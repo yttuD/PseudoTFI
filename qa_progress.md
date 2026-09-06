@@ -4,3 +4,8 @@
 - [ ] Flujo A: Gestor y Monetización -> FALLÓ
 - [ ] Flujo B: Publicación de Unidades -> FALLÓ
 - [ ] Flujo C: Usuario Común, Búsqueda y Mobile -> FALLÓ
+
+### Progreso 6 de Septiembre
+- **ESTADO**: COMPLETADO 100% VERDE.
+- El Flujo 1, 2 y 3 corren exitosamente tanto en Desktop Chrome como en Mobile Chrome.
+- Se solucionaron los bugs de backend, estado de publicaci�n y renderizado del frontend para los listados del marketplace.

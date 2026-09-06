@@ -84,7 +84,7 @@ export default async function UnidadDetailPage({
           <div className="aspect-[4/3] bg-muted rounded-xl overflow-hidden relative">
             {unidad.fotos && unidad.fotos.length > 0 ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={unidad.fotos[0]} alt={unidad.titulo_es} className="w-full h-full object-cover" />
+              <img src={unidad.fotos[0]} alt={unidad.titulo || unidad.titulo_es} className="w-full h-full object-cover" />
             ) : (
               <div className="flex items-center justify-center w-full h-full text-muted-foreground">
                 {t('sinFotos')}
@@ -125,8 +125,8 @@ export default async function UnidadDetailPage({
                 />
               </div>
             </div>
-            <h1 className="text-3xl font-bold mb-4">{unidad.titulo_es}</h1>
-            <p className="text-muted-foreground whitespace-pre-wrap">{unidad.descripcion_es}</p>
+            <h1 className="text-3xl font-bold mb-4">{unidad.titulo || unidad.titulo_es}</h1>
+            <p className="text-muted-foreground whitespace-pre-wrap">{unidad.descripcion || unidad.descripcion_es}</p>
           </div>
         </div>
 
@@ -149,7 +149,7 @@ export default async function UnidadDetailPage({
 
             <WhatsAppButton 
               telefono={unidad.whatsapp || ''} 
-              titulo={unidad.titulo_es} 
+              titulo={unidad.titulo || unidad.titulo_es} 
               className={buttonVariants({ variant: "default", className: "w-full gap-2" })} 
             />
           </div>

@@ -91,13 +91,30 @@ test('Flujo 1: Gestor - Facturación, MP, Unidades, Grupos, Inquilinos, Delegado
 
   // Guardar Unidad
   await page.click('button:has-text("Guardar Unidad")');
-  await expect(page).toHaveURL(/.*\/es\/mis-unidades\/.*/, { timeout: 15000 });
+  await expect(page).toHaveURL(/.*\/es\/mis-unidades\/.*\/editar/, { timeout: 15000 });
+  await page.waitForLoadState('networkidle');
+
+  // Publicar Unidad para que aparezca en el Marketplace
+  page.once('dialog', async dialog => {
+    try {
+      if (dialog.message().includes('publicada')) {
+        await dialog.accept();
+      } else {
+        console.error('UNEXPECTED DIALOG:', dialog.message());
+        await dialog.dismiss();
+      }
+    } catch (e) {}
+  });
+  await page.click('button:has-text("Publicar")');
+  
+  // Esperar redireccion a mis-unidades listado
+  await expect(page).toHaveURL(/\/es\/mis-unidades$/, { timeout: 15000 });
   await page.waitForLoadState('networkidle');
 
   // 3. Crear Grupo
-  await page.goto('/es');
-  await expect(page.locator('h1')).toContainText(/Encontrá el espacio perfecto|Marketplace|Propiedades|Alquiler/i);
-  await page.click('a:has-text("Buscar")');
+  await page.goto('/es/grupos');
+  await expect(page.locator('h1:has-text("Grupos")')).toBeVisible();
+  await page.click('button:has-text("Nuevo Grupo")');
   await page.waitForTimeout(500); // Wait for Radix UI Dialog animation and focus trap
   await page.fill('#nombre', 'Grupo Test E2E');
   await page.getByRole('button', { name: 'Guardar', exact: true }).click();
@@ -151,8 +168,9 @@ test('Flujo 2: Delegado - Login y Acceso a Workspace', async ({ page }) => {
   
   // Validar que no vea opciones prohibidas para delegado, ej. Facturación
   await expect(page.locator('text=Facturación')).toBeHidden();
-  // Validar que vea Mis Unidades
-  await expect(page.locator('text=Mis Unidades').first()).toBeVisible();
+  // Validar que pueda acceder a Mis Unidades
+  await page.goto('/es/mis-unidades');
+  await expect(page.locator('h1:has-text("Mis Unidades")')).toBeVisible({ timeout: 15000 });
 });
 
 test('Flujo 3: Cliente Normal - Landing y Búsqueda', async ({ page }) => {

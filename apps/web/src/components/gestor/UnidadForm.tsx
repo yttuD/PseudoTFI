@@ -228,6 +228,30 @@ export function UnidadForm({
     }
   };
 
+  const handlePublish = async () => {
+    if (!unidadId) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/unidades/${unidadId}/estado`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ estado: 'publicada' })
+      });
+      if (!res.ok) throw new Error('Error al publicar');
+      alert('Unidad publicada exitosamente');
+      router.push(`/${locale}/mis-unidades`);
+      router.refresh();
+    } catch (e) {
+      console.error(e);
+      alert('Hubo un error al publicar');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const getLabel = (unidad: string, cantidad: number) => {
     if (unidad === 'día' && cantidad === 1) return 'Diario';
     if (unidad === 'día' && cantidad === 7) return 'Semanal';
@@ -421,6 +445,11 @@ export function UnidadForm({
       
       <div className="flex justify-end gap-4 border-t pt-4">
         <Button type="button" variant="ghost" onClick={() => router.back()}>Cancelar</Button>
+        {initialData?.estado === 'borrador' && (
+          <Button type="button" variant="secondary" onClick={handlePublish} disabled={isSubmitting}>
+            Publicar
+          </Button>
+        )}
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Guardando...' : 'Guardar Unidad'}
         </Button>

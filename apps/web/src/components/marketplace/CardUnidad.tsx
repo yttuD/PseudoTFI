@@ -52,7 +52,7 @@ export function CardUnidad({ unidad, locale, isFavorito = false, isLoggedIn = fa
             <MapPin className="w-3 h-3" />
             <span>{(unidad.zonas as Record<string, unknown>)?.nombre as string} · {unidad.categoria as string}</span>
           </div>
-          <h3 className="font-semibold text-sm line-clamp-2 mb-2 flex-1">{unidad.titulo_es as string}</h3>
+          <h3 className="font-semibold text-sm line-clamp-2 mb-2 flex-1">{(unidad.titulo || unidad.titulo_es) as string}</h3>
           
           {precioMinimo > 0 && (
             <p className="text-primary font-bold">{t('desde')} ${precioMinimo}/{t('mes')}</p>
