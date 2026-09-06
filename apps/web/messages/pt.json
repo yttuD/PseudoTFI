@@ -1,0 +1,31 @@
+{
+  "nav": {
+    "buscar": "Procurar",
+    "ingresar": "Entrar",
+    "registrarse": "Cadastrar"
+  },
+  "busqueda": {
+    "titulo": "Encontre o seu aluguel ideal",
+    "tipo": "Que tipo de espaço você procura?",
+    "zona": "Em que zona?",
+    "precio": "Qual é o seu orçamento?",
+    "omitir": "Pular"
+  },
+  "unidad": {
+    "contactar": "Contatar",
+    "verUbicacion": "Ver localização exata",
+    "sinFotos": "Sem fotos disponíveis",
+    "desde": "A partir de",
+    "dia": "dia",
+    "mes": "mês"
+  },
+  "auth": {
+    "loginRequerido": "Faça login para ver a localização exata"
+  },
+  "comun": {
+    "cargando": "Carregando...",
+    "sinResultados": "Não encontramos resultados",
+    "verMas": "Ver mais",
+    "siguiente": "Próximo"
+  }
+}

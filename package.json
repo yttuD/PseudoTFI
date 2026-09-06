@@ -1,0 +1,18 @@
+{
+  "name": "tfi-marketplace-inmobiliario",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "test:e2e": "pnpm --filter web exec playwright test"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "^2.115.0",
+    "prettier": "^3.0.0",
+    "turbo": "latest"
+  },
+  "packageManager": "pnpm@9.0.0"
+}

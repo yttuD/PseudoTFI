@@ -1,0 +1,76 @@
+PAQUETE DE MARCA — RENDA (Real Estate Software)
+================================================
+
+01_RENDA-vertical-oscuro   → Logo principal (ícono + nombre + tagline) sobre fondo oscuro.
+                              Uso: portada de redes (LinkedIn/Instagram), fondo de pantalla de
+                              presentaciones, splash screen de la app.
+
+02_RENDA-vertical-claro     → Misma composición sobre fondo claro.
+                              Uso: documentos impresos, membretes, contratos, PDFs, papelería.
+
+03_RENDA-horizontal-oscuro  → Ícono + "RENDA" en línea, fondo TRANSPARENTE, colores claros.
+                              Uso: header/navbar de la web en modo oscuro, firma de email,
+                              banners sobre fotos o fondos de color oscuro.
+
+04_RENDA-horizontal-claro   → Igual al anterior pero en colores oscuros, fondo TRANSPARENTE.
+                              Uso: header/navbar en modo claro, banners sobre fondos blancos
+                              o de color claro.
+
+05_RENDA-icono-app          → Ícono solo, dentro de un cuadrado negro con esquinas redondeadas
+                              (autocontenido). Incluye versiones en 1024px, 512px y 180px
+                              (180px = apple-touch-icon para iOS).
+                              Uso: ícono de la app (iOS/Android/escritorio), avatar de redes,
+                              ícono de PWA.
+
+06_RENDA-icono-suelto-oscuro → Solo el símbolo (sin cuadrado ni fondo), en colores claros,
+                               fondo transparente.
+                               Uso: marca de agua o sello sobre fotos, fondos oscuros o de color,
+                               merchandising oscuro.
+
+07_RENDA-icono-suelto-claro  → Igual al anterior pero en colores oscuros.
+                               Uso: sobre fondos blancos/claros donde no querés el cuadrado negro
+                               (ej. como watermark discreto en un documento).
+
+favicon.ico                 → Favicon multi-resolución (16/32/48/64/128 px) lista para poner en
+                              la raíz del sitio o en <link rel="icon" href="favicon.ico">.
+favicon-16.png / favicon-32.png → Los mismos tamaños sueltos en PNG, por si el sistema los pide
+                              por separado (<link rel="icon" sizes="32x32" ...>).
+
+FORMATOS
+--------
+- Los .svg son el archivo fuente (vectorial): se pueden escalar a cualquier tamaño sin perder
+  calidad, y son los que hay que usar si necesitás editar colores o llevarlos a Illustrator/Figma.
+- Los .png están exportados en alta resolución para uso directo (web, redes, documentos).
+
+NOTA SOBRE TIPOGRAFÍA
+----------------------
+El wordmark usa la tipografía "Manrope" (Google Fonts, gratuita). Los PNG de este paquete se
+generaron sin conexión a internet, así que el texto quedó con la fuente de reemplazo del sistema
+en vez de Manrope. Si abrís los .svg en un navegador (con internet) o en Figma/Illustrator
+importando la fuente, el texto se va a ver con la tipografía correcta. Si querés, puedo
+regenerar los PNG finales con Manrope embebida.
+
+--- AGREGADOS PARA WEB / APP ---
+
+08_RENDA-social-preview     → Imagen 1200x630 para que se vea bien al compartir el link del
+                              sitio en WhatsApp, Twitter/X, LinkedIn, Slack, etc. (Open Graph).
+                              Usar con las etiquetas:
+                              <meta property="og:image" content=".../08_RENDA-social-preview.png">
+                              <meta name="twitter:card" content="summary_large_image">
+
+apple-touch-icon.png (180x180) → Ícono para cuando alguien agrega el sitio a la pantalla de
+                              inicio en iOS/iPadOS.
+                              <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+android-chrome-192x192.png
+android-chrome-512x512.png  → Íconos para Android / PWA (instalable como app).
+
+site.webmanifest            → Manifiesto listo para PWA. Van junto a los íconos de Android en
+                              la raíz del sitio, y se linkea así en el <head>:
+                              <link rel="manifest" href="/site.webmanifest">
+
+RESUMEN RÁPIDO PARA EL <head> DEL SITIO:
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <meta property="og:image" content="/08_RENDA-social-preview.png">

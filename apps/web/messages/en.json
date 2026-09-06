@@ -1,0 +1,31 @@
+{
+  "nav": {
+    "buscar": "Search",
+    "ingresar": "Login",
+    "registrarse": "Sign up"
+  },
+  "busqueda": {
+    "titulo": "Find your ideal rental",
+    "tipo": "What type of space are you looking for?",
+    "zona": "In which zone?",
+    "precio": "What is your budget?",
+    "omitir": "Skip"
+  },
+  "unidad": {
+    "contactar": "Contact",
+    "verUbicacion": "View exact location",
+    "sinFotos": "No photos available",
+    "desde": "From",
+    "dia": "day",
+    "mes": "month"
+  },
+  "auth": {
+    "loginRequerido": "Log in to see the exact location"
+  },
+  "comun": {
+    "cargando": "Loading...",
+    "sinResultados": "No results found",
+    "verMas": "See more",
+    "siguiente": "Next"
+  }
+}
