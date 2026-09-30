@@ -150,6 +150,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.115.0
         version: 2.115.0
+      '@tfi/types':
+        specifier: workspace:^
+        version: link:../../packages/types
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1

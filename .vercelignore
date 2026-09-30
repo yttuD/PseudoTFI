@@ -1,0 +1,35 @@
+# Keep deployment uploads limited to application source and workspace metadata.
+.git
+.agents
+.agent
+.claude
+.codex
+.specify
+specs
+/supabase/
+scratch
+.tmp
+.pnpm-store
+**/node_modules
+**/.next
+**/dist
+**/.turbo
+**/.vercel
+**/.env
+**/.env.*
+**/*.tsbuildinfo
+**/test-results
+**/playwright-report
+**/e2e
+**/android
+**/*.log
+# Archive/duplicate brand exports are retained in Git but not needed at runtime.
+apps/web/public/brand/.tmp
+apps/web/public/brand/renda-brand-kit
+apps/web/public/brand/rendo-brand-kit
+apps/web/public/brand/png
+apps/web/public/brand/svg
+apps/web/public/brand/css
+apps/web/public/brand/favicon
+apps/web/public/brand/*.png
+apps/web/public/brand/renda-*

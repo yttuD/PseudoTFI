@@ -9,22 +9,22 @@
 
 ## Phase 2: Foundation
 
-- [ ] T003 Review intended source and repository paths, scan staged diff for credentials, then commit `apps/`, `packages/types/`, `supabase/`, release docs and lockfile on the beta branch.
-- [ ] T004 Push the reviewed beta branch to the existing Git remote and record its commit ID in `evidence/deployment.md`.
-- [ ] T005 Configure exact hosted origins and non-commercial release flags in both Vercel projects; never copy the API service credential to web.
+- [x] T003 Review intended source and repository paths, scan staged diff for credentials, then commit `apps/`, `packages/types/`, `supabase/`, release docs and lockfile on the beta branch.
+- [x] T004 Push the reviewed beta branch to the existing Git remote and record its commit ID in `evidence/deployment.md`.
+- [x] T005 Configure exact hosted origins and non-commercial release flags in both Vercel projects; never copy the API service credential to web.
 
 ## Phase 3: User Story 1 — Reach a real beta (P1)
 
 **Independent test**: Hosted web loads, API liveness/readiness reflect real dependency state.
 
-- [ ] T006 [US1] Deploy `apps/api` and `apps/web` from the reviewed revision and record URLs/build results in `evidence/deployment.md`.
+- [x] T006 [US1] Deploy `apps/api` and `apps/web` from the reviewed revision and record URLs/build results in `evidence/deployment.md`.
 - [ ] T007 [US1] Verify hosted `/health/live`, `/health/ready`, catalog and dependency-failure behavior; record results in `evidence/deployment.md`.
 
 ## Phase 4: User Story 2 — Protect tester boundaries (P1)
 
 **Independent test**: Hosted actor allow/deny checks and beta money gates, with browser evidence.
 
-- [ ] T008 [US2] Configure Supabase Auth site/redirect URLs and real isolated tester accounts; record only non-sensitive setup in `evidence/deployment.md`.
+- [ ] T008 [US2] Configure Supabase Auth site/redirect URLs and real isolated tester accounts; record only non-sensitive setup in `evidence/deployment.md`. Dashboard URLs and disabled Confirm Email are user-reported; tester-account verification remains pending.
 - [ ] T009 [US2] Run public, Gestor, Delegado, cross-tenant and internal-denial hosted checks; preserve redacted evidence in `evidence/deployment.md`.
 - [ ] T010 [US2] Verify payment/fiscal/dev-token gates and inspect Playwright screenshots for desktop and responsive web in `evidence/`.
 

@@ -1,13 +1,21 @@
 # Deployment evidence
 
 **Date**: 2026-09-30  
-**Status**: In progress. No URL is tester-ready yet.
+**Status**: Production deployments live; restricted technical beta, **not yet cleared for invited actor testing**.
 
 - Vercel account: `dutty` (authenticated as `yttud`).
 - API project: `rendo-beta-api`, ID `prj_dL8gNB3eb3ePfOI9NBoE1GbRLtVB`.
 - Web project: `rendo-beta-web`, ID `prj_ccBNuSoRrobUZtTwY8PpsYr8PlHR`.
 - API secret variable `SUPABASE_SERVICE_ROLE_KEY`: present as Vercel Secret in Production only; value not read. Preview remains unset, so use Production only until separately configured.
 - Web project root `apps/web`, Next.js, Node 22, monorepo build command; API root `apps/api`, Node 22, shared package install/build command.
-- Both projects have Production-only release variables. Exact origins currently target `https://rendo-beta-web.vercel.app` and `https://rendo-beta-api.vercel.app`; these must be checked against actual assigned aliases after first deployment. Beta, payment, fiscal and dev-token switches are configured to fail closed.
-- Supabase beta: 21 applied migrations and 136/136 pgTAP assertions from Feature 006 evidence; hosted app behavior not yet verified.
-- Git revision, hosted URLs, builds, health, actor tests, visual evidence, rollback target: pending.
+- Both projects have Production-only release variables. Exact origins match the assigned production aliases `https://rendo-beta-web.vercel.app` and `https://rendo-beta-api.vercel.app`. Beta, payment, fiscal and dev-token switches are configured to fail closed.
+- Supabase beta: 21 applied migrations and 136/136 pgTAP assertions from Feature 006 evidence; hosted unauthenticated behavior is verified below, authenticated behavior is not.
+- Source pushed to `yttuD/PseudoTFI`, branch `codex/rendo-beta-deploy`, initial commit `e3e5391`; the branch tip also contains the lockfile, Turbo environment and deployment upload fixes. Vercel CLI deployments were built from the same local checkout; Git auto-deploy is deliberately not connected, so pushing does not change the live deployments.
+- API production deployment: `dpl_GPCzpuMzKRBYS25Hsnj2zvmfcSnk`, [API](https://rendo-beta-api.vercel.app), NestJS build `READY`.
+- Web production deployment: `dpl_7CyCzwa8DyMPUqzWm3Mi1m68of4r`, [Web](https://rendo-beta-web.vercel.app/es), Next.js build `READY`.
+- External unauthenticated checks on 2026-09-30: API `/health/live` 200, `/health/ready` 200; web `/es` 200, `/es/unidades` 200, proxied `/api/health/ready` 200. API `/marketplace/unidades` returns `{"data":[],"count":0,"page":1,"limit":20}` reflecting the empty beta database. Unauthenticated `/delegados` returns 401; `/es/dev` returns 404. Exact web Origin receives `Access-Control-Allow-Origin`; unrelated Origin receives no CORS allow header. This is not a cross-tenant authorization test.
+- Playwright (installed Edge channel) captured and Codex inspected `screenshots/home-desktop-light.png`, `screenshots/home-mobile-dark.png`, and `screenshots/catalog-desktop-light.png`. Desktop and mobile render without a visible error; catalog shows zero units. Mobile search placeholder truncates in the narrow field and should receive a later UX pass. These are responsive-web screenshots, not native Android evidence.
+- Supabase Auth hosted Site URL/redirect allowlist: Carlos reported these configured for the production web alias. He also reported disabling `Confirm Email` in the Email provider on 2026-09-30; this makes email confirmation unnecessary for beta sign-up. Email remains enabled, and Supabase's direct password-recovery endpoint is **not** blocked. The app currently has no visible recovery entry point. These dashboard settings are user-reported, not independently verified by a real hosted signup/recovery test. Because an unverified address may be treated as confirmed, use controlled test accounts and no sensitive production data; do not rely on email ownership for Delegado invitations in this beta.
+- No real-role registration/login, Gestor, Delegado, persisted group/unit, invitation, storage-policy or cross-tenant hosted scenario has been executed. No fictitious seed was loaded. Historical high/critical `FIND-005-042/043/044` remain open until real-actor evidence; do **not** invite testers yet.
+- Beta payment and fiscal flags are explicitly `false` in API Production; endpoint side-effect verification is pending. No real payment or fiscal credential was configured.
+- Rollback target: no prior successful deployment exists for these new projects. If this first release fails, pause both Rendo projects in Vercel (not unrelated projects); for subsequent releases, use each project's Deployments history / Instant Rollback. Never reset Supabase data.
