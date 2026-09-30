@@ -138,7 +138,7 @@ export default function OnboardingGestorPage() {
               <span>¡Listo! Redirigiendo al Dashboard...</span>
             ) : (
               <>
-                <span>Convertirme en Gestor y Activar Cupo Trial</span>
+                <span>Convertirme en Gestor y Activar Cupo Beta</span>
                 <ArrowRight className="h-4 w-4 shrink-0" />
               </>
             )}

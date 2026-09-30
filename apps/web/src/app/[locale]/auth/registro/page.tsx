@@ -312,7 +312,7 @@ export default function RegisterPage() {
 
   const pageSubtitle = isGestorPortal
     ? isClosedBeta
-      ? "Registrate para probar la gestión de unidades y alquileres. Los cobros y comprobantes están deshabilitados."
+      ? "Registrate para probar hasta 10 unidades sin costo. Los cobros y comprobantes están deshabilitados."
       : "Registrate para administrar tus unidades, alquileres y facturación sin comisiones."
     : "Iniciá tu cuenta para ver ubicaciones exactas, contactar gestores por WhatsApp y guardar favoritos.";
 
