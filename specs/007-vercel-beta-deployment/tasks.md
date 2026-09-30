@@ -37,7 +37,7 @@
 
 ## Final Phase: Stewardship
 
-- [ ] T013 Remove only verified task-owned temporary tools/build artifacts; leave unrelated projects, databases and user files intact.
+- [x] T013 Remove only verified task-owned temporary tools/build artifacts; leave unrelated projects, databases and user files intact.
 
 **Dependencies**: T003–T005 precede T006; T006 precedes T007–T010; T007–T010 precede tester-ready T011. T008 needs Carlos's private credential and Auth dashboard access. T009–T010 require real-role accounts and seeded test data; do not mark them done from mock sessions.
 
