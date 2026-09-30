@@ -1,4 +1,17 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Request,
+  Query,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { UnidadesService } from './unidades.service.js';
 import { CreateUnidadDto } from './dto/create-unidad.dto.js';
 import { UpdateUnidadDto } from './dto/update-unidad.dto.js';
@@ -8,68 +21,171 @@ import { SupabaseAuthGuard } from '../auth/supabase-auth.guard.js';
 import type { AuthenticatedRequest } from '../auth/supabase-auth.guard.js';
 import { CreateModalidadPrecioDto } from './dto/create-modalidad-precio.dto.js';
 import { UpdateModalidadPrecioDto } from './dto/update-modalidad-precio.dto.js';
+import { AuthorizationService } from '../authorization/authorization.service.js';
+import { ActionLogService } from '../authorization/action-log.service.js';
 
 @UseGuards(SupabaseAuthGuard)
 @Controller('unidades')
 export class UnidadesController {
-  constructor(private readonly unidadesService: UnidadesService) {}
+  constructor(
+    private readonly unidadesService: UnidadesService,
+    private readonly authzService: AuthorizationService,
+    private readonly actionLogService: ActionLogService,
+  ) {}
 
   @Post()
-  create(@Body() createUnidadDto: CreateUnidadDto, @Request() req: AuthenticatedRequest) {
+  async create(
+    @Body() createUnidadDto: CreateUnidadDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    const canCreate = await this.authzService.canCreateUnidad(
+      req.user,
+      req.user.workspace_id,
+      createUnidadDto.grupo_id,
+    );
+    if (!canCreate) {
+      throw new ForbiddenException(
+        'Permiso insuficiente: No tienes permiso para crear una Unidad con el alcance actual',
+      );
+    }
+
     const token = this.extractToken(req);
     return this.unidadesService.create(createUnidadDto, token, req.user.workspace_id);
   }
 
   @Get()
-  findAll(@Query() query: GetUnidadesDto, @Request() req: AuthenticatedRequest) {
+  async findAll(
+    @Query() query: GetUnidadesDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
     const token = this.extractToken(req);
-    return this.unidadesService.findAll(query, token);
+    const result = await this.unidadesService.findAll(query, token);
+
+    if (req.user.rol === 'delegado') {
+      const filtered = [];
+      for (const unit of result.data) {
+        if (await this.authzService.canReadUnidad(req.user, unit.id)) {
+          filtered.push(unit);
+        }
+      }
+      return {
+        ...result,
+        data: filtered,
+        count: filtered.length,
+      };
+    }
+
+    return result;
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+  async findOne(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+    const canRead = await this.authzService.canReadUnidad(req.user, id);
+    if (!canRead) {
+      throw new NotFoundException('Unidad no encontrada');
+    }
+
     const token = this.extractToken(req);
     return this.unidadesService.findOne(id, token);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUnidadDto: UpdateUnidadDto, @Request() req: AuthenticatedRequest) {
+  async update(
+    @Param('id') id: string,
+    @Body() updateUnidadDto: UpdateUnidadDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    const canManage = await this.authzService.canManageUnidad(req.user, id);
+    if (!canManage) {
+      throw new NotFoundException('Unidad no encontrada o sin permisos de gestión');
+    }
+
     const token = this.extractToken(req);
-    return this.unidadesService.update(id, updateUnidadDto, token);
+    return this.unidadesService.update(id, updateUnidadDto, token, req.user.workspace_id);
   }
 
   @Patch(':id/estado')
-  cambiarEstado(@Param('id') id: string, @Body() cambiarEstadoDto: CambiarEstadoDto, @Request() req: AuthenticatedRequest) {
+  async cambiarEstado(
+    @Param('id') id: string,
+    @Body() cambiarEstadoDto: CambiarEstadoDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    const canManage = await this.authzService.canManageUnidad(req.user, id);
+    if (!canManage) {
+      throw new NotFoundException('Unidad no encontrada o sin permisos de gestión');
+    }
+
     const token = this.extractToken(req);
     return this.unidadesService.cambiarEstado(id, cambiarEstadoDto, token);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+  async remove(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+    const canManage = await this.authzService.canManageUnidad(req.user, id);
+    if (!canManage) {
+      throw new NotFoundException('Unidad no encontrada o sin permisos de gestión');
+    }
+
     const token = this.extractToken(req);
     return this.unidadesService.remove(id, token);
   }
 
   @Post(':id/modalidades')
-  createModalidad(@Param('id') id: string, @Body() createModalidadDto: CreateModalidadPrecioDto, @Request() req: AuthenticatedRequest) {
+  async createModalidad(
+    @Param('id') id: string,
+    @Body() createModalidadDto: CreateModalidadPrecioDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    const canManage = await this.authzService.canManageUnidad(req.user, id);
+    if (!canManage) {
+      throw new NotFoundException('Unidad no encontrada o sin permisos de gestión');
+    }
+
     const token = this.extractToken(req);
     return this.unidadesService.createModalidad(id, createModalidadDto, token);
   }
 
   @Patch(':id/modalidades/:modId')
-  updateModalidad(@Param('id') id: string, @Param('modId') modId: string, @Body() updateModalidadDto: UpdateModalidadPrecioDto, @Request() req: AuthenticatedRequest) {
+  async updateModalidad(
+    @Param('id') id: string,
+    @Param('modId') modId: string,
+    @Body() updateModalidadDto: UpdateModalidadPrecioDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    const canManage = await this.authzService.canManageUnidad(req.user, id);
+    if (!canManage) {
+      throw new NotFoundException('Unidad no encontrada o sin permisos de gestión');
+    }
+
     const token = this.extractToken(req);
     return this.unidadesService.updateModalidad(id, modId, updateModalidadDto, token);
   }
 
   @Delete(':id/modalidades/:modId')
-  removeModalidad(@Param('id') id: string, @Param('modId') modId: string, @Request() req: AuthenticatedRequest) {
+  async removeModalidad(
+    @Param('id') id: string,
+    @Param('modId') modId: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    const canManage = await this.authzService.canManageUnidad(req.user, id);
+    if (!canManage) {
+      throw new NotFoundException('Unidad no encontrada o sin permisos de gestión');
+    }
+
     const token = this.extractToken(req);
     return this.unidadesService.removeModalidad(id, modId, token);
   }
 
   @Get(':id/alquileres')
-  getAlquileres(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+  async getAlquileres(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    const canRead = await this.authzService.canReadUnidad(req.user, id);
+    if (!canRead) {
+      throw new NotFoundException('Unidad no encontrada');
+    }
+
     const token = this.extractToken(req);
     return this.unidadesService.getAlquileres(id, token);
   }

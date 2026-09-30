@@ -1,16 +1,21 @@
 import { Controller, Post, Body, Req, UseGuards, HttpCode } from '@nestjs/common';
 import { PagosService } from './pagos.service.js';
 import { SupabaseAuthGuard, type AuthenticatedRequest } from '../auth/supabase-auth.guard.js';
+import { AuthorizationService } from '../authorization/authorization.service.js';
 
 @Controller('pagos')
 export class PagosController {
-  constructor(private readonly pagosService: PagosService) {}
+  constructor(
+    private readonly pagosService: PagosService,
+    private readonly authzService: AuthorizationService,
+  ) {}
 
   @UseGuards(SupabaseAuthGuard)
   @Post('mercadopago/preferencia')
   async crearPreferencia(@Req() req: AuthenticatedRequest, @Body('cupo_adquirido') cupo_adquirido: number) {
+    this.authzService.assertOwnerOnly(req.user);
     const token = req.headers.authorization!.split(' ')[1];
-    const gestorId = req.user.workspace_id; // Payments are linked to the gestor
+    const gestorId = req.user.id;
     return this.pagosService.crearPreferenciaMercadoPago(token, gestorId, cupo_adquirido);
   }
 
@@ -25,8 +30,9 @@ export class PagosController {
   @UseGuards(SupabaseAuthGuard)
   @Post('efectivo')
   async registrarEfectivo(@Req() req: AuthenticatedRequest, @Body('cupo_adquirido') cupo_adquirido: number) {
+    this.authzService.assertOwnerOnly(req.user);
     const token = req.headers.authorization!.split(' ')[1];
-    const gestorId = req.user.workspace_id;
+    const gestorId = req.user.id;
     return this.pagosService.registrarPagoEfectivo(token, gestorId, cupo_adquirido);
   }
 }

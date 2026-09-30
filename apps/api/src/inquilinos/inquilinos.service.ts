@@ -10,8 +10,6 @@ export class InquilinosService {
   async create(createInquilinoDto: CreateInquilinoDto, token: string, workspaceId: string) {
     const client = this.supabaseService.getClient(token);
 
-    // El workspaceId viene validado desde el AuthGuard.
-
     const { data, error } = await client
       .from('inquilinos')
       .insert([
@@ -23,8 +21,8 @@ export class InquilinosService {
       .select()
       .single();
 
-    if (error) {
-      throw new UnprocessableEntityException(error.message);
+    if (error || !data) {
+      throw new UnprocessableEntityException(error?.message || 'Error al crear inquilino');
     }
 
     return data;
@@ -45,11 +43,26 @@ export class InquilinosService {
     }
 
     return {
-      data,
-      total: count,
+      data: data || [],
+      total: count || 0,
       limit,
       offset,
     };
+  }
+
+  async findOne(id: string, token: string) {
+    const client = this.supabaseService.getClient(token);
+    const { data, error } = await client
+      .from('inquilinos')
+      .select('*')
+      .eq('id', id)
+      .is('deleted_at', null)
+      .single();
+
+    if (error || !data) {
+      throw new NotFoundException('Inquilino no encontrado');
+    }
+    return data;
   }
 
   async update(id: string, updateInquilinoDto: UpdateInquilinoDto, token: string) {

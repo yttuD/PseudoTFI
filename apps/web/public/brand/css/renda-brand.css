@@ -1,0 +1,11 @@
+:root {
+  --renda-navy: #0D203E;
+  --renda-navy-alt: #0E2144;
+  --renda-gold: #C49A4A;
+  --renda-cream: #FDFAEB;
+  --renda-white: #FFFFFF;
+
+  --renda-font-display: "Times New Roman", Georgia, "Iowan Old Style", serif;
+  --renda-logo-gap: 1rem;
+  --renda-logo-radius: 18px;
+}

@@ -1,8 +1,9 @@
-import { Controller, Get, Param, Query, Request } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, Request } from '@nestjs/common';
 import { MarketplaceService } from './marketplace.service.js';
 import { BuscarUnidadesDto } from './dto/buscar-unidades.dto.js';
 import { SupabaseService } from '../supabase/supabase.service.js';
 import type { Request as ExpressRequest } from 'express';
+import { isReleaseRuntime } from '../config/release-readiness.js';
 
 @Controller('marketplace')
 export class MarketplaceController {
@@ -22,14 +23,33 @@ export class MarketplaceController {
     let isAuthenticated = false;
 
     if (token) {
-      const supabase = this.supabaseService.getClient();
-      const { data } = await supabase.auth.getUser(token);
-      if (data && data.user) {
-        isAuthenticated = true;
+      if (token.startsWith('dev-') || token.startsWith('mock-')) {
+        isAuthenticated = !isReleaseRuntime();
+      } else {
+        try {
+          const supabase = this.supabaseService.getClient(token);
+          const { data, error } = await supabase.auth.getUser(token);
+          isAuthenticated = !error && !!data?.user;
+        } catch {
+          isAuthenticated = false;
+        }
       }
     }
 
-    return this.marketplaceService.findOne(id, isAuthenticated, locale || 'es');
+    const safeLocale = ['es', 'pt', 'en'].includes(locale) ? locale : 'es';
+    return this.marketplaceService.findOne(id, isAuthenticated, safeLocale);
+  }
+
+  @Post('unidades/:id/vista')
+  registrarVista(@Param('id') id: string, @Request() req: ExpressRequest) {
+    const rawIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.ip || req.socket.remoteAddress || '127.0.0.1';
+    return this.marketplaceService.registrarVista(id, rawIp);
+  }
+
+  @Post('unidades/:id/contacto')
+  registrarContacto(@Param('id') id: string, @Request() req: ExpressRequest) {
+    const rawIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.ip || req.socket.remoteAddress || '127.0.0.1';
+    return this.marketplaceService.registrarContacto(id, rawIp);
   }
 
   @Get('zonas')

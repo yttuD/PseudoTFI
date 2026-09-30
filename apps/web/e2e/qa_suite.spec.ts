@@ -6,7 +6,7 @@ test.use({ storageState: { cookies: [], origins: [] } });
 
 let delegadoEmail = `delegado${Math.floor(Math.random() * 1000000)}@test.com`;
 
-async function registerGestor(page) {
+async function registerGestor(page: import('@playwright/test').Page) {
   const rand = Math.floor(Math.random() * 1000000);
   const email = `gestor${rand}@test.com`;
   

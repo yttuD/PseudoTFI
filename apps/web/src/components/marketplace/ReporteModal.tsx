@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { Flag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,20 +33,14 @@ export function ReporteModal({ unidadId, isLoggedIn, token, className = '' }: Re
   const [motivo, setMotivo] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const router = useRouter();
   const pathname = usePathname();
 
   const handleOpenClick = (e: React.MouseEvent) => {
-    if (!isLoggedIn || !token) {
-      e.preventDefault();
-      const loginUrl = pathname.includes('/pt') 
-        ? '/pt/auth/login' 
-        : pathname.includes('/en') 
-          ? '/en/auth/login' 
-          : '/es/auth/login';
-          
-      router.push(`${loginUrl}?callbackUrl=${encodeURIComponent(pathname)}`);
-    }
+    e.preventDefault();
+    e.stopPropagation();
+    const currentPath = pathname || (typeof window !== 'undefined' ? window.location.pathname : '/es/unidades');
+    const locale = currentPath.startsWith('/pt') ? 'pt' : currentPath.startsWith('/en') ? 'en' : 'es';
+    window.location.href = `/${locale}/auth/login?portal=marketplace&next=${encodeURIComponent(currentPath)}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -79,6 +73,19 @@ export function ReporteModal({ unidadId, isLoggedIn, token, className = '' }: Re
     }
   };
 
+  if (!isLoggedIn || !token) {
+    return (
+      <button
+        type="button"
+        className={`min-h-[44px] min-w-[44px] text-muted-foreground hover:text-red-600 inline-flex items-center text-sm font-medium px-2 py-1 rounded-lg transition-colors ${className}`}
+        onClick={handleOpenClick}
+      >
+        <Flag className="h-4 w-4 mr-2" />
+        Reportar
+      </button>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger 
@@ -86,8 +93,7 @@ export function ReporteModal({ unidadId, isLoggedIn, token, className = '' }: Re
           <Button 
             variant="ghost" 
             size="sm" 
-            className={`text-muted-foreground hover:text-red-600 ${className}`}
-            onClick={handleOpenClick}
+            className={`min-h-[44px] min-w-[44px] text-muted-foreground hover:text-red-600 ${className}`}
           >
             <Flag className="h-4 w-4 mr-2" />
             Reportar
@@ -106,7 +112,7 @@ export function ReporteModal({ unidadId, isLoggedIn, token, className = '' }: Re
           <div className="space-y-2">
             <Label htmlFor="motivo">Motivo del reporte</Label>
             <Select value={motivo} onValueChange={(val) => setMotivo(val || '')} required>
-              <SelectTrigger id="motivo">
+              <SelectTrigger id="motivo" className="min-h-[44px] h-11 bg-background text-sm">
                 <SelectValue placeholder="Seleccioná un motivo" />
               </SelectTrigger>
               <SelectContent>
@@ -123,11 +129,16 @@ export function ReporteModal({ unidadId, isLoggedIn, token, className = '' }: Re
             <Button
               type="button"
               variant="outline"
+              className="min-h-[44px] h-11 px-4 text-sm"
               onClick={() => setOpen(false)}
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={!motivo || isSubmitting}>
+            <Button
+              type="submit"
+              className="min-h-[44px] h-11 px-4 text-sm"
+              disabled={!motivo || isSubmitting}
+            >
               {isSubmitting ? 'Enviando...' : 'Enviar Reporte'}
             </Button>
           </div>

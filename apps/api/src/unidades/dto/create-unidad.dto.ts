@@ -1,4 +1,4 @@
-import { IsInt, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateUnidadDto {
@@ -22,6 +22,26 @@ export class CreateUnidadDto {
   @IsOptional()
   @IsString()
   descripcion_es?: string;
+
+  @IsOptional()
+  @IsString()
+  titulo_en?: string;
+
+  @IsOptional()
+  @IsString()
+  descripcion_en?: string;
+
+  @IsOptional()
+  @IsString()
+  titulo_pt?: string;
+
+  @IsOptional()
+  @IsString()
+  descripcion_pt?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  auto_traducir?: boolean;
 
   @IsOptional()
   @IsString()

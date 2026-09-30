@@ -109,6 +109,48 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 - Website - [https://nestjs.com](https://nestjs.com/)
 - Twitter - [@nestframework](https://twitter.com/nestframework)
 
+## Authentication & Local Development Tokens
+
+The API uses `SupabaseAuthGuard` to protect all operational endpoints. Deployed requests require authoritative validation via Supabase Auth and derive identity and workspace exclusively from active canonical profiles in `public.users`.
+
+### Local Demo Authentication (Non-Production Only)
+
+For local offline development and automated testing, deterministic demo credentials may be enabled.
+
+> [!WARNING]
+> **Security Notice**: Local demo tokens are strictly a non-production test capability. They are disabled by default and fail closed in production and staging environments under all circumstances. Never set `AUTH_ALLOW_DEV_TOKENS=true` in deployed or production environments.
+
+#### Enabling Local Demo Tokens
+
+To activate local demo tokens, BOTH conditions must be met:
+1. `AUTH_ALLOW_DEV_TOKENS=true` (exact lowercase string)
+2. `NODE_ENV=development` OR `NODE_ENV=test`
+
+If `NODE_ENV=production`, if `NODE_ENV` is unset or set to any other environment, or if `AUTH_ALLOW_DEV_TOKENS` is omitted or any value other than `true`, demo credentials are unconditionally denied (HTTP 401).
+
+#### Accepted Compatibility Token Formats
+
+When explicitly enabled in development or test, the guard accepts only these exact token formats:
+
+| Credential Value | Actor ID | Role | Workspace ID |
+|---|---|---|---|
+| `dev-access-token` | `11111111-1111-1111-1111-111111111111` | `gestor` | `11111111-1111-1111-1111-111111111111` |
+| `dev-access-token-gestor` | `11111111-1111-1111-1111-111111111111` | `gestor` | `11111111-1111-1111-1111-111111111111` |
+| `dev-access-token-delegado` | `33333333-3333-3333-3333-333333333333` | `delegado` | `11111111-1111-1111-1111-111111111111` |
+| `dev-access-token-buscador` | `22222222-2222-2222-2222-222222222222` | `buscador` | `22222222-2222-2222-2222-222222222222` |
+
+#### Generated Dynamic Token Format
+
+```text
+dev-token-<role>-<uuid>
+```
+- `<role>`: exactly `gestor`, `delegado`, or `buscador` (exact lowercase only; uppercase or mixed-case prefixes and roles are rejected).
+- `<uuid>`: a valid 36-character canonical UUID string (case-insensitive hexadecimal digits accepted).
+- Gestor and Buscador assign the `<uuid>` as both actor ID and workspace ID.
+- Delegado assigns the `<uuid>` as actor ID and links to the fixed demo Gestor workspace `11111111-1111-1111-1111-111111111111`.
+- Any prefix, suffix, unsupported role (e.g. `admin`), uppercase/mixed-case role or prefix, non-UUID format, or extra separator is rejected with HTTP 401.
+
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+

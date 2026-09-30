@@ -1,6 +1,7 @@
-import { IsUUID } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateFavoritoDto {
-  @IsUUID()
+  @IsString()
+  @IsNotEmpty()
   unidad_id: string;
 }

@@ -1,23 +1,98 @@
-import { Controller, Get, Post, Body, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { GruposService } from './grupos.service.js';
 import { SupabaseAuthGuard } from '../auth/supabase-auth.guard.js';
 import type { AuthenticatedRequest } from '../auth/supabase-auth.guard.js';
+import { AuthorizationService } from '../authorization/authorization.service.js';
+import { ActionLogService } from '../authorization/action-log.service.js';
+import { CreateGrupoDto } from './dto/create-grupo.dto.js';
+import { UpdateGrupoDto } from './dto/update-grupo.dto.js';
 
 @UseGuards(SupabaseAuthGuard)
 @Controller('grupos')
 export class GruposController {
-  constructor(private readonly gruposService: GruposService) {}
+  constructor(
+    private readonly gruposService: GruposService,
+    private readonly authzService: AuthorizationService,
+    private readonly actionLogService: ActionLogService,
+  ) {}
 
   @Get()
-  findAll(@Request() req: AuthenticatedRequest) {
+  async findAll(@Request() req: AuthenticatedRequest) {
     const token = this.extractToken(req);
-    return this.gruposService.findAll(req.user.workspace_id, token);
+    const grupos = await this.gruposService.findAll(req.user.workspace_id, token);
+    
+    // Scoped filtering for Delegados
+    if (req.user.rol === 'delegado') {
+      const allowed = [];
+      for (const g of grupos) {
+        if (await this.authzService.canReadGrupo(req.user, g.id)) {
+          allowed.push(g);
+        }
+      }
+      return allowed;
+    }
+    return grupos;
   }
 
   @Post()
-  create(@Body() createGrupoDto: { nombre: string }, @Request() req: AuthenticatedRequest) {
+  async create(
+    @Body() createGrupoDto: CreateGrupoDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    if (req.user.rol === 'delegado') {
+      const ctx = await this.authzService.resolveAccessContext(req.user);
+      if (
+        ctx.actor !== 'delegado' ||
+        ctx.state !== 'activo' ||
+        ctx.permiso !== 'gestionar' ||
+        ctx.scope.alcanceTipo !== 'cuenta'
+      ) {
+        throw new ForbiddenException(
+          'Permiso insuficiente: Solo el Gestor o Delegado con alcance Cuenta puede crear grupos',
+        );
+      }
+    }
     const token = this.extractToken(req);
-    return this.gruposService.create(createGrupoDto.nombre, req.user.workspace_id, token);
+    return this.gruposService.create(createGrupoDto, req.user.workspace_id, token);
+  }
+
+  @Patch(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() updateDto: UpdateGrupoDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    const canManage = await this.authzService.canManageGrupo(req.user, id);
+    if (!canManage) {
+      throw new NotFoundException('Grupo no encontrado o sin permisos');
+    }
+    const token = this.extractToken(req);
+    return this.gruposService.update(id, updateDto, token);
+  }
+
+  @Delete(':id')
+  async remove(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    const canManageMembership = await this.authzService.canManageGrupoMembership(req.user, id);
+    if (!canManageMembership) {
+      throw new ForbiddenException('Solo el Gestor o Delegado con alcance Cuenta puede eliminar un grupo');
+    }
+    const token = this.extractToken(req);
+    return this.gruposService.remove(id, token);
   }
 
   private extractToken(req: AuthenticatedRequest): string {
