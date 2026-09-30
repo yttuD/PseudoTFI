@@ -81,17 +81,26 @@ export default function TerminosPage({
             <div className="flex items-center gap-3 text-primary">
               <CreditCard className="h-5 w-5 shrink-0" />
               <h2 className="text-xl font-bold tracking-tight text-foreground font-sans">
-                3. Modelo de Suscripción por Cupo Fijo
+                {process.env.RENDO_BETA_MODE === 'true' ? '3. Cupo Gratuito de la Beta' : '3. Modelo de Suscripción por Cupo Fijo'}
               </h2>
             </div>
-            <p>
-              El acceso a las funcionalidades de gestión y publicación para Gestores se estructura bajo un modelo de <strong>cupo mensual por unidad activa</strong>:
-            </p>
-            <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
-              <li>El Gestor abona un canon mensual fijo de software que le otorga el derecho de mantener publicadas y administradas una cantidad determinada de unidades.</li>
-              <li>El pago del cupo de software habilita la visibilidad en el marketplace, la auto-traducción y el acceso al panel operativo privado.</li>
-              <li>La falta de pago o vencimiento del período de cupo pausará la visibilidad pública de las unidades hasta su regularización, sin eliminar los datos ni el inventario cargado.</li>
-            </ul>
+            {process.env.RENDO_BETA_MODE === 'true' ? (
+              <p>
+                Durante esta beta, cada Gestor dispone de un cupo gratuito de hasta <strong>10 unidades no archivadas</strong>.
+                No se cobran mensualidades ni se pueden comprar cupos adicionales en esta versión de prueba.
+              </p>
+            ) : (
+              <>
+                <p>
+                  El acceso a las funcionalidades de gestión y publicación para Gestores se estructura bajo un modelo de <strong>cupo mensual por unidad activa</strong>:
+                </p>
+                <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
+                  <li>El Gestor abona un canon mensual fijo de software que le otorga el derecho de mantener publicadas y administradas una cantidad determinada de unidades.</li>
+                  <li>El pago del cupo de software habilita la visibilidad en el marketplace, la auto-traducción y el acceso al panel operativo privado.</li>
+                  <li>La falta de pago o vencimiento del período de cupo pausará la visibilidad pública de las unidades hasta su regularización, sin eliminar los datos ni el inventario cargado.</li>
+                </ul>
+              </>
+            )}
           </section>
 
           {/* 4. Obligaciones y Declaraciones del Gestor */}

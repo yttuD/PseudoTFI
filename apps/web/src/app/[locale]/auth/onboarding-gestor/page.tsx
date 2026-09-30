@@ -98,8 +98,8 @@ export default function OnboardingGestorPage() {
           <div className="flex items-start gap-3">
             <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
             <div>
-              <span className="text-xs font-semibold text-foreground">3 Unidades de Cupo Trial</span>
-              <p className="text-[11px] text-muted-foreground">Publica de inmediato hasta 3 Unidades sin costo alguno.</p>
+              <span className="text-xs font-semibold text-foreground">10 Unidades de Cupo Beta</span>
+              <p className="text-[11px] text-muted-foreground">Durante esta beta podés usar hasta 10 unidades sin costo. No hay compras de cupo habilitadas.</p>
             </div>
           </div>
           <div className="flex items-start gap-3">

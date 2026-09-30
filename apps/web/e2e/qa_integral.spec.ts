@@ -116,7 +116,7 @@ test.describe('QA INTEGRAL - Auditoría Completa de Plataforma Rendo (TC-01 a TC
     // Debe interceptar y mostrar la pantalla amigable de bienvenida sin 403 tosco
     await expect(page).toHaveURL(/onboarding-gestor/);
     await expect(page.locator('text=¿Deseas convertirte en Gestor?')).toBeVisible();
-    await expect(page.locator('text=3 Unidades de Cupo Trial')).toBeVisible();
+    await expect(page.locator('text=10 Unidades de Cupo Beta')).toBeVisible();
   });
 
   // TC-07: Conversión de Buscador a Gestor: botón interactivo
