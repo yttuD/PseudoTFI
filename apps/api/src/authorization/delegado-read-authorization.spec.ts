@@ -19,12 +19,22 @@ describe('Delegado Read Authorization (Ver Mode)', () => {
 
   beforeEach(() => {
     mockUnidadesService = {
-      findAll: vi.fn().mockResolvedValue({
-        data: [
-          { id: 'u-in-scope', titulo_es: 'Unidad Permitida' },
-          { id: 'u-out-scope', titulo_es: 'Unidad Ajena' },
-        ],
-        count: 2,
+      findAll: vi.fn().mockImplementation((_query, _token, _workspaceId, scope) => {
+        // En el nuevo contrato, el servicio devuelve el inventario ya filtrado por el scope
+        if (scope && scope.alcanceTipo === 'unidades') {
+          const inScope = [{ id: 'u-in-scope', titulo_es: 'Unidad Permitida' }];
+          return Promise.resolve({
+            data: inScope,
+            count: inScope.length,
+          });
+        }
+        return Promise.resolve({
+          data: [
+            { id: 'u-in-scope', titulo_es: 'Unidad Permitida' },
+            { id: 'u-out-scope', titulo_es: 'Unidad Ajena' },
+          ],
+          count: 2,
+        });
       }),
       findOne: vi.fn().mockImplementation((id: string) => {
         if (id === 'u-in-scope') {
@@ -44,7 +54,7 @@ describe('Delegado Read Authorization (Ver Mode)', () => {
         actor: 'delegado',
         state: 'activo',
         permiso: 'ver',
-        scope: { alcanceTipo: 'unidades', unidadIds: ['u-in-scope'] },
+        scope: { alcanceTipo: 'unidades', unidadIds: ['u-in-scope'], permiso: 'ver' },
         capabilities: ['read_unidad'],
       }),
     };
@@ -57,6 +67,14 @@ describe('Delegado Read Authorization (Ver Mode)', () => {
 
   it('filters unit list to only records in Delegado readable scope', async () => {
     const res = await controller.findAll({}, verDelegadoReq);
+    expect(mockAuthzService.resolveAccessContext).toHaveBeenCalledTimes(1);
+    expect(mockUnidadesService.findAll).toHaveBeenCalledWith(
+      {},
+      'token-123',
+      'gestor-1',
+      { alcanceTipo: 'unidades', unidadIds: ['u-in-scope'], permiso: 'ver' },
+    );
+    expect(mockAuthzService.canReadUnidad).not.toHaveBeenCalled();
     expect(res.data).toHaveLength(1);
     expect(res.data[0].id).toBe('u-in-scope');
     expect(res.count).toBe(1);

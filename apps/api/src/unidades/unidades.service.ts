@@ -8,6 +8,7 @@ import { CreateModalidadPrecioDto } from './dto/create-modalidad-precio.dto.js';
 import { UpdateModalidadPrecioDto } from './dto/update-modalidad-precio.dto.js';
 import { CupoService } from '../cupo/cupo.service.js';
 import { TraduccionService } from '../common/services/traduccion/traduccion.service.js';
+import type { DelegationConfiguration } from '../authorization/authorization.types.js';
 
 @Injectable()
 export class UnidadesService {
@@ -66,17 +67,41 @@ export class UnidadesService {
     return data;
   }
 
-  async findAll(query: GetUnidadesDto, token: string) {
+  async findAll(
+    query: GetUnidadesDto,
+    token: string,
+    workspaceId: string,
+    scope?: DelegationConfiguration,
+  ) {
     const { page = 1, limit = 20 } = query;
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
+    if (scope && scope.alcanceTipo === 'unidades') {
+      if (!scope.unidadIds || scope.unidadIds.length === 0) {
+        return { data: [], count: 0, page, limit };
+      }
+    }
+
     const supabase = this.supabaseService.getClient(token);
-    const { data, error, count } = await supabase
+    let queryBuilder = supabase
       .from('unidades')
       .select('*', { count: 'exact' })
-      .range(from, to)
-      .order('created_at', { ascending: false });
+      .eq('gestor_id', workspaceId)
+      .is('deleted_at', null);
+
+    if (scope) {
+      if (scope.alcanceTipo === 'grupo') {
+        queryBuilder = queryBuilder.eq('grupo_id', scope.grupoId);
+      } else if (scope.alcanceTipo === 'unidades') {
+        queryBuilder = queryBuilder.in('id', scope.unidadIds);
+      }
+    }
+
+    const { data, error, count } = await queryBuilder
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: true })
+      .range(from, to);
 
     if (error) {
       throw new UnprocessableEntityException(error.message);

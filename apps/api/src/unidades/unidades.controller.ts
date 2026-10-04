@@ -58,24 +58,35 @@ export class UnidadesController {
     @Query() query: GetUnidadesDto,
     @Request() req: AuthenticatedRequest,
   ) {
-    const token = this.extractToken(req);
-    const result = await this.unidadesService.findAll(query, token);
+    const page = query.page || 1;
+    const limit = query.limit || 20;
 
     if (req.user.rol === 'delegado') {
-      const filtered = [];
-      for (const unit of result.data) {
-        if (await this.authzService.canReadUnidad(req.user, unit.id)) {
-          filtered.push(unit);
-        }
+      const accessContext = await this.authzService.resolveAccessContext(req.user);
+      if (
+        accessContext.actor !== 'delegado' ||
+        accessContext.state !== 'activo' ||
+        !accessContext.scope
+      ) {
+        return {
+          data: [],
+          count: 0,
+          page,
+          limit,
+        };
       }
-      return {
-        ...result,
-        data: filtered,
-        count: filtered.length,
-      };
+
+      const token = this.extractToken(req);
+      return this.unidadesService.findAll(
+        query,
+        token,
+        req.user.workspace_id,
+        accessContext.scope,
+      );
     }
 
-    return result;
+    const token = this.extractToken(req);
+    return this.unidadesService.findAll(query, token, req.user.workspace_id);
   }
 
   @Get(':id')
