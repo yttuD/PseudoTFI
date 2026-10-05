@@ -84,26 +84,42 @@ export class UnidadesService {
     }
 
     const supabase = this.supabaseService.getClient(token);
-    let queryBuilder = supabase
-      .from('unidades')
-      .select('*', { count: 'exact' })
-      .eq('gestor_id', workspaceId)
-      .is('deleted_at', null);
+    const buildScopedQuery = (head = false) => {
+      let q = supabase
+        .from('unidades')
+        .select('*', head ? { count: 'exact', head: true } : { count: 'exact' })
+        .eq('gestor_id', workspaceId)
+        .is('deleted_at', null);
 
-    if (scope) {
-      if (scope.alcanceTipo === 'grupo') {
-        queryBuilder = queryBuilder.eq('grupo_id', scope.grupoId);
-      } else if (scope.alcanceTipo === 'unidades') {
-        queryBuilder = queryBuilder.in('id', scope.unidadIds);
+      if (scope) {
+        if (scope.alcanceTipo === 'grupo') {
+          q = q.eq('grupo_id', scope.grupoId);
+        } else if (scope.alcanceTipo === 'unidades') {
+          q = q.in('id', scope.unidadIds);
+        }
       }
-    }
+      return q;
+    };
 
-    const { data, error, count } = await queryBuilder
+    const { data, error, count } = await buildScopedQuery(false)
       .order('created_at', { ascending: false })
       .order('id', { ascending: true })
       .range(from, to);
 
     if (error) {
+      const isPgrst103 = (error as { code?: string })?.code === 'PGRST103';
+      if (isPgrst103 && from > 0) {
+        const { count: headCount, error: headError } = await buildScopedQuery(true);
+        if (
+          !headError &&
+          typeof headCount === 'number' &&
+          Number.isSafeInteger(headCount) &&
+          headCount >= 0 &&
+          from >= headCount
+        ) {
+          return { data: [], count: headCount, page, limit };
+        }
+      }
       throw new UnprocessableEntityException(error.message);
     }
 

@@ -810,6 +810,28 @@ describe('B007a: Aislamiento API Real y Autorización Multi-Tenant (T005 / T001)
       expect((result.data[0] as UnidadRow).id).toBe(unitB1Id);
       expect((result.data[0] as UnidadRow).gestor_id).toBe(gestorBId);
     });
+
+    it('Gestor A consulta page=9999 (fuera de rango): recupera count auténtico 4 y data vacía sin error PGRST103', async () => {
+      const { executionContext, request } = createExecutionContext(tokenGestorA);
+      await guard.canActivate(executionContext);
+
+      const result = await unidadesController.findAll({ page: 9999, limit: 10 }, request);
+      expect(result.count).toBe(4);
+      expect(result.data).toEqual([]);
+      expect(result.page).toBe(9999);
+      expect(result.limit).toBe(10);
+    });
+
+    it('Gestor B consulta page=9999 (fuera de rango): recupera count auténtico 1 y data vacía sin error PGRST103', async () => {
+      const { executionContext, request } = createExecutionContext(tokenGestorB);
+      await guard.canActivate(executionContext);
+
+      const result = await unidadesController.findAll({ page: 9999, limit: 10 }, request);
+      expect(result.count).toBe(1);
+      expect(result.data).toEqual([]);
+      expect(result.page).toBe(9999);
+      expect(result.limit).toBe(10);
+    });
   });
 
   describe('2. Ciclo de vida y alcances del Delegado (pendiente, grupo, cuenta, unidades, vacío)', () => {
@@ -857,6 +879,17 @@ describe('B007a: Aislamiento API Real y Autorización Multi-Tenant (T005 / T001)
       expect(returnedSet.has(unitB1Id)).toBe(false);
     });
 
+    it('Delegado con alcance grupo consulta page=9999 (fuera de rango): recupera count auténtico 2 y data vacía', async () => {
+      const { executionContext, request } = createExecutionContext(tokenDelegado);
+      await guard.canActivate(executionContext);
+
+      const result = await unidadesController.findAll({ page: 9999, limit: 10 }, request);
+      expect(result.count).toBe(2);
+      expect(result.data).toEqual([]);
+      expect(result.page).toBe(9999);
+      expect(result.limit).toBe(10);
+    });
+
     it('Delegado con alcance cuenta ve las 4 unidades operativas del Gestor A y excluye unidad B1 y deleted', async () => {
       const confRes = await clientGestorA.rpc('configure_delegacion', {
         p_delegacion_id: delegacionId,
@@ -900,6 +933,17 @@ describe('B007a: Aislamiento API Real y Autorización Multi-Tenant (T005 / T001)
       expect(result.count).toBe(1);
       expect(result.data).toHaveLength(1);
       expect((result.data[0] as UnidadRow).id).toBe(unitA1Id);
+    });
+
+    it('Delegado con alcance unidades explícitas consulta page=9999 (fuera de rango): recupera count auténtico 1 y data vacía', async () => {
+      const { executionContext, request } = createExecutionContext(tokenDelegado);
+      await guard.canActivate(executionContext);
+
+      const result = await unidadesController.findAll({ page: 9999, limit: 10 }, request);
+      expect(result.count).toBe(1);
+      expect(result.data).toEqual([]);
+      expect(result.page).toBe(9999);
+      expect(result.limit).toBe(10);
     });
 
     it('Delegado con alcance grupo vacío devuelve count: 0 y data: []', async () => {

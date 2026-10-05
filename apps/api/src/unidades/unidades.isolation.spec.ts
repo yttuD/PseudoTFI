@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { UnprocessableEntityException } from '@nestjs/common';
 import { UnidadesController } from './unidades.controller.js';
 import { UnidadesService } from './unidades.service.js';
 import type { AuthenticatedRequest, AuthenticatedUser } from '../auth/supabase-auth.guard.js';
@@ -435,6 +436,244 @@ describe('B006-N01a: Aislamiento e inventario antes de paginación (Unit Regress
       expect(queryBuilder.is).toHaveBeenCalledWith('deleted_at', null);
       expect(queryBuilder.in).not.toHaveBeenCalled();
       expect(queryBuilder.range).toHaveBeenCalledWith(0, 19);
+    });
+  });
+
+  describe('UnidadesService - findAll out-of-range (PGRST103) handling', () => {
+    let service: UnidadesService;
+    let mockSupabaseClient: { from: ReturnType<typeof vi.fn> };
+
+    const createMockBuilder = (result: { data?: unknown; count?: number | null; error?: { code?: string; message?: string } | null }) => {
+      const b: Record<string, ReturnType<typeof vi.fn>> = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
+        range: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+      };
+      (b as unknown as { then: unknown }).then = vi.fn().mockImplementation((onfulfilled) => {
+        return Promise.resolve(onfulfilled ? onfulfilled(result) : result);
+      });
+      return b;
+    };
+
+    beforeEach(() => {
+      mockSupabaseClient = {
+        from: vi.fn(),
+      };
+
+      const mockSupabaseService = {
+        getClient: vi.fn().mockReturnValue(mockSupabaseClient as unknown as SupabaseClient),
+      };
+
+      service = new UnidadesService(
+        mockSupabaseService as unknown as SupabaseService,
+        {} as unknown as CupoService,
+        {} as unknown as TraduccionService,
+      );
+    });
+
+    it('PGRST103 con offset > 0 y from >= count: recupera conteo HEAD y devuelve data [] con count auténtico', async () => {
+      const mainBuilder = createMockBuilder({
+        data: null,
+        count: null,
+        error: { code: 'PGRST103', message: 'Requested range not satisfiable' },
+      });
+      const headBuilder = createMockBuilder({
+        data: null,
+        count: 5,
+        error: null,
+      });
+
+      mockSupabaseClient.from
+        .mockReturnValueOnce(mainBuilder)
+        .mockReturnValueOnce(headBuilder);
+
+      const result = await service.findAll({ page: 2, limit: 10 }, 'mock-token', 'gestor-w1');
+
+      expect(mockSupabaseClient.from).toHaveBeenCalledTimes(2);
+      expect(headBuilder.select).toHaveBeenCalledWith('*', { count: 'exact', head: true });
+      expect(headBuilder.eq).toHaveBeenCalledWith('gestor_id', 'gestor-w1');
+      expect(headBuilder.is).toHaveBeenCalledWith('deleted_at', null);
+      expect(headBuilder.range).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        data: [],
+        count: 5,
+        page: 2,
+        limit: 10,
+      });
+    });
+
+    it('PGRST103 con offset > 0 pero HEAD count es null: lanza UnprocessableEntityException (no inventa 0 ni data vacía)', async () => {
+      const mainBuilder = createMockBuilder({
+        data: null,
+        count: null,
+        error: { code: 'PGRST103', message: 'Requested range not satisfiable' },
+      });
+      const headBuilder = createMockBuilder({
+        data: null,
+        count: null,
+        error: null,
+      });
+
+      mockSupabaseClient.from
+        .mockReturnValueOnce(mainBuilder)
+        .mockReturnValueOnce(headBuilder);
+
+      await expect(
+        service.findAll({ page: 2, limit: 10 }, 'mock-token', 'gestor-w1')
+      ).rejects.toThrow(UnprocessableEntityException);
+    });
+
+    it('PGRST103 con offset > 0 pero HEAD devuelve error: lanza UnprocessableEntityException', async () => {
+      const mainBuilder = createMockBuilder({
+        data: null,
+        count: null,
+        error: { code: 'PGRST103', message: 'Requested range not satisfiable' },
+      });
+      const headBuilder = createMockBuilder({
+        data: null,
+        count: null,
+        error: { code: 'PGRST500', message: 'DB connection failure' },
+      });
+
+      mockSupabaseClient.from
+        .mockReturnValueOnce(mainBuilder)
+        .mockReturnValueOnce(headBuilder);
+
+      await expect(
+        service.findAll({ page: 2, limit: 10 }, 'mock-token', 'gestor-w1')
+      ).rejects.toThrow(UnprocessableEntityException);
+    });
+
+    it('PGRST103 con offset > 0 pero from < count: lanza UnprocessableEntityException por inconsistencia', async () => {
+      const mainBuilder = createMockBuilder({
+        data: null,
+        count: null,
+        error: { code: 'PGRST103', message: 'Requested range not satisfiable' },
+      });
+      const headBuilder = createMockBuilder({
+        data: null,
+        count: 50, // from = 10, count = 50 -> from < count -> no debería haber dado PGRST103
+        error: null,
+      });
+
+      mockSupabaseClient.from
+        .mockReturnValueOnce(mainBuilder)
+        .mockReturnValueOnce(headBuilder);
+
+      await expect(
+        service.findAll({ page: 2, limit: 10 }, 'mock-token', 'gestor-w1')
+      ).rejects.toThrow(UnprocessableEntityException);
+    });
+
+    it('Error distinto a PGRST103: lanza UnprocessableEntityException sin llamar a HEAD', async () => {
+      const mainBuilder = createMockBuilder({
+        data: null,
+        count: null,
+        error: { code: '42P01', message: 'relation does not exist' },
+      });
+
+      mockSupabaseClient.from.mockReturnValueOnce(mainBuilder);
+
+      await expect(
+        service.findAll({ page: 2, limit: 10 }, 'mock-token', 'gestor-w1')
+      ).rejects.toThrow(UnprocessableEntityException);
+
+      expect(mockSupabaseClient.from).toHaveBeenCalledTimes(1);
+    });
+
+    it('Error con código distinto a PGRST103 pero cuyo mensaje contiene "PGRST103": debe lanzar 422 y NO ejecutar consulta HEAD', async () => {
+      const mainBuilder = createMockBuilder({
+        data: null,
+        count: null,
+        error: { code: 'PGRST200', message: 'Failed to process request: reference to PGRST103 in text' },
+      });
+
+      mockSupabaseClient.from.mockReturnValueOnce(mainBuilder);
+
+      await expect(
+        service.findAll({ page: 2, limit: 10 }, 'mock-token', 'gestor-w1')
+      ).rejects.toThrow(UnprocessableEntityException);
+
+      expect(mockSupabaseClient.from).toHaveBeenCalledTimes(1);
+    });
+
+    it('PGRST103 con offset = 0 (página 1): lanza UnprocessableEntityException directo sin llamar a HEAD', async () => {
+      const mainBuilder = createMockBuilder({
+        data: null,
+        count: null,
+        error: { code: 'PGRST103', message: 'Requested range not satisfiable' },
+      });
+
+      mockSupabaseClient.from.mockReturnValueOnce(mainBuilder);
+
+      await expect(
+        service.findAll({ page: 1, limit: 10 }, 'mock-token', 'gestor-w1')
+      ).rejects.toThrow(UnprocessableEntityException);
+
+      expect(mockSupabaseClient.from).toHaveBeenCalledTimes(1);
+    });
+
+    it('PGRST103 con Delegado scoped a grupo: HEAD preserva exactamente el filtro grupo_id', async () => {
+      const scope: DelegationConfiguration = {
+        permiso: 'ver',
+        alcanceTipo: 'grupo',
+        grupoId: 'grupo-scoped-99',
+      };
+      const mainBuilder = createMockBuilder({
+        data: null,
+        count: null,
+        error: { code: 'PGRST103', message: 'Requested range not satisfiable' },
+      });
+      const headBuilder = createMockBuilder({
+        data: null,
+        count: 2,
+        error: null,
+      });
+
+      mockSupabaseClient.from
+        .mockReturnValueOnce(mainBuilder)
+        .mockReturnValueOnce(headBuilder);
+
+      const result = await service.findAll({ page: 9999, limit: 10 }, 'mock-token', 'gestor-w1', scope);
+
+      expect(headBuilder.eq).toHaveBeenCalledWith('gestor_id', 'gestor-w1');
+      expect(headBuilder.eq).toHaveBeenCalledWith('grupo_id', 'grupo-scoped-99');
+      expect(headBuilder.is).toHaveBeenCalledWith('deleted_at', null);
+      expect(result.count).toBe(2);
+      expect(result.data).toEqual([]);
+    });
+
+    it('PGRST103 con Delegado scoped a IDs: HEAD preserva exactamente el filtro in(id, unidadIds)', async () => {
+      const scope: DelegationConfiguration = {
+        permiso: 'ver',
+        alcanceTipo: 'unidades',
+        unidadIds: ['u-1', 'u-2'],
+      };
+      const mainBuilder = createMockBuilder({
+        data: null,
+        count: null,
+        error: { code: 'PGRST103', message: 'Requested range not satisfiable' },
+      });
+      const headBuilder = createMockBuilder({
+        data: null,
+        count: 2,
+        error: null,
+      });
+
+      mockSupabaseClient.from
+        .mockReturnValueOnce(mainBuilder)
+        .mockReturnValueOnce(headBuilder);
+
+      const result = await service.findAll({ page: 50, limit: 10 }, 'mock-token', 'gestor-w1', scope);
+
+      expect(headBuilder.eq).toHaveBeenCalledWith('gestor_id', 'gestor-w1');
+      expect(headBuilder.in).toHaveBeenCalledWith('id', ['u-1', 'u-2']);
+      expect(headBuilder.is).toHaveBeenCalledWith('deleted_at', null);
+      expect(result.count).toBe(2);
+      expect(result.data).toEqual([]);
     });
   });
 });
