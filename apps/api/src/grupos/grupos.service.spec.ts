@@ -12,6 +12,7 @@ describe('GruposService', () => {
   beforeEach(async () => {
     mockSupabaseClient = {
       from: vi.fn(),
+      rpc: vi.fn(),
     };
 
     mockSupabaseService = {
@@ -149,6 +150,67 @@ describe('GruposService', () => {
           'token-123',
         ),
       ).rejects.toThrow(/El valor de la seña por defecto debe ser mayor a 0 cuando está activa/);
+    });
+  });
+
+  describe('remove', () => {
+    it('calls archive_grupo RPC and returns success: true when payload is valid', async () => {
+      mockSupabaseClient.rpc.mockResolvedValue({
+        data: { success: true, id: 'g-1' },
+        error: null,
+      });
+
+      const result = await service.remove('g-1', 'token-123');
+
+      expect(mockSupabaseService.getClient).toHaveBeenCalledWith('token-123');
+      expect(mockSupabaseClient.rpc).toHaveBeenCalledWith('archive_grupo', {
+        p_grupo_id: 'g-1',
+      });
+      expect(result).toEqual({ success: true });
+    });
+
+    it('throws UnprocessableEntityException when archive_grupo RPC returns error', async () => {
+      mockSupabaseClient.rpc.mockResolvedValue({
+        data: null,
+        error: { message: 'Grupo no encontrado' },
+      });
+
+      await expect(service.remove('g-invalid', 'token-123')).rejects.toThrow(
+        UnprocessableEntityException,
+      );
+    });
+
+    it('throws UnprocessableEntityException when RPC returns null data without error', async () => {
+      mockSupabaseClient.rpc.mockResolvedValue({
+        data: null,
+        error: null,
+      });
+
+      await expect(service.remove('g-1', 'token-123')).rejects.toThrow(
+        UnprocessableEntityException,
+      );
+    });
+
+    it('throws UnprocessableEntityException when RPC returns success: false', async () => {
+      mockSupabaseClient.rpc.mockResolvedValue({
+        data: { success: false, id: 'g-1' },
+        error: null,
+      });
+
+      await expect(service.remove('g-1', 'token-123')).rejects.toThrow(
+        UnprocessableEntityException,
+      );
+    });
+
+    it('throws UnprocessableEntityException when RPC returns wrong group id', async () => {
+      mockSupabaseClient.rpc.mockResolvedValue({
+        data: { success: true, id: 'g-different' },
+        error: null,
+      });
+
+      await expect(service.remove('g-1', 'token-123')).rejects.toThrow(
+        UnprocessableEntityException,
+      );
     });
   });
 });

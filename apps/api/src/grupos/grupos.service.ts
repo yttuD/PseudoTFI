@@ -113,15 +113,12 @@ export class GruposService {
 
   async remove(id: string, token: string) {
     const supabase = this.supabaseService.getClient(token);
-    const { data, error } = await supabase
-      .from('grupos')
-      .update({ deleted_at: new Date().toISOString() })
-      .eq('id', id)
-      .is('deleted_at', null)
-      .select()
-      .single();
+    const { data, error } = await supabase.rpc('archive_grupo', {
+      p_grupo_id: id,
+    });
 
-    if (error || !data) {
+    const res = data as { success?: boolean; id?: string } | null;
+    if (error || !res || res.success !== true || res.id !== id) {
       throw new UnprocessableEntityException(error?.message || 'Error al eliminar grupo');
     }
     return { success: true };
