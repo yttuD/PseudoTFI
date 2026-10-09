@@ -73,17 +73,17 @@ Fetching deployment "rendo-beta-api.vercel.app" in dutty
 
 ## 3. Manifiesto Comparativo de Fuentes (Baseline → Candidato → Desplegado)
 
-| Componente | Archivo | SHA-256 | Rol / Estado |
+| Componente | Archivo / Origen | SHA-256 | Rol / Estado |
 |---|---|---|---|
 | **Baseline publicado** | `snapshots/candidate-api/src/unidades/unidades.service.ts` | `13583df9601742908088d9a1f7e963a91ae0e22d7b9b77132f761c83c4046ef2` | Código API previo en producción (`dpl_6EQBEFvG6JsUcPfJ9rFuTzcUswcm` / Commit `55b8e19`) |
 | **Candidato preparado** | `apps/api/src/unidades/unidades.service.ts` (Commit `5b8e64c`) | `6656e3bd561bdd7c0244c2971c55155f43f4abbc138d17d9d564b7d74c28c728` | Aislado: solo método `remove` modificado a RPC `archive_unidad` |
-| **Fuente desplegada** | `snapshots-vercel/api-candidate/apps/api/src/unidades/unidades.service.ts` | `6656e3bd561bdd7c0244c2971c55155f43f4abbc138d17d9d564b7d74c28c728` | Fuente extraída y compilada por Vercel Cloud (399 archivos) |
+| **Fuente recuperada de Vercel** | Extraída de `source.tgz.part1` (`uid: c9e0fd8125c34e7cff8d0faf708306f36518ea2e`) vía Vercel REST API v8 | `6656e3bd561bdd7c0244c2971c55155f43f4abbc138d17d9d564b7d74c28c728` | Fuente descargada directamente de `dpl_9PD8rFu5ZZRRTTZ5Gwa2e5ezkpXN` en Vercel |
 
-### Paridad Candidato ↔ Fuente Desplegada
-```text
-$ git diff 5b8e64c:apps/api/src/unidades/unidades.service.ts snapshots-vercel/api-candidate/apps/api/src/unidades/unidades.service.ts
-(0 diferencias — paridad exacta 100%)
-```
+### Verificación de Fuente Descargada desde Vercel
+1. Consulta a API de Vercel: `GET /v6/deployments/dpl_9PD8rFu5ZZRRTTZ5Gwa2e5ezkpXN/files` identificó el archivo fuente `src/.vercel/source.tgz.part1` con UID `c9e0fd8125c34e7cff8d0faf708306f36518ea2e`.
+2. Descarga autorizada: `GET /v8/deployments/dpl_9PD8rFu5ZZRRTTZ5Gwa2e5ezkpXN/files/c9e0fd8125c34e7cff8d0faf708306f36518ea2e` devolvió el tarball comprimido de la fuente del despliegue (6.51 MB decodificado).
+3. Extracción y Hash: `tar -xf ... apps/api/src/unidades/unidades.service.ts` produjo el archivo exacto con SHA-256 `6656e3bd561bdd7c0244c2971c55155f43f4abbc138d17d9d564b7d74c28c728`.
+4. Comparación: 0 diferencias contra el candidato local (`apps/api/src/unidades/unidades.service.ts` en `5b8e64c`). Coincidencia 100% verificada directamente desde el almacenamiento de Vercel.
 
 ### Diff Exacto: Baseline Publicado ↔ Candidato Desplegado
 ```diff

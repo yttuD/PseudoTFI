@@ -221,7 +221,8 @@ BEGIN
             ELSIF v_del.alcance_tipo = 'grupo' THEN
               v_authorized := (v_unidad.grupo_id IS NOT NULL AND v_unidad.grupo_id = v_del.grupo_id);
             ELSIF v_del.alcance_tipo = 'unidades' THEN
-              v_authorized := EXISTS (\n                SELECT 1 FROM public.delegacion_unidades du
+              v_authorized := EXISTS (
+                SELECT 1 FROM public.delegacion_unidades du
                 WHERE du.delegacion_id = v_del.id
                   AND du.unidad_id = NEW.unidad_id
               );
@@ -284,15 +285,17 @@ CREATE TRIGGER trg_check_unidad_active_for_rental
 
 Consulta a `information_schema.routine_privileges`:
 
-| Función | Rol / Grantee | Tipo de Privilegio | Es Otorgable | Estado |
+| Función | Rol / Grantee | Tipo de Privilegio | Es Otorgable | Estado Efectivo en Catálogo |
 |---|---|---|---|---|
-| `archive_unidad` | `authenticated` | `EXECUTE` | `NO` | Autorizado |
-| `archive_unidad` | `service_role` | `EXECUTE` | `NO` | Autorizado |
+| `archive_unidad` | `authenticated` | `EXECUTE` | `NO` | Autorizado explícitamente |
+| `archive_unidad` | `service_role` | `EXECUTE` | `NO` | Autorizado explícitamente |
 | `archive_unidad` | `postgres` | `EXECUTE` | `YES` | Propietario |
 | `archive_unidad` | `PUBLIC` | *(Ninguno)* | — | **Revocado** |
 | `archive_unidad` | `anon` | *(Ninguno)* | — | **Revocado** |
-| `check_unidad_active_for_rental` | `authenticated` | `EXECUTE` | `NO` | Autorizado |
-| `check_unidad_active_for_rental` | `service_role` | `EXECUTE` | `NO` | Autorizado |
+| `check_unidad_active_for_rental` | `authenticated` | `EXECUTE` | `NO` | Autorizado (default de PostgreSQL) |
+| `check_unidad_active_for_rental` | `service_role` | `EXECUTE` | `NO` | Autorizado (default de PostgreSQL) |
 | `check_unidad_active_for_rental` | `postgres` | `EXECUTE` | `YES` | Propietario |
-| `check_unidad_active_for_rental` | `anon` | `EXECUTE` | `NO` | Trigger internamente fail-closed |
-| `check_unidad_active_for_rental` | `PUBLIC` | `EXECUTE` | `NO` | Trigger internamente fail-closed |
+| `check_unidad_active_for_rental` | `anon` | `EXECUTE` | `NO` | **Presente en catálogo** (no revocado; seguridad fail-closed interna en código) |
+| `check_unidad_active_for_rental` | `PUBLIC` | `EXECUTE` | `NO` | **Presente en catálogo** (no revocado; seguridad fail-closed interna en código) |
+
+> **Nota Crítica sobre Privilegios**: A diferencia de `archive_unidad(UUID)` (cuyos permisos fueron restringidos explícitamente revocando `PUBLIC` y `anon`), la función trigger `check_unidad_active_for_rental()` conserva los permisos de ejecución predeterminados de PostgreSQL para `PUBLIC` y `anon` en el catálogo del sistema. Su protección contra divulgación de estado u oráculos se basa enteramente en su control de acceso interno condicional (`IF NOT v_authorized THEN RETURN NEW; END IF;`), que delega el rechazo uniforme al RLS de la tabla `alquileres`. Conforme a las instrucciones del lote, no se alteran permisos en este paquete.
