@@ -2,9 +2,14 @@
 
 - Milestone actual: beta publicada, no cerrada; resolver observaciones con evidencia real.
 - Feature actual: specs/008-beta-observaciones-2026-10-02; alcance y estados en issues.md.
-- Estado: plan/contracts/tasks/analyze vigentes. B006-N01a aceptado y publicado; commit96b0b30 y deployment dpl_ADgxK4hCp1Rduwa2exgYHTUhTLYT READY/alias/smoke verificados. N01 completo y N02-N08 siguen abiertos; no porcentaje inferido.
-- Evidencia reciente: specs/008-beta-observaciones-2026-10-02/evidence/N01/review.md y deploy.md. 73 regresiones y 3 integración Auth/DB local reales; tipos productivos verdes, tipos generales base con 4 archivos defectuosos abiertos.
-- Marco vigente: constitución v2.1.1; Spec Kit sigue siendo fuente de verdad. Carlos autorizó Agy directo si Pi complica; Codex revisa entregas técnicas, Antigravity analiza medios visuales.
-- Blockers: aceptación integral requiere cuentas/vistas reales y recarga. Git automático sin link: decisión humana solicitada para versionar baseline ya publicado. B007a se frenó por dir innecesario, sin nuevos tests/ediciones; reintentar herramientas nativas, no ampliar shell. Backfill/Android sin nueva autorización.
-- Riesgos: catálogo con un prefijo falso y dos traducciones ausentes EN/PT; tarifas duplicadas preexistentes no deben borrarse automáticamente; fixtures locales no demuestran integración remota.
-- Siguiente acción: B007a (brief antigravity-batch-007a-real-authorization.md) negativas/positivas directas reales → B007b Playwright/análisis Agy desktop/mobile → N07/N08 → N02/N03. Supabase local actualizado, cuatro servicios necesarios; otros proyectos intactos. Publicar artefactos reconciliados hasta resolver baseline Git; nunca todo árbol sucio. Restaurar permisos temporales Agy al finalizar cada intervención.
+- Estado: N01 abierto. Migración 20261008040000_unit_archive_rpc.sql aplicada exitosamente en Supabase remoto (maeiuaketocznpogmtic). Candidato API aislado (solo UnidadesService.remove modificado a archive_unidad RPC) publicado en Vercel (dpl_9PD8rFu5ZZRRTTZ5Gwa2e5ezkpXN), estado READY y aliaseado a https://rendo-beta-api.vercel.app. Web preservada sin redespliegue. Endpoints de producción verificados (/health/live=200, /health/ready=200, /unidades=401, web /es=200). Rollback a dpl_6EQBEFvG6JsUcPfJ9rFuTzcUswcm preservado.
+- Evidencia: `specs/008-beta-observaciones-2026-10-02/evidence/N01/unit-archive-release.md`; migration list y definiciones de pg_proc/grants en remoto validadas; unit tests en `unidades.archive.spec.ts` (4/4 passed); smoke tests HTTP en producción.
+- Marco vigente: constitución v2.1.1; Spec Kit sigue siendo fuente de verdad. Carlos y Claude/Juez tienen la palabra final.
+- Autorización vigente: Lote B009 ejecutado según especificación autorizada. N01 permanece ABIERTO para la posterior reanudación controlada de suites remotas.
+- Riesgos: Las 3 unidades residuales del intento interrumpido previo permanecen en DB remota hasta que se ejecute la suite de archivado/limpieza autorizada; paridad de historial no acredita por sí sola igualdad total del esquema.
+- Próximo: Revisión del RESULT_PACKET por Carlos y el Juez (Claude). Preparación de la suite remota de verificación de inventario y archivado. N01 ABIERTO.
+
+
+
+
+

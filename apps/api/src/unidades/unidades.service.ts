@@ -275,19 +275,20 @@ export class UnidadesService {
 
   async remove(id: string, token: string) {
     const supabase = this.supabaseService.getClient(token);
-    
-    // Borrado lógico
-    const { data, error } = await supabase
-      .from('unidades')
-      .update({ deleted_at: new Date().toISOString() })
-      .eq('id', id)
-      .select()
-      .single();
 
-    if (error || !data) {
+    // Borrado lógico atómico vía RPC archive_unidad
+    const { data, error } = await supabase.rpc('archive_unidad', {
+      p_unidad_id: id,
+    });
+
+    const res = data as { success?: boolean; id?: string; deleted_at?: string } | null;
+    if (error || !res || res.success !== true || res.id !== id) {
+      if (error?.message?.includes('alquileres activos')) {
+        throw new UnprocessableEntityException('La unidad tiene alquileres activos y no se puede eliminar');
+      }
       throw new NotFoundException('Unidad no encontrada');
     }
-    return data;
+    return { success: true, id: res.id, deleted_at: res.deleted_at };
   }
 
   async createModalidad(unidadId: string, createDto: CreateModalidadPrecioDto, token: string) {
