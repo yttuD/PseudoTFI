@@ -42,7 +42,7 @@ jobs:
       - name: Install pinned Supabase CLI without hosted credentials
         uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
         with:
-          version: 2.84.2
+          version: 2.121.0
       - name: Create loopback-only Docker network
         run: docker network create -o 'com.docker.network.bridge.host_binding_ipv4=127.0.0.1' rendo-n01-ci
       - name: Start isolated local Supabase (Auth, PostgREST, Postgres)
@@ -51,7 +51,7 @@ jobs:
           set -euo pipefail
           if ! supabase start --network-id rendo-n01-ci -x realtime,storage-api,imgproxy,studio,edge-runtime,logflare,vector,supavisor,postgres-meta,mailpit > "$RUNNER_TEMP/n01-start.log" 2>&1; then
             echo 'Local stack startup failed. Selected sanitized diagnostics:'
-            grep -Ei 'migration|error|failed|timeout|healthy|docker|cannot' "$RUNNER_TEMP/n01-start.log" | sed -E 's/(token|password|secret|apikey|api_key|authorization).*/[redacted]/I' | tail -n 35 || true
+            grep -Ei -A 12 'failed to parse config|error|migration|failed|timeout|docker|cannot' "$RUNNER_TEMP/n01-start.log" | sed -E 's/(token|password|secret|apikey|api_key|authorization).*/[redacted]/I' | tail -n 35 || true
             exit 1
           fi
           echo 'Local Supabase started; startup output withheld to avoid printing local keys.'
