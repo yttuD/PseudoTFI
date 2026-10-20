@@ -471,6 +471,8 @@ export function UnidadForm({
 
       const payload = {
         ...unidadData,
+        // In PATCH, absence of grupo_id means "leave as-is"; null means detach.
+        ...(unidadId ? { grupo_id: data.grupo_id ?? null } : {}),
         auto_traducir: autoTraducir,
         direccion_texto: addressResultName || searchAddress || null,
       };
