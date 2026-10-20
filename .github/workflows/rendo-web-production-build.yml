@@ -24,10 +24,12 @@ jobs:
     env:
       CI: 'true'
       NEXT_TELEMETRY_DISABLED: '1'
-      NEXT_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54321'
+      NEXT_PUBLIC_SUPABASE_URL: 'https://supabase.rendo.invalid'
       NEXT_PUBLIC_SUPABASE_ANON_KEY: 'non-sensitive-local-build-placeholder'
-      NEXT_PUBLIC_API_URL: 'http://127.0.0.1:3001'
-      API_URL: 'http://127.0.0.1:3001'
+      NEXT_PUBLIC_API_URL: 'https://api.rendo.invalid'
+      API_URL: 'https://api.rendo.invalid'
+      API_ORIGIN: 'https://api.rendo.invalid'
+      WEB_PUBLIC_URL: 'https://web.rendo.invalid'
       RENDO_BETA_MODE: 'true'
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
