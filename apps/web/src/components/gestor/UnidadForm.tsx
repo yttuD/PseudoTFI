@@ -514,7 +514,8 @@ export function UnidadForm({
       }
 
       if (id) {
-        for (const [index, mod] of modalidades.entries()) {
+        for (let index = 0; index < modalidades.length; index++) {
+          const mod = modalidades[index];
           if (mod.id) {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/unidades/${id}/modalidades/${mod.id}`, {
               method: 'PATCH',
