@@ -126,7 +126,7 @@ jobs:
         timeout-minutes: 7
         run: >-
           node node_modules/@playwright/test/cli.js test -c playwright.real-local.config.ts
-          --grep 'N01: logout|N03:|N06:|N07/N08:|Escenario 1:|Escenario 1b:|Escenario 2:' --reporter=list
+          --grep 'N01: logout|N03:|N04:|N06:|N07/N08:|Escenario 1:|Escenario 1b:|Escenario 2:' --reporter=list
       - name: Keep failure captures and traces
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
