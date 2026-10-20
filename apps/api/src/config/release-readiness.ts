@@ -6,6 +6,16 @@ export function isReleaseRuntime(env: Environment = process.env): boolean {
   return env.NODE_ENV === 'production' || env.RENDO_BETA_MODE === 'true';
 }
 
+/**
+ * Sample inventory and static zones must never substitute unavailable real data
+ * in ordinary development or hosted environments. Fixtures exist only for
+ * explicit local demo adapters or isolated unit tests.
+ */
+export function allowSyntheticFallback(env: Environment = process.env): boolean {
+  return !isReleaseRuntime(env) &&
+    (env.NODE_ENV === 'test' || env.AUTH_ALLOW_DEV_TOKENS === 'true');
+}
+
 function isLoopback(hostname: string): boolean {
   const host = hostname.toLowerCase();
   return host === 'localhost' || host.endsWith('.localhost') ||
