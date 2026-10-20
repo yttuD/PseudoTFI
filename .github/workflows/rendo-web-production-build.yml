@@ -1,0 +1,51 @@
+name: Rendo production web build gate
+
+on:
+  pull_request:
+    branches:
+      - codex/release-candidate-n01-n08-2026-10-20
+    paths:
+      - 'apps/web/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/rendo-web-production-build.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rendo-build-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  next-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      NEXT_PUBLIC_SUPABASE_URL: 'https://supabase.rendo.invalid'
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'non-sensitive-local-build-placeholder'
+      NEXT_PUBLIC_API_URL: 'https://api.rendo.invalid'
+      API_URL: 'https://api.rendo.invalid'
+      API_ORIGIN: 'https://api.rendo.invalid'
+      WEB_PUBLIC_URL: 'https://web.rendo.invalid'
+      RENDO_BETA_MODE: 'true'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Activate pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.0.0 --activate
+      - name: Install web dependencies from lockfile
+        run: pnpm install --frozen-lockfile --filter web...
+      - name: Build internal types
+        run: pnpm --filter @tfi/types build
+      - name: Next.js production build without hosted credentials
+        working-directory: apps/web
+        run: node node_modules/next/dist/bin/next build
