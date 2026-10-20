@@ -1,0 +1,62 @@
+name: Rendo UI Playwright desktop-mobile smoke
+
+on:
+  pull_request:
+    branches:
+      - codex/n01-n02-group-membership-2026-10-20
+    paths:
+      - 'apps/web/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/rendo-playwright-matrix.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rendo-playwright-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  responsive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      AUTH_ALLOW_DEV_TOKENS: 'true'
+      NEXT_PUBLIC_AUTH_ALLOW_DEV_TOKENS: 'true'
+      NEXT_PUBLIC_API_URL: 'http://127.0.0.1:3001'
+      NEXT_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54321'
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'local-test-only'
+      PLAYWRIGHT_TEST: '1'
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Activate pinned pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.0.0 --activate
+      - name: Install web dependencies
+        run: pnpm install --frozen-lockfile --filter web...
+      - name: Build internal types
+        run: pnpm --filter @tfi/types build
+      - name: Install Chromium only
+        working-directory: apps/web
+        run: node node_modules/@playwright/test/cli.js install --with-deps chromium
+      - name: Run responsive regressions with only synthetic test fixtures
+        working-directory: apps/web
+        run: node node_modules/@playwright/test/cli.js test -c playwright.rendo-ci.config.ts e2e/observaciones_regression.spec.ts --reporter=list
+      - name: Preserve diagnostics and screenshot captures
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: rendo-ui-playwright-evidence
+          path: |
+            apps/web/test-results/
+            apps/web/playwright-report/
+          retention-days: 7
+          if-no-files-found: warn
