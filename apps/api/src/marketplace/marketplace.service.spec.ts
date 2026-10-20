@@ -2,8 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MarketplaceService } from './marketplace.service.js';
 import type { SupabaseService } from '../supabase/supabase.service.js';
 import { resetExchangeRatesCacheForTests } from './exchange-rates.js';
+import { resilientStore } from '../common/resilient-store.js';
 
-afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); resetExchangeRatesCacheForTests(); });
+afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); resetExchangeRatesCacheForTests(); });
 
 describe('release catalog failure behavior', () => {
   it('does not return synthetic units or zones during a beta database outage', async () => {
@@ -78,6 +79,80 @@ describe('release catalog failure behavior', () => {
       direccion_texto: 'Av. Rolón 850, Goya, Corrientes',
     });
   });
+
+  it.each(['offline', 'db-error'])(
+    'fallback local %s nunca arrastra campos privados a respuestas anónimas',
+    async (mode) => {
+      vi.stubEnv('NODE_ENV', 'test');
+      vi.stubEnv('RENDO_BETA_MODE', 'false');
+      const fixture = {
+        id: 'unit-demo',
+        estado: 'publicada',
+        titulo_es: 'Casa',
+        titulo_en: 'House',
+        descripcion_es: 'Descripción',
+        descripcion_en: 'Description',
+        categoria: 'casa',
+        zona_id: 'z1',
+        fotos: [],
+        ubicacion_aprox: { lat: -29, lng: -59 },
+        ubicacion_exacta: { lat: -29.1, lng: -59.1 },
+        direccion_texto: 'Dirección privada 123',
+        whatsapp: '+549000000',
+        telefono: '+549111111',
+        gestor_id: 'private-owner',
+        grupo_id: 'private-group',
+        internal_secret: 'should-never-leak',
+        deleted_at: null,
+        created_at: '2026-10-20',
+        modalidades_precio: [
+          { id: 'm-active', modalidad: 'dia', precio: 10000, deleted_at: null },
+          { id: 'm-deleted', modalidad: 'mes', precio: 50000, deleted_at: '2026-10-19' },
+        ],
+      };
+      vi.spyOn(resilientStore, 'getUnidadById').mockReturnValue(fixture as any);
+      const query: any = {
+        eq: () => query,
+        is: () => query,
+        single: async () => ({ data: null, error: { code: 'DB_UNAVAILABLE' } }),
+      };
+      const adminClient = vi.fn(() => ({ from: () => ({ select: () => query }) }));
+      const db = {
+        isOnline: vi.fn().mockResolvedValue(mode === 'db-error'),
+        getAdminClient: adminClient,
+      };
+      const service = new MarketplaceService(db as unknown as SupabaseService);
+      const anonymous = await service.findOne('unit-demo', false, 'en');
+
+      expect(anonymous).toMatchObject({
+        id: 'unit-demo',
+        titulo: 'House',
+        descripcion: 'Description',
+        whatsapp: null,
+        ubicacion_exacta: null,
+        direccion_texto: null,
+      });
+      for (const key of ['gestor_id', 'grupo_id', 'deleted_at', 'telefono', 'internal_secret', 'titulo_es']) {
+        expect(anonymous).not.toHaveProperty(key);
+      }
+      expect(anonymous.modalidades_precio).toEqual([
+        {
+          id: 'm-active', unidad_tiempo: 'dia', cantidad_tiempo: 1,
+          precio: 10000, precio_usd: null, precio_brl: null,
+        },
+      ]);
+      expect(adminClient).toHaveBeenCalledTimes(mode === 'db-error' ? 1 : 0);
+
+      const authenticated = await service.findOne('unit-demo', true, 'es');
+      expect(authenticated).toMatchObject({
+        titulo: 'Casa',
+        whatsapp: '+549000000',
+        ubicacion_exacta: { lat: -29.1, lng: -59.1 },
+        direccion_texto: 'Dirección privada 123',
+      });
+      expect(authenticated).not.toHaveProperty('gestor_id');
+    },
+  );
 
   it('busca por título y descripción sin exponer columnas privadas', async () => {
     vi.stubEnv('RENDO_BETA_MODE', 'true');
