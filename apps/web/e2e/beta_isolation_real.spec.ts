@@ -66,6 +66,28 @@ test.describe('B007b — Inventario y Aislamiento Real Navegador', () => {
     }
   });
 
+  test('N01: logout real invalida sesión en el navegador y protege inventario tras recarga', async ({ browser }, testInfo) => {
+    const context = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
+    try {
+      const page = await context.newPage();
+      await fixtures.loginViaUI(page, gestorA);
+      await page.goto('/es/unidades');
+      const profileMenu = page.getByRole('button', { name: 'Menú de perfil' });
+      await expect(profileMenu).toBeVisible();
+      await profileMenu.click();
+      await page.getByRole('button', { name: 'Cerrar Sesión' }).click();
+
+      // A hard navigation clears Next.js private route cache. A failed SDK
+      // logout must display an error rather than pretending to sign out.
+      await page.waitForURL(/\/es\/?(?:\?.*)?$/, { timeout: 20_000 });
+      await page.goto('/es/mis-unidades');
+      await expect(page).toHaveURL(/\/es\/auth\/login/);
+      await expect(page.getByText('Depto A1 Vista al Rio')).not.toBeVisible();
+    } finally {
+      await context.close();
+    }
+  });
+
   test('N06: perfil de Gestor se guarda y persiste al recargar con Auth real', async ({ browser }, testInfo) => {
     const context = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
     try {
