@@ -66,6 +66,70 @@ test.describe('B007b — Inventario y Aislamiento Real Navegador', () => {
     }
   });
 
+  test('N04: domicilio y contacto privados nunca aparecen anónimos, tampoco tras logout', async ({ browser }, testInfo) => {
+    const baseURL = testInfo.project.use.baseURL;
+    const apiUrl = process.env.API_URL;
+    if (!apiUrl || !['localhost', '127.0.0.1'].includes(new URL(apiUrl).hostname)) {
+      throw new Error('N04 requiere API_URL local y nunca ejecuta pruebas de privacidad en producción');
+    }
+    const secretAddress = `Dirección privada QA ${unitA1Id.slice(0, 8)}`;
+    const secretPhone = '00000000999';
+    // Fixture belongs to this isolated local Supabase only; afterAll removes its ID.
+    const { error: setupError } = await fixtures.adminClient.from('unidades')
+      .update({ direccion_texto: secretAddress, whatsapp: secretPhone })
+      .eq('id', unitA1Id);
+    expect(setupError).toBeNull();
+
+    const anonymous = await browser.newContext({ baseURL });
+    const verified = await browser.newContext({ baseURL });
+    try {
+      const publicResponse = await fetch(`${apiUrl}/marketplace/unidades/${unitA1Id}?locale=es`);
+      expect(publicResponse.status).toBe(200);
+      const publicData = await publicResponse.json() as { direccion_texto: string | null; whatsapp: string | null };
+      expect(publicData.direccion_texto).toBeNull();
+      expect(publicData.whatsapp).toBeNull();
+
+      const anonPage = await anonymous.newPage();
+      await anonPage.goto(`/es/unidades/${unitA1Id}`);
+      await expect(anonPage.getByTestId('approximate-location-note')).toBeVisible();
+      await expect(anonPage.getByTestId('exact-address')).toHaveCount(0);
+      expect(await anonPage.content()).not.toContain(secretAddress);
+      expect(await anonPage.content()).not.toContain(secretPhone);
+
+      // Independent signed-in account proves authenticated disclosure is
+      // deliberate, not merely RLS ownership of the published unit.
+      const viewer = await fixtures.createGestor('N04Viewer');
+      const page = await verified.newPage();
+      await fixtures.loginViaUI(page, viewer);
+      await page.goto(`/es/unidades/${unitA1Id}`);
+      await expect(page.getByTestId('exact-address')).toContainText(secretAddress);
+      const authResponse = await fetch(`${apiUrl}/marketplace/unidades/${unitA1Id}?locale=es`, {
+        headers: { Authorization: `Bearer ${viewer.accessToken}` },
+      });
+      expect(authResponse.status).toBe(200);
+      const authData = await authResponse.json() as { direccion_texto: string | null; whatsapp: string | null };
+      expect(authData.direccion_texto).toBe(secretAddress);
+      expect(authData.whatsapp).toBe(secretPhone);
+
+      await page.getByRole('button', { name: 'Menú de perfil' }).click();
+      await page.getByRole('button', { name: 'Cerrar Sesión' }).click();
+      await page.waitForURL(/\\/es\\/?(?:\\?.*)?$/, { timeout: 20_000 });
+      await page.goto(`/es/unidades/${unitA1Id}`);
+      await expect(page.getByTestId('approximate-location-note')).toBeVisible();
+      await expect(page.getByTestId('exact-address')).toHaveCount(0);
+      expect(await page.content()).not.toContain(secretAddress);
+      expect(await page.content()).not.toContain(secretPhone);
+    } finally {
+      await anonymous.close();
+      await verified.close();
+      // Minimize interference with following cases, including screenshots.
+      const { error: restoreError } = await fixtures.adminClient.from('unidades')
+        .update({ direccion_texto: null, whatsapp: null })
+        .eq('id', unitA1Id);
+      expect(restoreError).toBeNull();
+    }
+  });
+
   test('N01: logout real invalida sesión en el navegador y protege inventario tras recarga', async ({ browser }, testInfo) => {
     const context = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
     try {
