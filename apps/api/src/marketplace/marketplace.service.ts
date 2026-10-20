@@ -3,7 +3,7 @@ import { SupabaseService } from '../supabase/supabase.service.js';
 import { BuscarUnidadesDto } from './dto/buscar-unidades.dto.js';
 import { resilientStore } from '../common/resilient-store.js';
 import { createHash } from 'node:crypto';
-import { isReleaseRuntime } from '../config/release-readiness.js';
+import { isReleaseRuntime, allowSyntheticFallback } from '../config/release-readiness.js';
 import { getExchangeRates } from './exchange-rates.js';
 
 const databaseUnavailable = () => new ServiceUnavailableException('El catálogo no está disponible temporalmente');
@@ -40,7 +40,7 @@ export class MarketplaceService {
 
     const isOnline = await this.supabaseService.isOnline();
     if (!isOnline) {
-      if (isReleaseRuntime()) throw databaseUnavailable();
+      if (!allowSyntheticFallback()) throw databaseUnavailable();
       let fallbackUnidades = resilientStore.getUnidades(true);
       
       if (categoria) {
@@ -178,7 +178,7 @@ export class MarketplaceService {
     }
 
     if (error || !data) {
-      if (isReleaseRuntime()) throw databaseUnavailable();
+      if (!allowSyntheticFallback()) throw databaseUnavailable();
       let fallbackUnidades = resilientStore.getUnidades(true);
       
       if (categoria) {
@@ -246,7 +246,7 @@ export class MarketplaceService {
   async findOne(id: string, isAuthenticated: boolean, locale: string = 'es') {
     const isOnline = await this.supabaseService.isOnline();
     if (!isOnline) {
-      if (isReleaseRuntime()) throw databaseUnavailable();
+      if (!allowSyntheticFallback()) throw databaseUnavailable();
       const fallback = resilientStore.getUnidadById(id);
       if (fallback && fallback.estado === 'publicada') {
         return this.projectDetail(fallback, isAuthenticated, locale);
@@ -274,7 +274,7 @@ export class MarketplaceService {
     }
 
     if (error || !data) {
-      if (isReleaseRuntime()) {
+      if (!allowSyntheticFallback()) {
         if (error?.code === 'PGRST116') throw new NotFoundException('Unidad no encontrada o no publicada');
         throw databaseUnavailable();
       }
@@ -332,7 +332,7 @@ export class MarketplaceService {
   async getZonas() {
     const isOnline = await this.supabaseService.isOnline();
     if (!isOnline) {
-      if (isReleaseRuntime()) throw databaseUnavailable();
+      if (!allowSyntheticFallback()) throw databaseUnavailable();
       return [
         {
           id: 1,
@@ -365,7 +365,7 @@ export class MarketplaceService {
       if (result && !result.error && result.data) return result.data;
     } catch {}
 
-    if (isReleaseRuntime()) throw databaseUnavailable();
+    if (!allowSyntheticFallback()) throw databaseUnavailable();
 
     return [
       {
@@ -386,7 +386,7 @@ export class MarketplaceService {
     const ipHash = hashIp(ip || '127.0.0.1');
     const isOnline = await this.supabaseService.isOnline();
     if (!isOnline) {
-      if (isReleaseRuntime()) throw databaseUnavailable();
+      if (!allowSyntheticFallback()) throw databaseUnavailable();
       resilientStore.addVista(unidadId, ipHash);
       return { ok: true };
     }
@@ -396,9 +396,9 @@ export class MarketplaceService {
         unidad_id: unidadId,
         ip_hash: ipHash,
       });
-      if (error && isReleaseRuntime()) throw databaseUnavailable();
+      if (error && !allowSyntheticFallback()) throw databaseUnavailable();
     } catch {
-      if (isReleaseRuntime()) throw databaseUnavailable();
+      if (!allowSyntheticFallback()) throw databaseUnavailable();
       resilientStore.addVista(unidadId, ipHash);
     }
     return { ok: true };
@@ -408,7 +408,7 @@ export class MarketplaceService {
     const ipHash = ip ? hashIp(ip) : undefined;
     const isOnline = await this.supabaseService.isOnline();
     if (!isOnline) {
-      if (isReleaseRuntime()) throw databaseUnavailable();
+      if (!allowSyntheticFallback()) throw databaseUnavailable();
       resilientStore.addContacto(unidadId, ipHash);
       return { ok: true };
     }
@@ -418,9 +418,9 @@ export class MarketplaceService {
         unidad_id: unidadId,
         ip_hash: ipHash || null,
       });
-      if (error && isReleaseRuntime()) throw databaseUnavailable();
+      if (error && !allowSyntheticFallback()) throw databaseUnavailable();
     } catch {
-      if (isReleaseRuntime()) throw databaseUnavailable();
+      if (!allowSyntheticFallback()) throw databaseUnavailable();
       resilientStore.addContacto(unidadId, ipHash);
     }
     return { ok: true };
