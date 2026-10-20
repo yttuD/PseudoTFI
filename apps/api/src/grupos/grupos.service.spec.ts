@@ -111,6 +111,46 @@ describe('GruposService', () => {
       ).rejects.toThrow(/El porcentaje de seña por defecto no puede superar el 100%/);
     });
 
+    it.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
+      'rechaza crear seña con valor no finito %s antes de escribir',
+      async (valor) => {
+        await expect(
+          service.create(
+            {
+              nombre: 'Grupo inválido',
+              sena_default_activa: true,
+              sena_default_tipo: 'monto_fijo',
+              sena_default_valor: valor,
+            },
+            'gestor-1',
+            'token-123',
+          ),
+        ).rejects.toThrow(/número finito/);
+        expect(mockSupabaseClient.from).not.toHaveBeenCalled();
+      },
+    );
+
+    it('rechaza actualizar una seña a NaN antes de escribir', async () => {
+      const currentGrupo = {
+        id: 'g-1',
+        nombre: 'Edificio Libertador',
+        sena_default_activa: false,
+        sena_default_tipo: 'porcentaje',
+        sena_default_valor: 0,
+      };
+      const updateMock = vi.fn();
+      const singleMock = vi.fn().mockResolvedValue({ data: currentGrupo, error: null });
+      const isMock = vi.fn().mockReturnValue({ single: singleMock });
+      const eqMock = vi.fn().mockReturnValue({ is: isMock });
+      const selectMock = vi.fn().mockReturnValue({ eq: eqMock });
+      mockSupabaseClient.from.mockReturnValue({ select: selectMock, update: updateMock });
+
+      await expect(
+        service.update('g-1', { sena_default_valor: Number.NaN }, 'token-123'),
+      ).rejects.toThrow(/número finito/);
+      expect(updateMock).not.toHaveBeenCalled();
+    });
+
     it('allows inactive seña with zero value', async () => {
       const expected = { id: 'g-inactive', nombre: 'Grupo Inactivo', sena_default_activa: false, sena_default_valor: 0 };
       const singleMock = vi.fn().mockResolvedValue({ data: expected, error: null });

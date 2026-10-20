@@ -5,6 +5,7 @@ import { AuthorizationService } from '../authorization/authorization.service.js'
 import { ActionLogService } from '../authorization/action-log.service.js';
 import { SupabaseAuthGuard } from '../auth/supabase-auth.guard.js';
 import { vi, describe, beforeEach, it, expect } from 'vitest';
+import { ForbiddenException } from '@nestjs/common';
 
 describe('GruposController', () => {
   let controller: GruposController;
@@ -63,6 +64,54 @@ describe('GruposController', () => {
     const result = await controller.findAll(req);
     expect(service.findAll).toHaveBeenCalledWith('ws-123', 'tok-123');
     expect(result).toEqual([{ id: 'g-1', nombre: 'Grupo 1' }]);
+  });
+
+  it('create debe rechazar al Buscador antes de escribir, incluso con token demo', async () => {
+    const req = {
+      user: { id: 'buscador-1', rol: 'buscador', workspace_id: 'buscador-1' },
+      headers: { authorization: 'Bearer token-local' },
+    } as any;
+
+    await expect(controller.create({ nombre: 'Intruso' }, req)).rejects.toThrow(
+      ForbiddenException,
+    );
+    expect(service.create).not.toHaveBeenCalled();
+    expect(authzService.resolveAccessContext).not.toHaveBeenCalled();
+  });
+
+  it('create rechaza Delegado sin alcance Cuenta aunque tenga permiso gestionar', async () => {
+    const req = {
+      user: { id: 'delegado-1', rol: 'delegado', workspace_id: 'ws-123' },
+      headers: { authorization: 'Bearer token-local' },
+    } as any;
+    authzService.resolveAccessContext.mockResolvedValue({
+      actor: 'delegado',
+      state: 'activo',
+      permiso: 'gestionar',
+      scope: { alcanceTipo: 'grupo', grupoId: 'g-1' },
+    });
+
+    await expect(controller.create({ nombre: 'Intruso' }, req)).rejects.toThrow(
+      ForbiddenException,
+    );
+    expect(service.create).not.toHaveBeenCalled();
+  });
+
+  it('create permite Delegado activo con permiso gestionar y alcance Cuenta', async () => {
+    const req = {
+      user: { id: 'delegado-1', rol: 'delegado', workspace_id: 'ws-123' },
+      headers: { authorization: 'Bearer token-local' },
+    } as any;
+    authzService.resolveAccessContext.mockResolvedValue({
+      actor: 'delegado',
+      state: 'activo',
+      permiso: 'gestionar',
+      scope: { alcanceTipo: 'cuenta' },
+    });
+
+    await controller.create({ nombre: 'Nuevo Grupo' }, req);
+
+    expect(service.create).toHaveBeenCalledWith({ nombre: 'Nuevo Grupo' }, 'ws-123', 'token-local');
   });
 
   it('create should call service.create with body and workspace_id', async () => {
