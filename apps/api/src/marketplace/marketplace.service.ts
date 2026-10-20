@@ -68,9 +68,11 @@ export class MarketplaceService {
 
       const mapped = fallbackUnidades.map((item) => {
         const titulo = (item as any)[`titulo_${locale}`] || item.titulo_es;
+        const traduccionPendiente = locale !== 'es' && !String((item as any)[`titulo_${locale}`] || '').trim();
         return {
           id: item.id,
           titulo: titulo || null,
+          traduccion_pendiente: traduccionPendiente,
           categoria: item.categoria,
           zona_id: item.zona_id,
           fotos: item.fotos,
@@ -204,9 +206,11 @@ export class MarketplaceService {
 
       const mapped = fallbackUnidades.map((item) => {
         const titulo = (item as any)[`titulo_${locale}`] || item.titulo_es;
+        const traduccionPendiente = locale !== 'es' && !String((item as any)[`titulo_${locale}`] || '').trim();
         return {
           id: item.id,
           titulo: titulo || null,
+          traduccion_pendiente: traduccionPendiente,
           categoria: item.categoria,
           zona_id: item.zona_id,
           fotos: item.fotos,
@@ -223,6 +227,7 @@ export class MarketplaceService {
       return {
         id: item.id,
         titulo: item[`titulo_${locale}`] || item.titulo_es || null,
+        traduccion_pendiente: locale !== 'es' && !String(item[`titulo_${locale}`] || '').trim(),
         categoria: item.categoria,
         zona_id: item.zona_id,
         zonas: item.zonas || null,
@@ -291,10 +296,16 @@ export class MarketplaceService {
   private projectDetail(data: any, isAuthenticated: boolean, locale: string) {
     const titulo = data[`titulo_${locale}`] || data.titulo_es;
     const descripcion = data[`descripcion_${locale}`] || data.descripcion_es;
+    // For EN/PT, a Spanish fallback is not a translation. Report missing
+    // localized fields explicitly; never suggest that untranslated copy is ready.
+    const traduccionPendiente = locale !== 'es' &&
+      (!String(data[`titulo_${locale}`] || '').trim() ||
+       !String(data[`descripcion_${locale}`] || '').trim());
     return {
       id: data.id,
       titulo: titulo || null,
       descripcion: descripcion || null,
+      traduccion_pendiente: traduccionPendiente,
       categoria: data.categoria,
       zona_id: data.zona_id,
       zonas: data.zonas || null,

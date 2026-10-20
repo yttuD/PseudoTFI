@@ -225,6 +225,7 @@
     "publishUnit": "Publicar uma Unidade"
   },
   "UnitDetail": {
+    "translationPendingNotice": "Tradução pendente: parte das informações aparece no original em espanhol.",
     "tabDescription": "Descrição & Comodidades",
     "tabPricing": "Modalidades de Cobrança",
     "tabRules": "Regras & Condições",
