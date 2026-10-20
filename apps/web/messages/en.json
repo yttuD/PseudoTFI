@@ -429,5 +429,28 @@
     "grupoSinSena": "No default deposit",
     "grupoSenaNoDisponible": "Deposit settings unavailable",
     "grupoSenaNoCobro": "This is a setting for future rentals, not a payment received."
+  },
+  "Profile": {
+    "account": "Your account",
+    "title": "My profile",
+    "intro": "View and update your contact information.",
+    "loading": "Loading profile...",
+    "loginRequired": "Log in to view your account.",
+    "loadError": "We couldn't load your profile. Please reload the page.",
+    "logIn": "Log in",
+    "accountType": "Account type:",
+    "searcher": "Searcher",
+    "manager": "Property manager",
+    "delegate": "Delegate",
+    "betaQuota": "Beta quota: {count} units at no cost.",
+    "fullName": "Full name",
+    "email": "Email address",
+    "emailReadOnly": "Email can't be changed from this form.",
+    "phone": "Phone",
+    "nameRequired": "Enter a valid full name.",
+    "saveError": "We couldn't confirm that your changes were saved. Please try again.",
+    "saved": "Changes saved.",
+    "saving": "Saving...",
+    "save": "Save changes"
   }
 }
