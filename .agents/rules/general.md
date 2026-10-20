@@ -5,10 +5,12 @@ trigger: always_on
  # Marketplace Inmobiliario — Regla de
   proyecto
 
-    **Al iniciar cualquier sesión en este
-  proyecto**, leer primero:
-    `D:\Programacion-
-  Cosas\Proyecto_inmobiliaria\TFI\INICIO.md`
+    **Al iniciar una sesión**, leer el estado compacto
+  `.specify/memory/PROJECT_STATE.md` y la gobernanza
+  `.specify/memory/constitution.md` una vez.
+  Cargar solo las reglas especializadas que esta última indique para la tarea.
+  `INICIO.md` y los documentos de diseño se consultan por secciones pertinentes,
+  nunca completos automáticamente. Si ya están en contexto y no cambiaron, no releer.
 
     ## Skills a activar según la tarea
     - Lógica de negocio, modelos, API, estados →

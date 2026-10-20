@@ -1,0 +1,9 @@
+{
+  "name": "rendo-pi-runtime",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@mariozechner/pi-coding-agent": "0.73.1",
+    "ws": "8.22.0"
+  }
+}

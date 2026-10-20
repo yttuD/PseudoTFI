@@ -1,0 +1,1 @@
+-- supabase/seed.sql - Canonical seed entrypoint for local development and test environments

@@ -15,6 +15,9 @@ import { AlquileresModule } from './alquileres/alquileres.module.js';
 import { DelegadosModule } from './delegados/delegados.module.js';
 import { TraduccionService } from './common/services/traduccion/traduccion.service.js';
 import { PagosModule } from './pagos/pagos.module.js';
+import { MetricasModule } from './metricas/metricas.module.js';
+import { AfipModule } from './afip/afip.module.js';
+import { AuthorizationModule } from './authorization/authorization.module.js';
 
 @Module({
   imports: [
@@ -33,6 +36,9 @@ import { PagosModule } from './pagos/pagos.module.js';
     AlquileresModule,
     DelegadosModule,
     PagosModule,
+    MetricasModule,
+    AfipModule,
+    AuthorizationModule,
   ],
   controllers: [AppController],
   providers: [AppService, TraduccionService],

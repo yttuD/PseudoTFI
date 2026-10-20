@@ -1,7 +1,10 @@
 # INICIO — Marketplace Inmobiliario
 
-> **Para Antigravity IDE:** Este archivo es tu punto de entrada al proyecto.
-> Léelo completo antes de hacer cualquier cosa. Es tu briefing de arquitecto/ingeniero.
+> **Briefing histórico:** el flujo activo es [GitHub](docs/GITHUB_WORKFLOW.md),
+> con entrada en [AGENTS.md](AGENTS.md). No iniciar Antigravity/Pi por estas instrucciones.
+> Entrada operativa actual: `.specify/memory/PROJECT_STATE.md` y
+> `.specify/memory/constitution.md`. Consultá este briefing histórico solo por secciones
+> pertinentes; no lo cargues completo por defecto ni lo uses como prueba de implementación.
 
 ---
 
@@ -24,7 +27,9 @@ procesa dinero** entre partes — cobra suscripción mensual al Gestor por Unida
 | [`ARQUITECTURA-Y-PRODUCTO.md`](./ARQUITECTURA-Y-PRODUCTO.md) | PRD completo, stack técnico, ERD, reglas de negocio, integraciones |
 | [`ADR-candidatos.md`](./ADR-candidatos.md) | 9 decisiones arquitectónicas justificadas y cerradas |
 
-**Lee los 3 antes de escribir una sola línea de código.**
+**Consultá solo las secciones relevantes para el lote activo**, mediante las reglas
+especializadas indicadas por la constitución. Los ADR cerrados y los invariantes siguen
+vigentes; las decisiones aprobadas posteriores deben resolverse explícitamente, no ignorarse.
 
 ---
 

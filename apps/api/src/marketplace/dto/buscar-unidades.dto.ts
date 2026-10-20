@@ -1,4 +1,4 @@
-import { IsOptional, IsInt, IsString, IsIn, MaxLength, Min, Max } from 'class-validator';
+import { IsOptional, IsInt, IsNumber, IsString, IsIn, MaxLength, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class BuscarUnidadesDto {
@@ -12,12 +12,14 @@ export class BuscarUnidadesDto {
   categoria?: string;
 
   @IsOptional()
-  @IsInt()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
   @Type(() => Number)
   precio_min?: number;
 
   @IsOptional()
-  @IsInt()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
   @Type(() => Number)
   precio_max?: number;
 

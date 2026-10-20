@@ -1,4 +1,4 @@
-import { Injectable, UnprocessableEntityException, NotFoundException } from '@nestjs/common';
+import { Injectable, UnprocessableEntityException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { SupabaseService } from '../supabase/supabase.service.js';
 import { CreateUnidadDto } from './dto/create-unidad.dto.js';
 import { UpdateUnidadDto } from './dto/update-unidad.dto.js';
@@ -6,9 +6,9 @@ import { CambiarEstadoDto, UnidadEstado } from './dto/cambiar-estado.dto.js';
 import { GetUnidadesDto } from './dto/get-unidades.dto.js';
 import { CreateModalidadPrecioDto } from './dto/create-modalidad-precio.dto.js';
 import { UpdateModalidadPrecioDto } from './dto/update-modalidad-precio.dto.js';
-
 import { CupoService } from '../cupo/cupo.service.js';
 import { TraduccionService } from '../common/services/traduccion/traduccion.service.js';
+import type { DelegationConfiguration } from '../authorization/authorization.types.js';
 
 @Injectable()
 export class UnidadesService {
@@ -21,34 +21,35 @@ export class UnidadesService {
   async create(createDto: CreateUnidadDto, token: string, workspaceId: string) {
     await this.cupoService.validarCupo(token);
     
+    // Auto-translation logic
+    let { titulo_es, descripcion_es, titulo_en, titulo_pt, descripcion_en, descripcion_pt, auto_traducir } = createDto;
+
+    if (auto_traducir !== false) {
+      [titulo_en, titulo_pt, descripcion_en, descripcion_pt] = await Promise.all([
+        titulo_es && !titulo_en ? this.traduccionService.traducir(titulo_es, 'en') : titulo_en,
+        titulo_es && !titulo_pt ? this.traduccionService.traducir(titulo_es, 'pt') : titulo_pt,
+        descripcion_es && !descripcion_en ? this.traduccionService.traducir(descripcion_es, 'en') : descripcion_en,
+        descripcion_es && !descripcion_pt ? this.traduccionService.traducir(descripcion_es, 'pt') : descripcion_pt,
+      ]);
+    }
+
     const supabase = this.supabaseService.getClient(token);
-    
-    // El workspaceId viene validado desde el AuthGuard.
-
-    // Auto-translation mock logic
-    let { titulo_es, descripcion_es } = createDto;
-    let titulo_en, titulo_pt, descripcion_en, descripcion_pt;
-
-    if (titulo_es) {
-      titulo_en = await this.traduccionService.traducir(titulo_es, 'en');
-      titulo_pt = await this.traduccionService.traducir(titulo_es, 'pt');
-    }
-    if (descripcion_es) {
-      descripcion_en = await this.traduccionService.traducir(descripcion_es, 'en');
-      descripcion_pt = await this.traduccionService.traducir(descripcion_es, 'pt');
-    }
-
     const { data, error } = await supabase
       .from('unidades')
       .insert({
         gestor_id: workspaceId,
         categoria: createDto.categoria,
         zona_id: createDto.zona_id,
+        grupo_id: createDto.grupo_id,
         estado: UnidadEstado.Borrador,
         titulo_es: createDto.titulo_es,
         descripcion_es: createDto.descripcion_es,
         whatsapp: createDto.whatsapp,
         instagram: createDto.instagram,
+        fotos: createDto.fotos || [],
+        ubicacion_aprox: createDto.ubicacion_aprox,
+        ubicacion_exacta: createDto.ubicacion_exacta,
+        direccion_texto: createDto.direccion_texto,
         titulo_en,
         titulo_pt,
         descripcion_en,
@@ -57,34 +58,74 @@ export class UnidadesService {
       .select()
       .single();
 
-    if (error) {
-      throw new UnprocessableEntityException(error.message);
+    if (error || !data) {
+      throw new UnprocessableEntityException(error?.message || 'Error al crear la unidad');
     }
+
     return data;
   }
 
-  async findAll(query: GetUnidadesDto, token: string) {
-    const supabase = this.supabaseService.getClient(token);
+  async findAll(
+    query: GetUnidadesDto,
+    token: string,
+    workspaceId: string,
+    scope?: DelegationConfiguration,
+  ) {
     const { page = 1, limit = 20 } = query;
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    // RLS: "Gestor puede ver sus propias unidades" ya filtra deleted_at IS NULL
-    const { data, error, count } = await supabase
-      .from('unidades')
-      .select('*', { count: 'exact' })
-      .range(from, to)
-      .order('created_at', { ascending: false });
+    if (scope && scope.alcanceTipo === 'unidades') {
+      if (!scope.unidadIds || scope.unidadIds.length === 0) {
+        return { data: [], count: 0, page, limit };
+      }
+    }
+
+    const supabase = this.supabaseService.getClient(token);
+    const buildScopedQuery = (head = false) => {
+      let q = supabase
+        .from('unidades')
+        .select('*', head ? { count: 'exact', head: true } : { count: 'exact' })
+        .eq('gestor_id', workspaceId)
+        .is('deleted_at', null);
+
+      if (scope) {
+        if (scope.alcanceTipo === 'grupo') {
+          q = q.eq('grupo_id', scope.grupoId);
+        } else if (scope.alcanceTipo === 'unidades') {
+          q = q.in('id', scope.unidadIds);
+        }
+      }
+      return q;
+    };
+
+    const { data, error, count } = await buildScopedQuery(false)
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: true })
+      .range(from, to);
 
     if (error) {
+      const isPgrst103 = (error as { code?: string })?.code === 'PGRST103';
+      if (isPgrst103 && from > 0) {
+        const { count: headCount, error: headError } = await buildScopedQuery(true);
+        if (
+          !headError &&
+          typeof headCount === 'number' &&
+          Number.isSafeInteger(headCount) &&
+          headCount >= 0 &&
+          from >= headCount
+        ) {
+          return { data: [], count: headCount, page, limit };
+        }
+      }
       throw new UnprocessableEntityException(error.message);
     }
-    return { data, count, page, limit };
+
+    return { data: data || [], count: count || 0, page, limit };
   }
 
   async findOne(id: string, token: string) {
     const supabase = this.supabaseService.getClient(token);
-    
     const { data, error } = await supabase
       .from('unidades')
       .select('*, modalidades_precio(*)')
@@ -95,42 +136,48 @@ export class UnidadesService {
     if (error || !data) {
       throw new NotFoundException('Unidad no encontrada');
     }
-    return data;
+
+    return {
+      ...data,
+      modalidades_precio: (data.modalidades_precio || []).filter((m: any) => !m.deleted_at),
+    };
   }
 
-  async update(id: string, updateDto: UpdateUnidadDto, token: string) {
-    const supabase = this.supabaseService.getClient(token);
-    
-    // Auto-translation logic for Update
+  async update(id: string, updateDto: UpdateUnidadDto, token: string, workspaceId?: string) {
     const finalUpdateDto = { ...updateDto };
 
-    if (finalUpdateDto.titulo_es && !finalUpdateDto.titulo_en) {
-      finalUpdateDto.titulo_en = await this.traduccionService.traducir(finalUpdateDto.titulo_es, 'en');
+    if (finalUpdateDto.auto_traducir !== false) {
+      [finalUpdateDto.titulo_en, finalUpdateDto.titulo_pt,
+        finalUpdateDto.descripcion_en, finalUpdateDto.descripcion_pt] = await Promise.all([
+        finalUpdateDto.titulo_es && !finalUpdateDto.titulo_en
+          ? this.traduccionService.traducir(finalUpdateDto.titulo_es, 'en') : finalUpdateDto.titulo_en,
+        finalUpdateDto.titulo_es && !finalUpdateDto.titulo_pt
+          ? this.traduccionService.traducir(finalUpdateDto.titulo_es, 'pt') : finalUpdateDto.titulo_pt,
+        finalUpdateDto.descripcion_es && !finalUpdateDto.descripcion_en
+          ? this.traduccionService.traducir(finalUpdateDto.descripcion_es, 'en') : finalUpdateDto.descripcion_en,
+        finalUpdateDto.descripcion_es && !finalUpdateDto.descripcion_pt
+          ? this.traduccionService.traducir(finalUpdateDto.descripcion_es, 'pt') : finalUpdateDto.descripcion_pt,
+      ]);
     }
-    if (finalUpdateDto.titulo_es && !finalUpdateDto.titulo_pt) {
-      finalUpdateDto.titulo_pt = await this.traduccionService.traducir(finalUpdateDto.titulo_es, 'pt');
-    }
+    delete (finalUpdateDto as any).auto_traducir;
 
-    if (finalUpdateDto.descripcion_es && !finalUpdateDto.descripcion_en) {
-      finalUpdateDto.descripcion_en = await this.traduccionService.traducir(finalUpdateDto.descripcion_es, 'en');
-    }
-    if (finalUpdateDto.descripcion_es && !finalUpdateDto.descripcion_pt) {
-      finalUpdateDto.descripcion_pt = await this.traduccionService.traducir(finalUpdateDto.descripcion_es, 'pt');
-    }
+    const supabase = this.supabaseService.getClient(token);
 
-    const { data, error } = await supabase
+    let updateQuery = supabase
       .from('unidades')
       .update(finalUpdateDto)
-      .eq('id', id)
-      .select()
-      .single();
+      .eq('id', id);
 
-    if (error) {
-      throw new UnprocessableEntityException(error.message);
+    if (workspaceId) {
+      updateQuery = updateQuery.eq('gestor_id', workspaceId);
     }
-    if (!data) {
-      throw new NotFoundException('Unidad no encontrada');
+
+    const { data, error } = await updateQuery.select().single();
+
+    if (error || !data) {
+      throw new UnprocessableEntityException(error?.message || 'Error al actualizar la unidad');
     }
+
     return data;
   }
 
@@ -204,7 +251,8 @@ export class UnidadesService {
     }
 
     const updates: any = {
-      estado: nuevoEstado, };
+      estado: nuevoEstado,
+    };
     
     // Al archivar, setear archivada_at
     if (nuevoEstado === UnidadEstado.Archivada) {
@@ -218,30 +266,38 @@ export class UnidadesService {
       .select()
       .single();
 
-    if (error) {
-      throw new UnprocessableEntityException(error.message);
+    if (error || !data) {
+      throw new UnprocessableEntityException(error?.message || 'Error al cambiar estado');
     }
     return data;
   }
 
   async remove(id: string, token: string) {
     const supabase = this.supabaseService.getClient(token);
-    
-    // Borrado lógico
-    const { data, error } = await supabase
-      .from('unidades')
-      .update({ deleted_at: new Date().toISOString() })
-      .eq('id', id)
-      .select()
-      .single();
 
-    if (error) {
-      throw new UnprocessableEntityException(error.message);
-    }
-    if (!data) {
+    const { data: activeRentals, error: rentalsError } = await supabase
+      .from('alquileres')
+      .select('id')
+      .eq('unidad_id', id)
+      .eq('estado', 'activo')
+      .is('deleted_at', null)
+      .limit(1);
+    if (rentalsError) throw new UnprocessableEntityException('No se pudo verificar si la unidad tiene alquileres activos');
+    if (activeRentals?.length) throw new UnprocessableEntityException('La unidad tiene alquileres activos y no se puede eliminar');
+    
+    // Borrado lógico atómico vía RPC archive_unidad
+    const { data, error } = await supabase.rpc('archive_unidad', {
+      p_unidad_id: id,
+    });
+
+    const res = data as { success?: boolean; id?: string; deleted_at?: string } | null;
+    if (error || !res || res.success !== true || res.id !== id) {
+      if (error?.message?.includes('alquileres activos')) {
+        throw new UnprocessableEntityException('La unidad tiene alquileres activos y no se puede eliminar');
+      }
       throw new NotFoundException('Unidad no encontrada');
     }
-    return data;
+    return { success: true, id: res.id, deleted_at: res.deleted_at };
   }
 
   async createModalidad(unidadId: string, createDto: CreateModalidadPrecioDto, token: string) {
@@ -252,8 +308,8 @@ export class UnidadesService {
       .select()
       .single();
 
-    if (error) {
-      throw new UnprocessableEntityException(error.message);
+    if (error || !data) {
+      throw new UnprocessableEntityException(error?.message || 'Error al crear modalidad');
     }
     return data;
   }
@@ -268,10 +324,7 @@ export class UnidadesService {
       .select()
       .single();
 
-    if (error) {
-      throw new UnprocessableEntityException(error.message);
-    }
-    if (!data) {
+    if (error || !data) {
       throw new NotFoundException('Modalidad no encontrada');
     }
     return data;
@@ -287,10 +340,7 @@ export class UnidadesService {
       .select()
       .single();
 
-    if (error) {
-      throw new UnprocessableEntityException(error.message);
-    }
-    if (!data) {
+    if (error || !data) {
       throw new NotFoundException('Modalidad no encontrada');
     }
     return data;
@@ -311,6 +361,6 @@ export class UnidadesService {
     if (error) {
       throw new UnprocessableEntityException(error.message);
     }
-    return data;
+    return data || [];
   }
 }

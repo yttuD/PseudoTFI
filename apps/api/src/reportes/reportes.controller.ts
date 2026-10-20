@@ -2,10 +2,10 @@ import { Controller, Post, Body, UseGuards, Request, HttpCode } from '@nestjs/co
 import type { Request as ExpressRequest } from 'express';
 import { ReportesService } from './reportes.service.js';
 import { CreateReporteDto } from './dto/create-reporte.dto.js';
-import { SupabaseAuthGuard } from '../auth/supabase-auth.guard.js';
+import { SupabasePublicAuthGuard } from '../auth/supabase-public-auth.guard.js';
 
 @Controller('reportes')
-@UseGuards(SupabaseAuthGuard)
+@UseGuards(SupabasePublicAuthGuard)
 export class ReportesController {
   constructor(private readonly reportesService: ReportesService) {}
 

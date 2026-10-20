@@ -1,0 +1,111 @@
+{
+  "terminal_status": "PARTIAL",
+  "audit_batch": "Batch 2 (Correction Pass 02)",
+  "date": "2026-09-25",
+  "files_added_or_modified": [
+    "apps/web/e2e/brownfield_system_audit.spec.ts",
+    "specs/001-brownfield-system-audit/tasks.md",
+    "specs/001-brownfield-system-audit/evidence/delivery.json",
+    "specs/001-brownfield-system-audit/evidence/manifests/routes-and-surfaces.md",
+    "specs/001-brownfield-system-audit/evidence/manifests/forms-and-dialogs.md",
+    "specs/001-brownfield-system-audit/evidence/manifests/api-capabilities.md",
+    "specs/001-brownfield-system-audit/evidence/manifests/data-and-migrations.md",
+    "specs/001-brownfield-system-audit/evidence/manifests/automated-tests.md",
+    "specs/001-brownfield-system-audit/evidence/manifests/traceability.md",
+    "specs/001-brownfield-system-audit/evidence/runs/2026-09-25-environment.md",
+    "specs/001-brownfield-system-audit/evidence/runs/2026-09-25-api-test.log",
+    "specs/001-brownfield-system-audit/evidence/runs/2026-09-25-api-build.log",
+    "specs/001-brownfield-system-audit/evidence/runs/2026-09-25-web-build.log",
+    "specs/001-brownfield-system-audit/evidence/runs/2026-09-25-playwright-targeted.log",
+    "specs/001-brownfield-system-audit/evidence/reports/visual-matrix.md",
+    "specs/001-brownfield-system-audit/evidence/reports/form-behavior.md",
+    "specs/001-brownfield-system-audit/evidence/reports/role-and-privacy.md",
+    "specs/001-brownfield-system-audit/evidence/reports/ui-ux-audit.md",
+    "specs/001-brownfield-system-audit/evidence/reports/findings.md",
+    "specs/001-brownfield-system-audit/evidence/reports/contradictions.md",
+    "specs/001-brownfield-system-audit/evidence/reports/remediation-roadmap.md",
+    "specs/001-brownfield-system-audit/evidence/reports/cleanup-ledger.md"
+  ],
+  "commands_executed": [
+    {
+      "command": "pnpm --filter api test",
+      "exit_code": 0,
+      "passed": 39,
+      "failed": 0,
+      "raw_log": "specs/001-brownfield-system-audit/evidence/runs/2026-09-25-api-test.log"
+    },
+    {
+      "command": "pnpm --filter api build",
+      "exit_code": 0,
+      "tool": "nest build",
+      "raw_log": "specs/001-brownfield-system-audit/evidence/runs/2026-09-25-api-build.log"
+    },
+    {
+      "command": "pnpm --filter web build",
+      "exit_code": 0,
+      "tool": "next build",
+      "raw_log": "specs/001-brownfield-system-audit/evidence/runs/2026-09-25-web-build.log"
+    },
+    {
+      "command": "pnpm --filter web exec playwright test e2e/brownfield_system_audit.spec.ts --project=\"Desktop Chrome\"",
+      "exit_code": 0,
+      "passed": 6,
+      "skipped": 24,
+      "failed": 0,
+      "raw_log": "specs/001-brownfield-system-audit/evidence/runs/2026-09-25-playwright-targeted.log"
+    }
+  ],
+  "inventory_totals": {
+    "route_entries": 25,
+    "rendered_surfaces": 24,
+    "redirect_aliases": 1,
+    "forms_and_dialogs": 10,
+    "api_capabilities": 13,
+    "database_migrations": 16,
+    "automated_test_files": 39,
+    "total_inventory_items": 103
+  },
+  "inventory_status_breakdown": {
+    "implemented_verified": 45,
+    "partially_implemented": 7,
+    "implemented_unverified": 48,
+    "environment_blocked": 3,
+    "placeholder_or_mock": 0,
+    "specified_only": 0,
+    "absent": 0
+  },
+  "visual_matrix_totals": {
+    "expected_cells": 192,
+    "retained_surface_cells": 184,
+    "interaction_captures": 10,
+    "total_retained_screenshots": 194,
+    "inspected_by_antigravity": 194,
+    "blocked_cells": 8,
+    "rejected_and_deleted": 8
+  },
+  "findings_totals": {
+    "p0": 1,
+    "p1": 4,
+    "p2": 7,
+    "p3": 0,
+    "total": 12
+  },
+  "unresolved_blockers": [
+    {
+      "id": "BLOCK-SUPABASE-LOCAL",
+      "affected_items": ["SURF-019"],
+      "prerequisite": "Local Supabase Docker stack running at 127.0.0.1:54321 with active seed session or server client timeout fallback"
+    },
+    {
+      "id": "BLOCK-AFIP-001",
+      "affected_items": ["CAP-013", "FORM-002"],
+      "prerequisite": "Official AFIP electronic testing certificate (.crt) and private key (.key) registered in WSFE testing environment"
+    }
+  ],
+  "cleanup_result": {
+    "pre_existing_files_preserved": true,
+    "task_owned_temporary_traces_removed": true,
+    "retained_screenshots_count": 194,
+    "orphaned_processes_terminated": true
+  }
+}

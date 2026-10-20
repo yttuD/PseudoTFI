@@ -1,0 +1,15 @@
+node_modules
+**/node_modules
+.git
+.pi/local
+.pi/runtime
+.env
+**/.env*
+**/.vercel
+**/.auth
+.tmp
+scratch
+**/.next
+dist
+**/test-results
+**/playwright-report

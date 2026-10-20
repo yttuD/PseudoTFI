@@ -1,0 +1,246 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "D:\\Programacion-Cosas\\Proyecto_inmobiliaria\\TFI\\apps\\web\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config",
+      "playwright.beta-real.config.ts",
+      "--project",
+      "auth-matrix-1440-light"
+    ],
+    "configFile": "D:\\Programacion-Cosas\\Proyecto_inmobiliaria\\TFI\\apps\\web\\playwright.beta-real.config.ts",
+    "rootDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "auth-matrix-1440-light",
+        "name": "auth-matrix-1440-light",
+        "testDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/beta_isolation_real.spec.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "visual-1440-light",
+        "name": "visual-1440-light",
+        "testDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/beta_isolation_real.spec.ts"
+        ],
+        "timeout": 75000
+      },
+      {
+        "outputDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "visual-1440-dark",
+        "name": "visual-1440-dark",
+        "testDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/beta_isolation_real.spec.ts"
+        ],
+        "timeout": 75000
+      },
+      {
+        "outputDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "visual-1024-light",
+        "name": "visual-1024-light",
+        "testDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/beta_isolation_real.spec.ts"
+        ],
+        "timeout": 75000
+      },
+      {
+        "outputDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "visual-1024-dark",
+        "name": "visual-1024-dark",
+        "testDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/beta_isolation_real.spec.ts"
+        ],
+        "timeout": 75000
+      },
+      {
+        "outputDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "visual-768-light",
+        "name": "visual-768-light",
+        "testDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/beta_isolation_real.spec.ts"
+        ],
+        "timeout": 75000
+      },
+      {
+        "outputDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "visual-375-light",
+        "name": "visual-375-light",
+        "testDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/beta_isolation_real.spec.ts"
+        ],
+        "timeout": 75000
+      },
+      {
+        "outputDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "visual-375-dark",
+        "name": "visual-375-dark",
+        "testDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/beta_isolation_real.spec.ts"
+        ],
+        "timeout": 75000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "D:\\Programacion-Cosas\\Proyecto_inmobiliaria\\TFI\\specs\\008-beta-observaciones-2026-10-02\\evidence\\N01\\playwright-auth-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "beta_isolation_real.spec.ts",
+      "file": "beta_isolation_real.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "B007b — Inventario y Aislamiento Real Navegador",
+          "file": "beta_isolation_real.spec.ts",
+          "line": 16,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Escenario 2: Matriz completa de alcances de Delegado (cuenta, grupo, IDs, pending, revoked) @auth",
+              "ok": true,
+              "tags": [
+                "auth"
+              ],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "auth-matrix-1440-light",
+                  "projectName": "auth-matrix-1440-light",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 28983,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:43:22.966Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-c5cb6d02477f2f9a9c51",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 358,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-08T00:43:21.876Z",
+    "duration": 32588.401,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

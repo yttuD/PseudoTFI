@@ -1,21 +1,13 @@
 import { Module, Global } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
+import { SupabaseModule } from '../supabase/supabase.module.js';
 import { SupabaseAuthGuard } from './supabase-auth.guard.js';
+import { SupabasePublicAuthGuard } from './supabase-public-auth.guard.js';
 
 @Global()
 @Module({
-  imports: [
-    ConfigModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('SUPABASE_JWT_SECRET'),
-      }),
-    }),
-  ],
-  providers: [SupabaseAuthGuard],
-  exports: [SupabaseAuthGuard, JwtModule],
+  imports: [ConfigModule, SupabaseModule],
+  providers: [SupabaseAuthGuard, SupabasePublicAuthGuard],
+  exports: [SupabaseAuthGuard, SupabasePublicAuthGuard],
 })
 export class AuthModule {}

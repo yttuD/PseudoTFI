@@ -1,0 +1,23 @@
+{
+  "id": "rendo-orchestration-check",
+  "mode": "DISCOVERY",
+  "feature": "specs/008-beta-observaciones-2026-10-02",
+  "taskIds": [],
+  "objective": "Verificar la delegación SDD de Rendo sin modificar la aplicación ni cerrar sus incidencias",
+  "relevantContext": "Este lote solo comprueba el puente Pi → Antigravity → revisión Sol. PROJECT_STATE resume los pendientes actuales de la beta. No ejecutar backfills, tests de la app, despliegues ni operaciones remotas.",
+  "readFiles": [".specify/memory/PROJECT_STATE.md"],
+  "allowedFiles": [],
+  "decisions": [".specify/memory/decisions/2026-10-03-pi-rendo-sdd.md"],
+  "approvedChanges": [],
+  "acceptanceCriteria": [
+    { "id": "AC1", "text": "Leer PROJECT_STATE mediante el MCP de Rendo y resumir al menos un blocker actual" },
+    { "id": "AC2", "text": "Ejecutar verify-state por el puente y entregar RESULT_PACKET válido sin cambiar código" }
+  ],
+  "risk": "LOW",
+  "evidenceProfiles": ["CODE"],
+  "solReview": "PACKET_ONLY",
+  "rules": ["AGENT_RULES"],
+  "commands": [{ "id": "verify-state", "command": "node -e \"const fs=require('node:fs');const s=fs.readFileSync('.specify/memory/PROJECT_STATE.md','utf8');if(!s.includes('Rendo')||s.length>2400)process.exit(1);console.log('RENDO_STATE_OK');\"", "purpose": "VERIFY", "timeoutMs": 30000 }],
+  "verification": ["verify-state"],
+  "expectedOutput": "RESULT_PACKET"
+}

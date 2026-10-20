@@ -1,4 +1,4 @@
-import { IsInt, IsObject, IsOptional, IsString, IsUUID, IsNotEmpty, IsArray, ArrayMaxSize } from 'class-validator';
+import { IsInt, IsObject, IsOptional, IsString, IsUUID, IsNotEmpty, IsArray, ArrayMaxSize, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateUnidadDto } from './create-unidad.dto.js';
@@ -67,4 +67,12 @@ export class UpdateUnidadDto extends PartialType(CreateUnidadDto) {
   @IsOptional()
   @IsString()
   instagram?: string;
+
+  @IsOptional()
+  @IsString()
+  direccion_texto?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  auto_traducir?: boolean;
 }

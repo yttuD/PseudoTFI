@@ -7,7 +7,11 @@
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "test:e2e": "pnpm --filter web exec playwright test"
+    "test:e2e": "pnpm --filter web exec playwright test",
+    "sdd": "node .pi/sdd/cli.mjs",
+    "sdd:doctor": "node .pi/sdd/cli.mjs doctor",
+    "sdd:test": "node --test .pi/sdd/tests/*.test.mjs",
+    "sdd:setup": "npm install --prefix .pi/runtime --ignore-scripts --no-audit --no-fund"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.115.0",

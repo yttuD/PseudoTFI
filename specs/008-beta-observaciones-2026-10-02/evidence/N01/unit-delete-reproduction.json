@@ -1,0 +1,54 @@
+{
+  "description": "Resultados originales de reproducción de DELETE /unidades/:id vía PostgREST directo",
+  "executedAt": "2026-10-08T20:41:57-03:00",
+  "clientType": "@supabase/supabase-js directo contra PostgREST (sin pasar por servidor NestJS ni JwtAuthGuard)",
+  "variants": {
+    "variantA_update_without_select": {
+      "call": "client.from('unidades').update({ deleted_at: isoDate }).eq('id', u1Id)",
+      "httpStatus": 403,
+      "postgrestError": {
+        "code": "42501",
+        "details": null,
+        "hint": null,
+        "message": "new row violates row-level security policy for table \"unidades\""
+      },
+      "dbStateAfter": {
+        "deleted_at": null
+      },
+      "conclusion": "Causa observada directa: el UPDATE falla en PostgreSQL por la cláusula WITH CHECK de Unidades update policy, independientemente de cualquier SELECT o proyección RETURNING."
+    },
+    "variantB_update_with_select_single": {
+      "call": "client.from('unidades').update({ deleted_at: isoDate }).eq('id', u2Id).select().single()",
+      "httpStatus": 403,
+      "postgrestError": {
+        "code": "42501",
+        "details": null,
+        "hint": null,
+        "message": "new row violates row-level security policy for table \"unidades\""
+      },
+      "dbStateAfter": {
+        "deleted_at": null
+      },
+      "conclusion": "El llamado que realizaba unidades.service.ts recibe 403 desde PostgREST. NestJS capturaba (error || !data) y arrojaba NotFoundException (HTTP 404)."
+    },
+    "variantC_update_with_select_array": {
+      "call": "client.from('unidades').update({ deleted_at: isoDate }).eq('id', u3Id).select()",
+      "httpStatus": 403,
+      "postgrestError": {
+        "code": "42501",
+        "details": null,
+        "hint": null,
+        "message": "new row violates row-level security policy for table \"unidades\""
+      },
+      "dbStateAfter": {
+        "deleted_at": null
+      },
+      "conclusion": "Incluso sin .single(), el error 42501 detiene la mutación a nivel del UPDATE antes de la proyección."
+    }
+  },
+  "hypothesisVsObserved": {
+    "observedDirectCause": "PostgreSQL rechaza la fila propuesta en UPDATE porque can_manage_unidad(id) en WITH CHECK retorna FALSE cuando deleted_at IS NOT NULL.",
+    "architecturalSecondaryConstraint": "Si WITH CHECK fuera sorteado o relajado, RETURNING clause de PostgREST seguiría fallando al evaluar Unidades authenticated select policy (deleted_at IS NULL), retornando 0 filas.",
+    "controllerMapping": "El guard de NestJS no fue testeado por este script; el 404 observado en el harness remoto proviene del mapeo de código en unidades.service.ts ante el error 403 devuelto por PostgREST."
+  }
+}

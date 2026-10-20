@@ -1,12 +1,25 @@
 import { createServerClient } from '@supabase/ssr';
+import { getServerAuth } from '@/lib/supabase/server-auth';
+import { getServerAccessContext } from '@/lib/access-context';
 import { cookies } from 'next/headers';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button, buttonVariants } from '@/components/ui/button';
-import { Plus, MoreHorizontal } from 'lucide-react';
+import { Building2, Plus, Eye } from 'lucide-react';
 import Link from 'next/link';
+import { buttonVariants } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
+import { BentoGruposGrid } from '@/components/gestor/BentoGruposGrid';
+import { GrupoFormModal } from '@/components/gestor/GrupoFormModal';
+import { Badge } from '@/components/ui/badge';
+import { fetchMisUnidades, fetchMisGrupos } from '@/lib/inventory-loader';
+import { InventoryLoadError } from '@/components/gestor/InventoryLoadError';
+import { getTranslations } from 'next-intl/server';
 
-async function getMisUnidades() {
+interface PageProps {
+  params: { locale: string };
+  searchParams?: { page?: string; limit?: string };
+}
+
+export default async function MisUnidadesPage({ params: { locale }, searchParams }: PageProps) {
+  const t = await getTranslations({ locale, namespace: 'Inventario' });
   const cookieStore = cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,90 +33,133 @@ async function getMisUnidades() {
     }
   );
 
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.access_token) return [];
+  const { accessToken: token } = await getServerAuth(cookieStore, supabase);
+  const accessContext = await getServerAccessContext(token);
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/unidades`, {
-    headers: {
-      Authorization: `Bearer ${session.access_token}`
-    },
-    cache: 'no-store'
-  });
+  const isDelegado = accessContext?.actor === 'delegado';
+  const isReadOnly = isDelegado && (accessContext.state !== 'activo' || accessContext.permiso === 'ver');
+  const canCreateGrupo =
+    accessContext?.actor === 'gestor' ||
+    (isDelegado &&
+      accessContext.state === 'activo' &&
+      accessContext.permiso === 'gestionar' &&
+      accessContext.scope.alcanceTipo === 'cuenta');
+  const canCreateUnidad =
+    accessContext?.actor === 'gestor' ||
+    (isDelegado &&
+      accessContext.state === 'activo' &&
+      accessContext.permiso === 'gestionar' &&
+      (accessContext.scope.alcanceTipo === 'cuenta' || accessContext.scope.alcanceTipo === 'grupo'));
 
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.data || [];
-}
+  const parsedPage =
+    typeof searchParams?.page === 'string' && /^\d+$/.test(searchParams.page.trim())
+      ? parseInt(searchParams.page.trim(), 10)
+      : 1;
+  const parsedLimit =
+    typeof searchParams?.limit === 'string' && /^\d+$/.test(searchParams.limit.trim())
+      ? parseInt(searchParams.limit.trim(), 10)
+      : 12;
 
-const ESTADO_STYLES: Record<string, string> = {
-  borrador:           'bg-gray-100 text-gray-600 hover:bg-gray-100 border-transparent',
-  publicada:          'bg-green-100 text-green-800 hover:bg-green-100 border-transparent',
-  pausada:            'bg-yellow-100 text-yellow-800 hover:bg-yellow-100 border-transparent',
-  no_disponible:      'bg-indigo-100 text-indigo-800 hover:bg-indigo-100 border-transparent',
-  en_revision:        'bg-orange-100 text-orange-800 hover:bg-orange-100 border-transparent',
-  suspendida:         'bg-red-100 text-red-800 hover:bg-red-100 border-transparent',
-  archivada:          'border-border text-muted-foreground hover:bg-transparent bg-transparent',
-  bloqueada_por_impago: 'bg-red-900 text-white hover:bg-red-900 border-transparent',
-};
+  const page = Math.max(1, parsedPage);
+  const limit = Math.max(1, Math.min(100, parsedLimit));
 
-export default async function MisUnidadesPage({ params: { locale } }: { params: { locale: string } }) {
-  const unidades = await getMisUnidades();
+  const [unidadesResult, gruposResult] = await Promise.all([
+    fetchMisUnidades(token, page, limit),
+    fetchMisGrupos(token),
+  ]);
+
+  // Si cualquiera de los dos falla, mostrar error para no corromper la vista con datos parciales
+  if (!unidadesResult.ok || !gruposResult.ok) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight font-sans">
+              {t('titulo')}
+            </h1>
+            <p className="text-muted-foreground mt-1 font-mono text-sm">
+              {t('subtitulo')}
+            </p>
+          </div>
+        </div>
+        <InventoryLoadError />
+      </div>
+    );
+  }
+
+  // Count > 0 en otra página no es inventario vacío: solo está vacío si count === 0 y 0 grupos
+  const isGloballyEmpty = unidadesResult.count === 0 && gruposResult.data.length === 0;
 
   return (
     <div className="space-y-6">
+      {/* Cabecera Principal */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Mis Unidades</h1>
-          <p className="text-muted-foreground mt-2">
-            Gestiona tus propiedades y publicaciones.
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold tracking-tight font-sans">
+              {t('titulo')}
+            </h1>
+            {isReadOnly && (
+              <Badge data-testid="readonly-badge" variant="outline" className="border-[#B89355]/60 text-[#131F3C] dark:border-[#B89355] dark:text-[#B89355] font-mono text-xs flex items-center gap-1">
+                <Eye className="w-3 h-3" />
+                {t('modoLectura')}
+              </Badge>
+            )}
+          </div>
+          <p className="text-muted-foreground mt-1 font-mono text-sm">
+            {t('subtitulo')}
           </p>
         </div>
-        <Link href={`/${locale}/mis-unidades/nueva`} className={buttonVariants()}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nueva Unidad
-        </Link>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {token && canCreateGrupo && <GrupoFormModal token={token} />}
+          {canCreateUnidad && (
+            <Link
+              href={`/${locale}/mis-unidades/nueva`}
+              className={buttonVariants({ className: 'min-h-[44px] min-w-[44px] inline-flex items-center justify-center' })}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {t('nuevaUnidad')}
+            </Link>
+          )}
+        </div>
       </div>
 
-      <div className="grid gap-4">
-        {unidades.length === 0 ? (
-          <div className="text-center p-12 border border-dashed rounded-lg bg-background">
-            <h3 className="text-lg font-medium">No tienes unidades todavía</h3>
-            <p className="text-muted-foreground mt-2 mb-4">Crea tu primera unidad para empezar a recibir inquilinos.</p>
-            <Link href={`/${locale}/mis-unidades/nueva`} className={buttonVariants({ variant: 'outline' })}>
-              <Plus className="h-4 w-4 mr-2" />
-              Crear Unidad
-            </Link>
-          </div>
-        ) : (
-          unidades.map((unidad: { id: string; titulo_es?: string; estado: string; categoria?: unknown; zonas?: unknown }) => (
-            <Card key={unidad.id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-3">
-                  <h3 className="font-semibold text-lg">{unidad.titulo_es || 'Sin título'}</h3>
-                  <Badge 
-                    className={`whitespace-nowrap ${ESTADO_STYLES[unidad.estado] || ESTADO_STYLES.borrador}`}
-                  >
-                    {unidad.estado.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
-                  </Badge>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                  {(typeof unidad.categoria === 'string' ? unidad.categoria : (unidad.categoria as any)?.nombre)} • {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}{(unidad.zonas as any)?.nombre}
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Link href={`/${locale}/mis-unidades/${unidad.id}/editar`} className={buttonVariants({ variant: 'outline', size: 'sm' })}>
-                  Editar
+      {isGloballyEmpty ? (
+        <div data-testid="inventory-empty" className="bg-card rounded-2xl border border-border shadow-sm p-8">
+          <p className="mb-4 text-sm text-muted-foreground font-mono">
+            {t('totalMostrado', { mostrado: 0, total: unidadesResult.count, grupos: gruposResult.data.length })}
+          </p>
+          <EmptyState 
+            icon={Building2}
+            title={t('vacioTitulo')}
+            description={t('vacioDescripcion')}
+            action={
+              canCreateUnidad ? (
+                <Link href={`/${locale}/mis-unidades/nueva`} className={buttonVariants({ className: 'min-h-[44px] min-w-[44px] inline-flex items-center justify-center' })}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t('registrarUnidad')}
                 </Link>
-                <Button variant="ghost" size="icon">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </div>
-            </Card>
-          ))
-        )}
-      </div>
+              ) : undefined
+            }
+          />
+        </div>
+      ) : (
+        <BentoGruposGrid
+          unidades={unidadesResult.data}
+          grupos={gruposResult.data}
+          locale={locale}
+          token={token || ''}
+          isReadOnly={isReadOnly}
+          canCreateGrupo={canCreateGrupo}
+          canCreateUnidad={canCreateUnidad}
+          pagination={{
+            page: unidadesResult.page,
+            limit: unidadesResult.limit,
+            total: unidadesResult.count,
+          }}
+        />
+      )}
     </div>
   );
 }

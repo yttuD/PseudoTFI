@@ -19,9 +19,16 @@ interface DatePickerProps {
   setDate: (date?: Date) => void;
   label?: string;
   disabled?: boolean;
+  dateFormat?: string;
 }
 
-export function DatePicker({ date, setDate, label = "Elegir fecha", disabled }: DatePickerProps) {
+export function DatePicker({
+  date,
+  setDate,
+  label = "Elegir fecha",
+  disabled,
+  dateFormat = "dd/MM/yyyy",
+}: DatePickerProps) {
   return (
     <Popover>
       <PopoverTrigger
@@ -30,12 +37,16 @@ export function DatePicker({ date, setDate, label = "Elegir fecha", disabled }: 
             variant={"outline"}
             disabled={disabled}
             className={cn(
-              "w-full justify-start text-left font-normal",
+              "w-full justify-start text-left font-normal text-xs sm:text-sm truncate",
               !date && "text-muted-foreground"
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {date ? format(date, "PPP", { locale: es }) : <span>{label}</span>}
+            <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+            {date ? (
+              <span>{format(date, dateFormat, { locale: es })}</span>
+            ) : (
+              <span>{label}</span>
+            )}
           </Button>
         }
       />

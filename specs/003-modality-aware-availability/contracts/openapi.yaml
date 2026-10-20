@@ -1,0 +1,591 @@
+openapi: 3.1.0
+info:
+  title: Rendo Modality-Aware Availability
+  version: 0.1.0
+  description: >
+    Contract for public availability projection and authenticated operational
+    availability. Public responses deliberately omit operational identities and reasons.
+servers:
+  - url: /api
+
+paths:
+  /marketplace/unidades/{unidadId}/disponibilidad:
+    get:
+      operationId: getPublicAvailability
+      summary: Read privacy-safe availability for one published Unidad
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/UnidadId'
+        - $ref: '#/components/parameters/ModalidadId'
+        - $ref: '#/components/parameters/Desde'
+        - $ref: '#/components/parameters/Hasta'
+      responses:
+        '200':
+          description: Configured or explicitly unknown availability
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicAvailability'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: Unidad does not exist or is not publicly published
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+
+  /disponibilidad/unidades/{unidadId}:
+    get:
+      operationId: getOperationalAvailability
+      summary: Read operational rule and blocks within authorized scope
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UnidadId'
+        - $ref: '#/components/parameters/Desde'
+        - $ref: '#/components/parameters/Hasta'
+      responses:
+        '200':
+          description: Operational calendar including auditable private block metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationalAvailability'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+
+  /disponibilidad/unidades/{unidadId}/regla:
+    put:
+      operationId: putUnitAvailabilityRule
+      summary: Create or replace the explicit Unidad rule/inheritance choice
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UnidadId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnitRuleInput'
+      responses:
+        '200':
+          description: Effective rule after save
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectiveRule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/RuleInvalid'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+
+  /disponibilidad/grupos/{grupoId}/regla:
+    put:
+      operationId: putGroupAvailabilityRule
+      summary: Create or replace the explicit common Grupo rule
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: grupoId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupRuleInput'
+      responses:
+        '200':
+          description: Saved Grupo rule and count of inheriting Unidades
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [rule, inheritingUnits]
+                properties:
+                  rule:
+                    $ref: '#/components/schemas/EffectiveRule'
+                  inheritingUnits:
+                    type: integer
+                    minimum: 0
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/RuleInvalid'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+
+  /disponibilidad/unidades/{unidadId}/bloqueos:
+    post:
+      operationId: createManualAvailabilityBlock
+      summary: Create an auditable maintenance or private-use block
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UnidadId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManualBlockInput'
+      responses:
+        '201':
+          description: Created block
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationalBlock'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/RuleInvalid'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+
+  /disponibilidad/bloqueos/{bloqueoId}/liberar:
+    post:
+      operationId: releaseManualAvailabilityBlock
+      summary: Release a manual block while retaining its history
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bloqueoId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  minLength: 2
+                  maxLength: 500
+      responses:
+        '200':
+          description: Retained released block
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationalBlock'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Supabase access token
+
+  parameters:
+    UnidadId:
+      name: unidadId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ModalidadId:
+      name: modalidadId
+      in: query
+      required: true
+      schema:
+        type: string
+        format: uuid
+    Desde:
+      name: desde
+      in: query
+      required: true
+      description: ISO date or ISO instant matching the selected modality
+      schema:
+        type: string
+    Hasta:
+      name: hasta
+      in: query
+      required: true
+      description: Exclusive ISO date or ISO instant; maximum window is 366 days
+      schema:
+        type: string
+
+  responses:
+    BadRequest:
+      description: Invalid request shape or window
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Missing or invalid authenticated identity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Authenticated actor lacks read/manage permission for this scope
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource is absent, deleted, or outside visible scope
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Period overlaps an existing active block or state changed concurrently
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            overlap:
+              value:
+                statusCode: 409
+                code: AVAILABILITY_CONFLICT
+                message: El período se superpone con otro bloqueo activo.
+    RuleInvalid:
+      description: Effective schedule, modality or backfill state rejects the operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unavailable:
+      description: Authoritative database availability could not be read or changed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            unavailable:
+              value:
+                statusCode: 503
+                code: AVAILABILITY_UNAVAILABLE
+                message: No pudimos verificar la disponibilidad en este momento.
+
+  schemas:
+    Error:
+      type: object
+      required: [statusCode, code, message]
+      additionalProperties: false
+      properties:
+        statusCode:
+          type: integer
+        code:
+          type: string
+        message:
+          type: string
+
+    AvailabilityStatus:
+      type: string
+      enum: [configured, unknown]
+
+    Precision:
+      type: string
+      enum: [fecha_mensual, fecha_diaria, instante_horario]
+
+    RuleOrigin:
+      type: string
+      enum: [unidad, grupo]
+
+    TimeInterval:
+      type: object
+      required: [desde, hasta]
+      additionalProperties: false
+      properties:
+        desde:
+          type: string
+          pattern: '^[0-2][0-9]:[0-5][0-9]$'
+        hasta:
+          type: string
+          pattern: '^[0-2][0-9]:[0-5][0-9]$'
+
+    WeeklySchedule:
+      type: object
+      additionalProperties: false
+      required: ['1', '2', '3', '4', '5', '6', '7']
+      properties:
+        '1': { type: array, items: { $ref: '#/components/schemas/TimeInterval' } }
+        '2': { type: array, items: { $ref: '#/components/schemas/TimeInterval' } }
+        '3': { type: array, items: { $ref: '#/components/schemas/TimeInterval' } }
+        '4': { type: array, items: { $ref: '#/components/schemas/TimeInterval' } }
+        '5': { type: array, items: { $ref: '#/components/schemas/TimeInterval' } }
+        '6': { type: array, items: { $ref: '#/components/schemas/TimeInterval' } }
+        '7': { type: array, items: { $ref: '#/components/schemas/TimeInterval' } }
+
+    EffectiveRule:
+      type: object
+      required: [origin, timezone, weeklySchedule, bufferMinutes, reviewStatus]
+      additionalProperties: false
+      properties:
+        origin:
+          $ref: '#/components/schemas/RuleOrigin'
+        timezone:
+          type: string
+          examples: [America/Argentina/Cordoba]
+        weeklySchedule:
+          $ref: '#/components/schemas/WeeklySchedule'
+        bufferMinutes:
+          type: integer
+          minimum: 0
+          maximum: 1440
+        reviewStatus:
+          type: string
+          enum: [pendiente, activa]
+
+    UnitRuleInput:
+      oneOf:
+        - type: object
+          required: [mode]
+          additionalProperties: false
+          properties:
+            mode:
+              const: heredar_grupo
+        - type: object
+          required: [mode, timezone, weeklySchedule, bufferMinutes]
+          additionalProperties: false
+          properties:
+            mode:
+              const: propia
+            timezone:
+              type: string
+            weeklySchedule:
+              $ref: '#/components/schemas/WeeklySchedule'
+            bufferMinutes:
+              type: integer
+              minimum: 0
+              maximum: 1440
+
+    GroupRuleInput:
+      type: object
+      required: [active, timezone, weeklySchedule, bufferMinutes]
+      additionalProperties: false
+      properties:
+        active:
+          type: boolean
+        timezone:
+          type: string
+        weeklySchedule:
+          $ref: '#/components/schemas/WeeklySchedule'
+        bufferMinutes:
+          type: integer
+          minimum: 0
+          maximum: 1440
+
+    DatePeriod:
+      type: object
+      required: [precision, startDate, endDate]
+      additionalProperties: false
+      properties:
+        precision:
+          type: string
+          enum: [fecha_mensual, fecha_diaria]
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+
+    InstantPeriod:
+      type: object
+      required: [precision, startsAt, endsAt, timezone]
+      additionalProperties: false
+      properties:
+        precision:
+          const: instante_horario
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        timezone:
+          type: string
+
+    ManualBlockInput:
+      type: object
+      required: [origin, period, reason]
+      additionalProperties: false
+      properties:
+        origin:
+          type: string
+          enum: [mantenimiento, uso_privado]
+        period:
+          oneOf:
+            - $ref: '#/components/schemas/DatePeriod'
+            - $ref: '#/components/schemas/InstantPeriod'
+        reason:
+          type: string
+          minLength: 2
+          maxLength: 500
+
+    PublicBlockedPeriod:
+      type: object
+      required: [start, end]
+      additionalProperties: false
+      properties:
+        start:
+          type: string
+        end:
+          type: string
+
+    PublicAvailability:
+      oneOf:
+        - $ref: '#/components/schemas/ConfiguredPublicAvailability'
+        - $ref: '#/components/schemas/UnknownPublicAvailability'
+
+    ConfiguredPublicAvailability:
+      type: object
+      additionalProperties: false
+      required:
+        - unidadId
+        - status
+        - precision
+        - timezone
+        - minimumDuration
+        - blockedPeriods
+        - generatedAt
+      properties:
+        unidadId:
+          type: string
+          format: uuid
+        status:
+          const: configured
+        precision:
+          $ref: '#/components/schemas/Precision'
+        timezone:
+          type: string
+        minimumDuration:
+          type: object
+          required: [quantity, unit]
+          additionalProperties: false
+          properties:
+            quantity:
+              type: integer
+              minimum: 1
+            unit:
+              type: string
+              enum: [mes, día, hora]
+        weeklySchedule:
+          $ref: '#/components/schemas/WeeklySchedule'
+        blockedPeriods:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicBlockedPeriod'
+        generatedAt:
+          type: string
+          format: date-time
+
+    UnknownPublicAvailability:
+      type: object
+      additionalProperties: false
+      required: [unidadId, status, unknownReason, generatedAt]
+      properties:
+        unidadId:
+          type: string
+          format: uuid
+        status:
+          const: unknown
+        unknownReason:
+          type: string
+          enum: [NOT_CONFIGURED, BACKFILL_PENDING, RULE_UNAVAILABLE]
+        generatedAt:
+          type: string
+          format: date-time
+
+    OperationalBlock:
+      type: object
+      required: [id, origin, precision, start, end, blockedUntil, status]
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        origin:
+          type: string
+          enum: [sena, mantenimiento, uso_privado]
+        precision:
+          $ref: '#/components/schemas/Precision'
+        start:
+          type: string
+        end:
+          type: string
+        blockedUntil:
+          type: string
+        status:
+          type: string
+          enum: [activo, liberado]
+        reason:
+          type: string
+        alquilerId:
+          type: string
+          format: uuid
+
+    OperationalAvailability:
+      type: object
+      required: [unidadId, effectiveRule, blocks, unresolvedLegacyCount]
+      additionalProperties: false
+      properties:
+        unidadId:
+          type: string
+          format: uuid
+        effectiveRule:
+          $ref: '#/components/schemas/EffectiveRule'
+        blocks:
+          type: array
+          items:
+            $ref: '#/components/schemas/OperationalBlock'
+        unresolvedLegacyCount:
+          type: integer
+          minimum: 0

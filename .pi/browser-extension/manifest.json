@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Rendo · puente de chats para Pi",
+  "version": "1.0.0",
+  "minimum_chrome_version": "116",
+  "description": "Chats nuevos de ChatGPT y Gemini para el workflow SDD local de Rendo.",
+  "permissions": ["storage", "alarms"],
+  "host_permissions": ["https://chatgpt.com/*", "https://gemini.google.com/*", "http://127.0.0.1/*"],
+  "background": { "service_worker": "worker.js", "type": "module" },
+  "action": { "default_popup": "popup.html" },
+  "content_scripts": [{ "matches": ["https://chatgpt.com/*", "https://gemini.google.com/*"], "js": ["content.js"], "run_at": "document_idle", "world": "ISOLATED" }]
+}

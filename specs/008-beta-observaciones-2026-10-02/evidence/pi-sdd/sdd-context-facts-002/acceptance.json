@@ -1,0 +1,13 @@
+{
+  "decision": {
+    "decision": "ACCEPT",
+    "reason": "AC1 satisfecho: el resumen contiene los valores medidos de docs-facts y sus rutas, distingue caracteres y reporta ejecución con código 0. Sin cambios, diff ni violaciones de alcance. Revisión LOW/PACKET_ONLY; no se repiten comprobaciones válidas. Se aceptan únicamente estos hechos documentales, no la corrección integral del contexto ni el cierre de la beta.",
+    "nextAction": "Mantener bloqueado sdd-context-validation-001 y continuar con discovery acotado a los pendientes de su revisión anterior; este lote no levanta los bloqueos operativos.",
+    "reviewedArtifacts": [],
+    "reviewedRanges": {}
+  },
+  "mode": "DISCOVERY",
+  "taskIds": [],
+  "run": "1791051965343-sdd-context-facts-002-executor-pdfn4",
+  "acceptedAt": "2026-10-03T18:26:55.636Z"
+}

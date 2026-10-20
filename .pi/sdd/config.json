@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "project": {
+    "name": "Rendo",
+    "packageName": "tfi-marketplace-inmobiliario",
+    "state": ".specify/memory/PROJECT_STATE.md"
+  },
+  "roles": {
+    "architect": {
+      "backend": "pi",
+      "provider": "openai-codex",
+      "model": "gpt-6.1-sol",
+      "thinking": "high",
+      "authentication": "subscription"
+    },
+    "executor": {
+      "backend": "antigravity-cli",
+      "provider": "google-official",
+      "model": "gemini-3.8-flash-medium",
+      "thinking": "medium",
+      "authentication": "subscription",
+      "executable": ".pi/runtime/antigravity/agy.exe"
+    }
+  },
+  "limits": {
+    "stateChars": 2400,
+    "taskChars": 9000,
+    "resultChars": 6000,
+    "readChars": 6000,
+    "architectReadChars": 24000,
+    "executorReadChars": 90000,
+    "reviewChars": 28000,
+    "maxTurns": 24,
+    "maxBatches": 4,
+    "maxCorrections": 2,
+    "maxTransitions": 16,
+    "timeoutMs": 1800000
+  },
+  "webChats": {
+    "mode": "cli",
+    "fallback": true,
+    "architect": {
+      "model": "GPT 5.6 Sol",
+      "effort": "Alto"
+    },
+    "executor": {
+      "model": "Gemini 3.8 Flash",
+      "effort": "Avanzado"
+    },
+    "maxPromptChars": 90000,
+    "maxReplyChars": 180000
+  },
+  "rules": {
+    "DESIGN_RULES": [
+      ".pi/sdd/rules/DESIGN_RULES.md"
+    ],
+    "SECURITY_RULES": [
+      ".pi/sdd/rules/SECURITY_RULES.md"
+    ],
+    "DOMAIN_RULES": [
+      ".pi/sdd/rules/DOMAIN_RULES.md"
+    ],
+    "AGENT_RULES": [
+      ".pi/sdd/rules/AGENT_RULES.md"
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "id": "batch-001",
+  "mode": "IMPLEMENT",
+  "feature": "specs/007-vercel-beta-deployment",
+  "taskIds": ["T001"],
+  "objective": "Reemplazar con un objetivo concreto de la feature activa",
+  "relevantContext": "Contexto ya resumido por Sol; invariantes y dependencias",
+  "readFiles": ["specs/007-vercel-beta-deployment/spec.md", "specs/007-vercel-beta-deployment/plan.md"],
+  "allowedFiles": ["apps/api/src/config/example.ts"],
+  "decisions": [],
+  "approvedChanges": [],
+  "acceptanceCriteria": [{ "id": "AC1", "text": "Resultado observable y verificable" }],
+  "risk": "MEDIUM",
+  "evidenceProfiles": ["CODE"],
+  "solReview": "TARGETED_DIFF",
+  "rules": ["AGENT_RULES"],
+  "commands": [{ "id": "typecheck", "command": "pnpm --filter api exec tsc --noEmit", "purpose": "VERIFY", "timeoutMs": 120000 }],
+  "verification": ["typecheck"],
+  "expectedOutput": "RESULT_PACKET"
+}

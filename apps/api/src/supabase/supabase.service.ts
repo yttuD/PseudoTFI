@@ -9,31 +9,63 @@ export class SupabaseService {
   private supabaseServiceRoleKey: string;
 
   constructor(private configService: ConfigService) {
-    this.supabaseUrl = this.configService.get<string>('SUPABASE_URL')!;
-    // Locally, SUPABASE_ANON_KEY is usually in web/.env.local, but for the API, 
-    // it's better to use the ANON KEY for JWT pass-through.
-    // Wait, the API .env doesn't have ANON_KEY right now. I should add it, or just read the SERVICE_ROLE_KEY if needed.
-    // Actually, createClient needs anon key for JWT pass-through.
-    // Wait, if I use the Service Role Key for JWT pass-through, it overrides RLS? No, if we pass JWT in global headers,
-    // the user's JWT takes precedence for RLS if we use the ANON key. If we use the SERVICE ROLE key, it bypasses RLS unless we do complex stuff.
-    // We will just read SUPABASE_ANON_KEY.
-    this.supabaseAnonKey = this.configService.get<string>('SUPABASE_ANON_KEY')!;
-    this.supabaseServiceRoleKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY')!;
+    this.supabaseUrl = this.requiredSetting('SUPABASE_URL');
+    this.supabaseAnonKey = this.requiredSetting('SUPABASE_ANON_KEY');
+    this.supabaseServiceRoleKey = this.requiredSetting('SUPABASE_SERVICE_ROLE_KEY');
+  }
+
+  private requiredSetting(name: string): string {
+    const value = this.configService.get<string>(name)?.trim();
+    if (!value) throw new Error(`Missing required setting: ${name}`);
+    return value;
   }
 
   // Obtiene un cliente con la sesión del usuario para respetar RLS (o anónimo si no hay token)
   getClient(token?: string): SupabaseClient {
-    return createClient(this.supabaseUrl, this.supabaseAnonKey, token ? {
+    return createClient(this.supabaseUrl, this.supabaseAnonKey, {
       global: {
-        headers: {
-          Authorization: `Bearer ${token}`,
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        fetch: (url: any, options: any) => {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 5000);
+          return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timeout));
         },
       },
-    } : undefined);
+    });
   }
 
   // Cliente con privilegios administrativos (bypassea RLS)
   getAdminClient(): SupabaseClient {
-    return createClient(this.supabaseUrl, this.supabaseServiceRoleKey);
+    return createClient(this.supabaseUrl, this.supabaseServiceRoleKey, {
+      global: {
+        fetch: (url: any, options: any) => {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 5000);
+          return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timeout));
+        },
+      },
+    });
+  }
+
+  private isOnlineCached: boolean | null = null;
+  private lastCheck: number = 0;
+
+  async isOnline(): Promise<boolean> {
+    const now = Date.now();
+    if (this.isOnlineCached !== null && now - this.lastCheck < 15000) {
+      return this.isOnlineCached;
+    }
+    
+    try {
+      const response = await fetch(new URL('/auth/v1/health', this.supabaseUrl).toString(), {
+        headers: { apikey: this.supabaseAnonKey },
+        signal: AbortSignal.timeout(3000),
+      });
+      this.isOnlineCached = response.ok;
+    } catch {
+      this.isOnlineCached = false;
+    }
+    this.lastCheck = now;
+    return this.isOnlineCached;
   }
 }

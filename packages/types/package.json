@@ -1,6 +1,19 @@
 {
   "name": "@tfi/types",
   "version": "1.0.0",
-  "main": "src/index.ts",
-  "types": "src/index.ts"
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  }
 }

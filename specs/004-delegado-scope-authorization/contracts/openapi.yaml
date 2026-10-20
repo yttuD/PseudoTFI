@@ -1,0 +1,323 @@
+openapi: 3.1.0
+info:
+  title: Rendo Delegado Authorization Contract
+  version: 0.1.0
+  description: >-
+    Feature 004 contract. Every route uses a verified bearer session. Request identifiers never
+    override the authenticated actor or resolved Gestor workspace.
+servers:
+  - url: /api
+security:
+  - bearerAuth: []
+paths:
+  /delegados/contexto:
+    get:
+      summary: Resolve the current operational access context
+      operationId: getAccessContext
+      responses:
+        '200':
+          description: Owner, pending Delegado, or active Delegado context
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessContext'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /delegados:
+    get:
+      summary: List invitation and relationship lifecycle for the Gestor owner
+      operationId: listDelegados
+      responses:
+        '200':
+          description: Owner-only delegation list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [invitaciones, delegaciones]
+                properties:
+                  invitaciones:
+                    type: array
+                    items: { $ref: '#/components/schemas/Invitation' }
+                  delegaciones:
+                    type: array
+                    items: { $ref: '#/components/schemas/Delegation' }
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /delegados/invitaciones:
+    post:
+      summary: Invite an existing verified account
+      operationId: createDelegadoInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              additionalProperties: false
+              properties:
+                email:
+                  type: string
+                  format: email
+                  maxLength: 320
+      responses:
+        '201':
+          description: Pending single-use invitation and channel status
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Invitation' }
+        '400':
+          description: Unknown, unverified, self, duplicate, conflicting, or malformed target
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /delegados/invitaciones/recibidas:
+    get:
+      summary: List invitations targeting the authenticated account
+      operationId: listReceivedDelegadoInvitations
+      responses:
+        '200':
+          description: Invitations visible only to the target account
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ReceivedInvitation' }
+  /delegados/invitaciones/{invitationId}/aceptar:
+    post:
+      summary: Accept an invitation as its exact target account
+      operationId: acceptDelegadoInvitation
+      parameters:
+        - $ref: '#/components/parameters/InvitationId'
+      responses:
+        '200':
+          description: Accepted relationship with no access until owner configuration
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AccessContext' }
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Expired, cancelled, terminal, or newly conflicting membership
+  /delegados/invitaciones/{invitationId}/rechazar:
+    post:
+      summary: Reject an invitation as its exact target account
+      operationId: rejectDelegadoInvitation
+      parameters:
+        - $ref: '#/components/parameters/InvitationId'
+      responses:
+        '204': { description: Rejected }
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /delegados/invitaciones/{invitationId}:
+    delete:
+      summary: Cancel a pending invitation as Gestor owner
+      operationId: cancelDelegadoInvitation
+      parameters:
+        - $ref: '#/components/parameters/InvitationId'
+      responses:
+        '204': { description: Cancelled }
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /delegados/{delegationId}/configuracion:
+    put:
+      summary: Atomically replace active scope and permission as Gestor owner
+      operationId: configureDelegado
+      parameters:
+        - $ref: '#/components/parameters/DelegationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DelegationConfiguration' }
+      responses:
+        '200':
+          description: Active replacement configuration
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Delegation' }
+        '400':
+          description: Invalid scope shape or targets outside the Gestor workspace
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /delegados/{delegationId}:
+    delete:
+      summary: Revoke a Delegado relationship as Gestor owner
+      operationId: revokeDelegado
+      parameters:
+        - $ref: '#/components/parameters/DelegationId'
+      responses:
+        '204': { description: Revoked; next protected request is denied }
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /grupos/{grupoId}:
+    patch:
+      summary: Rename or update operational settings of an authorized Grupo
+      operationId: updateGrupo
+      parameters:
+        - name: grupoId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Updated within scope }
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Soft-delete a Grupo; owner or account-wide Gestionar only
+      operationId: deleteGrupo
+      parameters:
+        - name: grupoId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '204': { description: Soft-deleted }
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Supabase access token
+  parameters:
+    InvitationId:
+      name: invitationId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    DelegationId:
+      name: delegationId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  responses:
+    Unauthorized:
+      description: Missing or invalid verified session
+    Forbidden:
+      description: Authenticated actor lacks owner/action permission; no target details disclosed
+    NotFound:
+      description: Target absent or intentionally concealed because it is outside scope
+  schemas:
+    Invitation:
+      type: object
+      required: [id, target, estado, expiresAt, channels, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        target:
+          type: object
+          required: [displayName, maskedEmail]
+          properties:
+            displayName: { type: string }
+            maskedEmail: { type: string }
+        estado:
+          type: string
+          enum: [pendiente, aceptada, rechazada, cancelada, expirada]
+        expiresAt: { type: string, format: date-time }
+        channels:
+          type: object
+          required: [inApp, email]
+          properties:
+            inApp: { type: string, enum: [created, read] }
+            email: { type: string, enum: [pending, sent, failed] }
+        createdAt: { type: string, format: date-time }
+    ReceivedInvitation:
+      type: object
+      required: [id, gestorDisplayName, estado, expiresAt, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        gestorDisplayName: { type: string }
+        estado: { type: string, enum: [pendiente, expirada] }
+        expiresAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+    DelegationConfiguration:
+      oneOf:
+        - type: object
+          additionalProperties: false
+          required: [permiso, alcanceTipo]
+          properties:
+            permiso: { type: string, enum: [ver, gestionar] }
+            alcanceTipo: { const: cuenta }
+        - type: object
+          additionalProperties: false
+          required: [permiso, alcanceTipo, grupoId]
+          properties:
+            permiso: { type: string, enum: [ver, gestionar] }
+            alcanceTipo: { const: grupo }
+            grupoId: { type: string, format: uuid }
+        - type: object
+          additionalProperties: false
+          required: [permiso, alcanceTipo, unidadIds]
+          properties:
+            permiso: { type: string, enum: [ver, gestionar] }
+            alcanceTipo: { const: unidades }
+            unidadIds:
+              type: array
+              minItems: 1
+              uniqueItems: true
+              items: { type: string, format: uuid }
+    Delegation:
+      type: object
+      required: [id, delegado, estado, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        delegado:
+          type: object
+          required: [id, displayName, maskedEmail]
+          properties:
+            id: { type: string, format: uuid }
+            displayName: { type: string }
+            maskedEmail: { type: string }
+        estado: { type: string, enum: [aceptada_sin_configurar, activa, revocada] }
+        permiso: { type: [string, 'null'], enum: [ver, gestionar, null] }
+        alcanceTipo: { type: [string, 'null'], enum: [cuenta, grupo, unidades, null] }
+        grupo:
+          anyOf:
+            - type: 'null'
+            - type: object
+              required: [id, nombre]
+              properties:
+                id: { type: string, format: uuid }
+                nombre: { type: string }
+        unidades:
+          type: array
+          items:
+            type: object
+            required: [id, nombre]
+            properties:
+              id: { type: string, format: uuid }
+              nombre: { type: string }
+        updatedAt: { type: string, format: date-time }
+    AccessContext:
+      oneOf:
+        - type: object
+          required: [actor, ownerOnly, capabilities]
+          properties:
+            actor: { const: gestor }
+            ownerOnly: { const: true }
+            capabilities: { type: array, items: { type: string } }
+        - type: object
+          required: [actor, state, ownerOnly, capabilities]
+          properties:
+            actor: { const: delegado }
+            state: { const: pendiente_configuracion }
+            ownerOnly: { const: false }
+            capabilities: { type: array, maxItems: 0 }
+        - type: object
+          required: [actor, state, ownerOnly, permiso, scope, capabilities]
+          properties:
+            actor: { const: delegado }
+            state: { const: activo }
+            ownerOnly: { const: false }
+            permiso: { type: string, enum: [ver, gestionar] }
+            scope: { $ref: '#/components/schemas/DelegationConfiguration' }
+            capabilities: { type: array, items: { type: string } }

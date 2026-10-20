@@ -1,48 +1,70 @@
-import { chromium, FullConfig } from '@playwright/test';
+import { FullConfig } from '@playwright/test';
 import path from 'path';
+import fs from 'fs';
 
-async function globalSetup(config: FullConfig) {
-  const browser = await chromium.launch({ channel: 'msedge' });
-  const context = await browser.newContext();
-  const page = await context.newPage();
-
-  // URL base, asumiendo localhost:3000
-  const baseURL = 'http://localhost:3000';
-
-  // Ir a la página de login
-  await page.goto(`${baseURL}/es/auth/login`);
-
-  // Llenar el formulario OTP
-  await page.fill('input[type="tel"]', '+541111111111');
-  await page.click('button:has-text("Enviar Código OTP")');
-
-  // Esperar a que aparezca el input del código o haya un error
-  const errorLocator = page.locator('.text-red-500');
-  const otpInputLocator = page.locator('input[placeholder="123456"]');
-  
-  await Promise.race([
-    otpInputLocator.waitFor({ timeout: 10000 }),
-    errorLocator.waitFor({ timeout: 10000 })
-  ]).catch(() => {});
-
-  if (await errorLocator.isVisible()) {
-    const errorText = await errorLocator.innerText();
-    console.error('Error durante el envío de OTP en global.setup.ts:', errorText);
-    throw new Error('OTP send failed: ' + errorText);
+async function globalSetup(_config: FullConfig) {
+  const authDir = path.join(__dirname, '.auth');
+  if (!fs.existsSync(authDir)) {
+    fs.mkdirSync(authDir, { recursive: true });
   }
 
-  await otpInputLocator.fill('123456');
-  
-  // Hacer clic en Ingresar
-  await page.click('button:has-text("Verificar y Entrar")');
+  const authPath = path.join(authDir, 'user.json');
 
-  // Esperar a que la redirección suceda y estemos en el dashboard
-  await page.waitForURL(/.*\/es\/dashboard/);
+  // Provide deterministic non-production test adapter auth state on clean checkouts
+  // Eliminates external login, real OTP, and cached credentials dependency
+  const userId = '11111111-1111-1111-1111-111111111111';
+  const email = 'gestor@test.com';
+  const role = 'gestor';
+  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64');
+  const body = Buffer.from(
+    JSON.stringify({
+      sub: userId,
+      email,
+      role: 'authenticated',
+      user_metadata: { role, rol: role },
+      accessContext: { actor: 'gestor', ownerOnly: true, capabilities: ['*'] },
+      exp: Math.floor(Date.now() / 1000) + 86400 * 30,
+    })
+  ).toString('base64');
+  const token = `${header}.${body}.mocksignature`;
 
-  // Guardar estado
-  await page.context().storageState({ path: 'e2e/.auth/user.json' });
+  const cookiePayload = {
+    access_token: token,
+    user: {
+      id: userId,
+      email,
+      user_metadata: { role, rol: role },
+    },
+  };
+  const cookieValue = `base64-${Buffer.from(JSON.stringify(cookiePayload)).toString('base64')}`;
 
-  await browser.close();
+  const storageState = {
+    cookies: [
+      {
+        name: 'sb-127-auth-token',
+        value: cookieValue,
+        domain: 'localhost',
+        path: '/',
+        expires: Math.floor(Date.now() / 1000) + 86400 * 30,
+        httpOnly: false,
+        secure: false,
+        sameSite: 'Lax',
+      },
+      {
+        name: 'sb-localhost-auth-token',
+        value: cookieValue,
+        domain: 'localhost',
+        path: '/',
+        expires: Math.floor(Date.now() / 1000) + 86400 * 30,
+        httpOnly: false,
+        secure: false,
+        sameSite: 'Lax',
+      },
+    ],
+    origins: [],
+  };
+
+  fs.writeFileSync(authPath, JSON.stringify(storageState, null, 2), 'utf8');
 }
 
 export default globalSetup;
