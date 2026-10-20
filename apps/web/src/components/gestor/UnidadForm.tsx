@@ -91,6 +91,8 @@ export function UnidadForm({
   const preselectedGrupoId = searchParams.get('grupo_id') || undefined;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Prevent two submit handlers from racing before React updates the disabled state.
+  const submitInFlightRef = useRef(false);
   const [saveError, setSaveError] = useState<string | null>(searchParams.get('save_error') ? 'La unidad quedó como borrador. Revisá las tarifas y guardá nuevamente.' : null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState('basicos');
@@ -454,10 +456,12 @@ export function UnidadForm({
   };
 
   const onSubmit = async (data: FormData, publishAfterSave = false) => {
+    if (submitInFlightRef.current) return;
     if (publishAfterSave && (!data.titulo_es?.trim() || !data.modalidades.some((m) => m.precio > 0) || !data.ubicacion_aprox || !data.fotos?.length)) {
       setSaveError('Para publicar, completá un título, una tarifa mayor a cero, la ubicación y al menos una foto.');
       return;
     }
+    submitInFlightRef.current = true;
     setIsSubmitting(true);
     setSaveError(null);
     let newlyCreatedId: string | null = null;
@@ -550,6 +554,7 @@ export function UnidadForm({
         setSaveError(e instanceof Error ? e.message : 'No se pudo guardar. Intentá nuevamente.');
       }
     } finally {
+      submitInFlightRef.current = false;
       setIsSubmitting(false);
     }
   };
