@@ -97,6 +97,33 @@ test.describe('B007b — Inventario y Aislamiento Real Navegador', () => {
     }
   });
 
+  test('N03: atajos de Día/Mes/Hora nunca prellenan precios inventados', async ({ browser }, testInfo) => {
+    const context = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
+    try {
+      const page = await context.newPage();
+      await fixtures.loginViaUI(page, gestorA);
+      await page.goto(`/es/mis-unidades/${unitA1Id}/editar`);
+      await expect(page.getByRole('heading', { name: 'Editar Unidad' })).toBeVisible();
+
+      for (const title of ['Alquiler por Día', 'Alquiler Mensual', 'Alquiler por Hora']) {
+        await page.getByRole('button', { name: title, exact: false }).click();
+      }
+      const fields = page.getByTestId('input-precio');
+      await expect(fields).toHaveCount(3);
+      for (let i = 0; i < 3; i++) {
+        await expect(fields.nth(i)).toHaveValue('');
+      }
+
+      // No implicit rows may be written simply by selecting three templates.
+      const { data: stored, error } = await fixtures.adminClient.from('modalidades_precio')
+        .select('id').eq('unidad_id', unitA1Id).is('deleted_at', null);
+      expect(error).toBeNull();
+      expect(stored).toEqual([]);
+    } finally {
+      await context.close();
+    }
+  });
+
   test('N07/N08: cuatro variantes de grupo desde UI y recarga real', async ({ browser }, testInfo) => {
     const context = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
     const variants = [
