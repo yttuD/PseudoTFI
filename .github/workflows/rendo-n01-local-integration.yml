@@ -55,8 +55,6 @@ jobs:
         uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
         with:
           version: 2.121.0
-      - name: Generate reviewed migration filename with pinned Supabase CLI
-        run: supabase migration new harden_rendo_rpc_permissions
       - name: Create loopback-only Docker network
         run: docker network create -o 'com.docker.network.bridge.host_binding_ipv4=127.0.0.1' rendo-n01-ci
       - name: Start isolated local Supabase (Auth, PostgREST, Postgres)
@@ -84,7 +82,7 @@ jobs:
           echo("Preflight PASS: local API and DB only");
           function echo(message) { process.stdout.write(message + "\n"); }
           '
-      - name: Harden and verify RPC permissions only on loopback DB
+      - name: Verify versioned migration grants against local database
         run: node scripts/db/run-local-rpc-hardening.mjs
       - name: N01 actual Auth RLS HTTP suite (isolated local database)
         working-directory: apps/api
