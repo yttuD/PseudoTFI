@@ -96,6 +96,9 @@ test('N02 y N03: editor permite cambiar categoría a cancha y muestra modalidade
 });
 
 test('N04 y N05: detalle público proyecta dirección solo para autenticado y localiza WhatsApp en es, en, pt', async ({ page, context }, testInfo) => {
+  // The shared Playwright storage state contains a demo Gestor cookie. Clear it
+  // explicitly so the anonymous assertions never inherit a signed-in identity.
+  await context.clearCookies();
   // 1. Anónimo en español
   await page.goto('/es/unidades/a0000000-0000-0000-0000-000000000001');
   await expect(page.getByRole('heading', { name: /Departamento 2 Ambientes/ })).toBeVisible();
