@@ -6,6 +6,34 @@ import { resilientStore } from '../common/resilient-store.js';
 
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); resetExchangeRatesCacheForTests(); });
 
+
+  it('ordinary dev without explicit fixture flag returns 503 rather than invented property and zones', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('RENDO_BETA_MODE', 'false');
+    vi.stubEnv('AUTH_ALLOW_DEV_TOKENS', 'false');
+    const db = { isOnline: vi.fn().mockResolvedValue(false), getClient: vi.fn(), getAdminClient: vi.fn() };
+    const service = new MarketplaceService(db as unknown as SupabaseService);
+    await expect(service.findAll({})).rejects.toMatchObject({ status: 503 });
+    await expect(service.findOne('u0000000-0000-0000-0000-000000000001', false)).rejects.toMatchObject({ status: 503 });
+    await expect(service.getZonas()).rejects.toMatchObject({ status: 503 });
+    await expect(service.registrarVista('u0000000-0000-0000-0000-000000000001', '127.0.0.1')).rejects.toMatchObject({ status: 503 });
+    await expect(service.registrarContacto('u0000000-0000-0000-0000-000000000001')).rejects.toMatchObject({ status: 503 });
+    expect(db.getClient).not.toHaveBeenCalled();
+    expect(db.getAdminClient).not.toHaveBeenCalled();
+  });
+
+  it('explicit local demo adapter can still use isolated fixture catalog', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('RENDO_BETA_MODE', 'false');
+    vi.stubEnv('AUTH_ALLOW_DEV_TOKENS', 'true');
+    const db = { isOnline: vi.fn().mockResolvedValue(false) };
+    const service = new MarketplaceService(db as unknown as SupabaseService);
+    const result = await service.findAll({});
+    expect(result.data.length).toBeGreaterThan(0);
+    expect(result.data[0]).not.toHaveProperty('gestor_id');
+    expect(result.data[0]).not.toHaveProperty('whatsapp');
+  });
+
 describe('release catalog failure behavior', () => {
   it('does not return synthetic units or zones during a beta database outage', async () => {
     vi.stubEnv('RENDO_BETA_MODE', 'true');
