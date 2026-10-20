@@ -16,7 +16,9 @@ test('release audit: one read-only WITH/SELECT query without DML or DDL', () => 
 });
 
 test('release audit: outputs only privacy-safe aggregates, no raw IDs, prices or PII', () => {
-  const select = withoutComments.slice(withoutComments.lastIndexOf('SELECT'));
+  const finalSelect = withoutComments.lastIndexOf('\nSELECT\n');
+  assert.ok(finalSelect >= 0, 'Missing final aggregate projection');
+  const select = withoutComments.slice(finalSelect + 1);
   const outputAliases = [...select.matchAll(/\bAS\s+([a-z_][a-z_0-9]*)/gi)].map(m => m[1]);
   assert.deepEqual(outputAliases.sort(), [
     'published_unit_count', 'title_en_missing', 'title_pt_missing',
