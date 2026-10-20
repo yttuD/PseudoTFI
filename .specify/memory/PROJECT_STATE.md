@@ -8,9 +8,9 @@
 - Marco vigente: constitución v3.0.0; Spec Kit conserva intención y trazabilidad. Revisión según riesgo con RESULT_PACKET compacto, sin repetir historial ni checks verdes con inputs vigentes.
 - Autorización previa B010: una ejecución N01, hasta dos Gestores/un Delegado temporales y archivado propio; sin tocar testers ni purgar Auth. Sin ejecución acreditada.
 - Riesgos: Las 3 unidades residuales del intento interrumpido previo permanecen en DB remota hasta la ejecución de la suite de archivado/limpieza autorizada.
-- Blocker externo: última comprobación 2026-10-13, Supabase NXDOMAIN y API readiness 503; no revalidado en esta sincronización. No iniciar registros mientras la dependencia no se restablezca.
+- Disponibilidad #2 (2026-10-19 23:32 ART): front/live/ready y Auth 200; DNS A local/Google/Cloudflare correcto. NXDOMAIN anterior no se reproduce. Registro real no probado; sesión Vercel caducada impide acreditar IDs/SHA actuales. Evidencia: `evidence/N01/issue-002-availability.md` dentro de la feature.
 - Evidencia reciente: API local 34 suites/281 tests PASS; auditoría pública en docs/GITHUB_SYNC.md. Capturas/respaldos privados siguen locales; typecheck histórico no aprobado.
-- Próximo: usar el handoff GitHub para un PR acotado de N01 y comprobar disponibilidad con Codex. La suite B010 autorizada sigue sin ejecución acreditada; no lanzar agentes históricos.
+- Próximo: revisar propuesta `codex/n01b-api-read-isolation` desde handoff, issue #2. Preparación/revocación de fixtures es mutación, separada del diagnóstico. B010 sigue sin ejecución acreditada; no lanzar agentes históricos ni nuevas pruebas remotas automáticamente.
 
 
 
