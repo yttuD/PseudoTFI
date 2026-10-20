@@ -1,0 +1,46 @@
+name: Rendo full API unit regression
+
+on:
+  pull_request:
+    branches:
+      - codex/n01-n02-group-membership-2026-10-20
+    paths:
+      - 'apps/api/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/rendo-api-full-regression.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rendo-all-api-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  all-unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Activate pinned pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.0.0 --activate
+      - name: Install locked API workspace
+        run: pnpm install --frozen-lockfile --filter api...
+      - name: Build shared types
+        run: pnpm --filter @tfi/types build
+      - name: Run all API unit specs (no remote services)
+        working-directory: apps/api
+        run: node node_modules/vitest/vitest.mjs run --config vitest.config.ts --reporter=dot
+      - name: API typecheck
+        working-directory: apps/api
+        run: node node_modules/typescript/bin/tsc --noEmit -p tsconfig.build.json
