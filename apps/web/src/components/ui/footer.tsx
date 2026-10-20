@@ -86,7 +86,7 @@ export const Footer: React.FC<FooterProps> = ({ className }) => {
                 </Link>
               </li>
               <li>
-                <Link href={`/${currentLocale}/unidades?categoria=comercial`} className="hover:text-primary transition-colors min-h-[44px] flex items-center">
+                <Link href={`/${currentLocale}/unidades?categoria=local%20comercial`} className="hover:text-primary transition-colors min-h-[44px] flex items-center">
                   {tFooter("commercial")}
                 </Link>
               </li>

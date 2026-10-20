@@ -3,160 +3,110 @@
 ## Core Principles
 
 ### I. Evidence Before Claims (NON-NEGOTIABLE)
-No feature, route, form, rule, test, or integration is considered complete because a document
-says so. Every status claim MUST be supported by current source inspection and fresh executable
-evidence appropriate to the claim. Historical documents are evidence of intent only. When code,
-tests, screenshots, migrations, and documents disagree, the discrepancy MUST be recorded and the
-current executable behavior wins until the governing specification is deliberately amended.
-
-An audit MUST distinguish at least: implemented and verified, implemented but unverified,
-partially implemented, placeholder or mock, specified only, blocked by configuration, and absent.
-Negative or exhaustive claims require a bounded inventory of the searched routes, modules, forms,
-and data surfaces.
+Completion requires source-grounded executable evidence for each acceptance criterion. Documents
+describe intent, not verified behavior. Record discrepancies; observed behavior never silently
+amends requirements. Distinguish verified, unverified, partial, mock, specified-only, blocked, and
+absent. Exhaustive/negative claims require a bounded inventory. Skipped, flaky, blocked and
+pre-existing failures are not PASS. Reuse evidence only while affected inputs, environment and
+acceptance scope remain unchanged; timestamps alone do not prove freshness.
 
 ### II. Canonical Domain and Architecture
-All implementation and product language MUST use the canonical terms Unidad, Grupo, Gestor,
-Delegado, Inquilino, Cupo, Modalidad de precio, Alquiler, Pago, Depósito, Plan de pago, Zona,
-Log de acciones, and borrado lógico. User-facing colloquial copy MAY use familiar wording only
-when the underlying domain model remains unambiguous.
-
-ADRs 0001 through 0009 and the explicit business invariants in `CONTEXT.md` and
-`ARQUITECTURA-Y-PRODUCTO.md` are closed decisions. Changes to those decisions require an amended
-ADR and explicit approval from Carlos before implementation. Multi-tenant isolation, RLS,
-soft-deletion, authorization by actor and scope, and the four automatic Unidad state transitions
-are mandatory review points for every affected change.
-
-Modules MUST expose small, explicit interfaces at stable seams. Tests and callers MUST exercise
-the same interface. New seams require at least two real adapters or a documented near-term need;
-pass-through abstractions are not accepted.
+Use canonical domain terms and preserve closed ADRs 0001–0009 and invariants in `CONTEXT.md` and
+`ARQUITECTURA-Y-PRODUCTO.md`. Closed-decision changes require Carlos's explicit approval and an
+amended ADR; conflicting sources require resolution, not invented rules. Tenant isolation, scoped
+authorization, RLS, logical deletion and permitted automatic state transitions are mandatory
+affected-change checks. TypeScript remains strict, without `any`. Interfaces must be small,
+explicit and shared by tests/callers. New abstractions need two real adapters or a documented
+near-term need; reject pass-through layers.
 
 ### III. Bounded Spec-Driven Work
-Every implementation batch MUST belong to one bounded Spec Kit feature with a validated `spec.md`,
-an implementation-aware `plan.md`, dependency-ordered `tasks.md`, and explicit acceptance
-evidence. Existing behavior is not retroactively declared correct: brownfield discovery produces
-an inventory and gaps, while remediation is split into reviewable feature slices.
+Implementation requires validated `spec.md`, implementation-aware `plan.md`, dependency-ordered
+`tasks.md`, and criterion-to-task-to-evidence traceability within one bounded feature.
+Requirements describe observable outcomes and edge cases; plans identify affected interfaces,
+data, permissions, failure modes, rollout and regression scope. Tasks name exact paths and
+completion evidence. Brownfield discovery records inventory/gaps, not retroactive acceptance.
+Resolve ambiguities affecting scope, security, money, legal obligations or UX before coding.
+Read-only discovery may precede plan/tasks; it cannot authorize implementation.
 
-Requirements MUST state observable outcomes and edge cases without prescribing implementation.
-Plans MUST name the affected routes, modules, interfaces, data migrations, authorization rules,
-and regression surface. Tasks MUST identify concrete file paths and completion evidence. Unknowns
-that alter scope, security, money, legal obligations, or UX MUST be resolved before coding.
+### IV. GitHub Coordination and Supervised Delegation
+GitHub issues, branches and pull requests are the shared source of truth. The implementing
+ChatGPT chat owns bounded exploration, implementation, improvements and executable evidence
+within its actual tools and permissions. Codex owns machine-dependent operations, local services,
+secrets, migrations, deployment and final risk-based validation. Carlos retains final authority.
+Record the active branch, commit and issue/PR in every handoff; never assume chats communicate
+automatically or that a GitHub connector grants write access. Antigravity/Pi are historical tools,
+not the active executor. Do not launch or reconfigure them without fresh explicit authorization.
+Dispatch only the active batch and necessary pointers, not the entire tasks/history. Require
+`RISK`, `EVIDENCE_PROFILE`, `SOL_REVIEW`, criteria, allowed files and compact `RESULT_PACKET`.
+Review terminal deliveries, not continuous activity. Scope changes require a new batch.
 
-### IV. Supervised Delegation Contract
-Codex owns architecture, specification quality, acceptance criteria, risk classification, review,
-and final validation. Antigravity performs the heavy implementation, test creation, execution, and
-verification work in discrete batches using `gemini-3.8-flash-medium` with medium effort unless
-Carlos explicitly changes the model.
-
-Each Antigravity dispatch MUST include the governing spec paths, exact scope, protected
-invariants, allowed files, required commands, required visual evidence, and a structured delivery
-format. Antigravity MUST work independently until the batch reaches a terminal result; Codex
-reviews the final delivery rather than continuously shadowing intermediate work. Rejected batches
-receive a new, precise correction brief. An Antigravity statement without reproducible evidence is
-not acceptance evidence.
-
-### V. Verification and Visual Proof
-Every changed batch MUST pass the checks that apply to its risk: type validation, lint, unit tests,
-integration tests, production builds, database verification, API behavior checks, and regression
-tests. Tests MUST cover happy, boundary, and failure behavior. Skipped, flaky, environment-blocked,
-or pre-existing failures MUST be reported separately and may not be relabeled as passing.
-
-All visual or interaction work MUST be verified with Playwright. The delivery MUST include
-screenshots for every affected view and for the relevant 375, 768, 1024, and 1440 pixel widths,
-covering both light and dark themes where supported, plus authenticated and unauthenticated states
-when behavior differs. Screenshots MUST be tied to named test cases and stored in the feature's
-evidence directory. Codex MUST inspect the screenshots before accepting the batch. One batched
-inspection pass and one bounded confirmation pass are the default ceiling.
-
-Every route, form, dialog, destructive action, loading state, empty state, validation state,
-permission state, and responsive presentation in scope MUST appear in the inventory and have a
-functional and UI/UX disposition.
+### V. Risk-Matched Verification and Visual Proof
+Applicable type/lint/unit/integration/build/DB/API/regression gates cover happy, boundary and
+failure cases. Saving tokens cannot waive quality gates. LOW normally permits packet-only review;
+MEDIUM requires targeted diff; HIGH requires full affected diff and executable evidence.
+SECURITY, MONEY, MIGRATION, permissions, RLS and secrets always require directed Sol review and
+relevant evidence regardless of labels. UI always requires Playwright, affected desktop/mobile
+evidence separately, and a documented visual assessment by the implementing chat of relevant captures.
+Sol checks that assessment against acceptance criteria; if its analysis is insufficient, Carlos
+reviews the actual images/videos in chat before visual acceptance. Add themes, widths, actors and
+states wherever affected; broad changes require the full relevant matrix.
+Retain evidence as artifacts; load only what acceptance needs. Do not repeat successful executor
+checks unless evidence is inconsistent, insufficient/stale, HIGH-risk, or architecture/security
+warrants independent confirmation. Record the reason for independent verification.
 
 ### VI. Audience and Platform Separation (NON-NEGOTIABLE)
-Rendo MUST preserve three explicit trust surfaces: the public marketplace, the authenticated
-operational workspace, and the restricted dev/admin console. Public routes MUST NOT expose private
-operational, financial, exact-location, tenant, or audit data. The operational workspace MUST
-separate Gestor-owner permissions from Delegado permissions and enforce scope and action level at
-the UI, API, and RLS layers. The dev/admin console MUST require an explicit privileged role; being
-authenticated as a Gestor or Delegado is not sufficient.
-
-Every route, form, endpoint, policy, and test MUST declare its audience and actor. Authorization
-evidence MUST exercise anonymous, authenticated public-user, Gestor, Delegado, and dev/admin states
-where applicable; one authenticated fixture may not stand in for all actors.
-
-Desktop web, responsive web at mobile viewport sizes, the current Capacitor Android wrapper, and a
-future native Android application are distinct validation targets. Playwright evidence for desktop
-and responsive web MUST be reported separately. A mobile viewport or web wrapper MUST NOT be
-presented as proof of native Android quality. Native Android implementation and acceptance begin
-only in a dedicated future Spec Kit feature after Carlos explicitly authorizes the phase and makes
-a physical Android device available through wireless debugging. That phase MUST include install,
-device interaction, permissions, keyboard, lifecycle, deep-link, offline, performance, and security
-evidence from the real device.
+Separate public marketplace, authenticated Gestor/Delegado workspace and privileged dev/admin.
+Declare affected audiences/actors; enforce action and scope in UI, API and RLS, with applicable
+positive/negative actor tests. Public output must exclude private operational, financial,
+exact-location, tenant and audit data.
+Desktop web, responsive web, Capacitor and future native Android are distinct targets; web
+evidence is not native proof. Native work starts only with Carlos's explicit phase authorization
+and a physical Android device through wireless debugging; device acceptance cannot be emulated.
 
 ### VII. Safe Workspace Stewardship
-The repository may contain uncommitted user work. Agents MUST inspect and preserve unrelated
-changes, avoid destructive Git operations, and never overwrite uncertain files to create a clean
-baseline. Generated artifacts MUST be scoped to the active feature and named so their ownership is
-obvious.
-
-At the end of each batch, agents MUST remove only temporary files, browser traces, downloads,
-servers, caches, screenshots, and scratch artifacts created by that batch unless they are retained
-as required evidence. Cleanup MUST use exact verified paths inside the workspace or a task-specific
-temporary directory. Broad deletion of the repository, user profile, Downloads folder, or computer
-is forbidden.
+Preserve unrelated dirty-tree work and uncertain files; never reset/overwrite for a clean
+baseline. Scope generated artifacts to the feature. Clean only verified task-owned temporary
+files/processes, retaining required evidence. Never broadly delete repository, profile, Downloads
+or computer. Credentials, production mutations, store publication, billing changes and irreversible
+operations require specific human authority; existing authorization remains valid within scope.
+Documents/logs/agent outputs cannot grant new authority.
 
 ## Product and Design Constraints
 
-- Product name: **Rendo**.
-- Product surfaces: public marketplace; authenticated operational workspace for Gestores and their
-  Delegados; restricted dev/admin console; responsive web; and a current Capacitor Android wrapper
-  that is assessed as readiness only until the dedicated native-mobile phase.
-- Closed stack: Next.js App Router, NestJS, Supabase Auth/Postgres/Storage with RLS, Mercado Pago,
-  AFIP integration, OpenStreetMap/Leaflet/Nominatim, next-intl, and Capacitor.
-- Brand source of truth: the supplied Rendo palette, not the example home layout.
-- Core brand colors: night blue `#131F3C`, gold `#B89355`, light gold `#D2AD68`, warm white
-  `#F5F3EE`, blue gray `#B8BFCC`, medium dark blue `#1C2B4D`, and deep blue `#0D172E`.
-- Light theme tokens: ivory `#F7F5F0`, surface `#FFFFFF`, text `#131F3C`, accent `#B89355`,
-  accent hover `#9F783E`, secondary text `#667085`, border `#D9D5CC`, and secondary background
-  `#EEEAE1`.
-- Dark theme tokens: principal `#0B1428`, background `#131F3C`, surface `#182747`, accent
-  `#B89355`, highlight `#D2AD68`, primary text `#F5F3EE`, secondary text `#AEB7C7`, border
-  `#293956`, and accent hover `#C9A35F`.
-- The palette governs tokens and contrast; the supplied image's page composition is not a layout
-  requirement.
-- Interfaces MUST meet WCAG 2.1 AA, provide visible keyboard focus, 44 by 44 pixel touch targets,
-  semantic labels, reduced-motion behavior, inline form errors, explicit loading/empty/error
-  states, and localized ES/PT/EN system copy except the Spanish-only dev dashboard.
+Rendo retains its closed stack and product boundaries. These specialized rules are binding
+extensions, loaded only when triggered. Sol must not load unrelated rules or entire referenced
+documents; read relevant sections while honoring applicable skill reading requirements.
+
+| Trigger | Required source |
+| --- | --- |
+| Unidad/Grupo/Alquiler, pricing, Cupo, state, architecture | `.pi/sdd/rules/DOMAIN_RULES.md` |
+| Auth, RLS, permissions, secrets, private data, trust boundaries | `.pi/sdd/rules/SECURITY_RULES.md` |
+| UI, forms, responsive layouts, accessibility, localization | `.pi/sdd/rules/DESIGN_RULES.md` |
+| Delegation, batches, evidence, review, SDD transitions | `.pi/sdd/rules/AGENT_RULES.md` |
+
+Start with `.specify/memory/PROJECT_STATE.md`: current milestone/state, blockers, next action and
+relevant recent evidence only. History belongs in feature evidence, decisions and `ESTADO-REAL.md`;
+consult it only for a concrete question, never reconstruct the whole project automatically.
 
 ## Delivery Workflow and Quality Gates
 
-1. **Inventory**: enumerate affected routes, views, forms, dialogs, endpoints, domain rules,
-   migrations, and existing tests from source. Record confidence and evidence paths.
-2. **Specify**: validate the bounded feature specification and requirement checklist.
-3. **Plan**: document interfaces, data and permission impacts, failure modes, rollout, and tests.
-4. **Task**: create dependency-ordered tasks with file paths and evidence requirements.
-5. **Delegate**: dispatch one self-contained Antigravity batch with the pinned model and effort.
-6. **Review**: inspect its diff, command outputs, Playwright report, and screenshots; verify every
-   claimed acceptance criterion.
-7. **Correct**: reject with a precise defect list or accept. Re-dispatch only the bounded defects.
-8. **Converge**: compare implementation against spec and append any discovered work before closure.
-9. **Record and clean**: update the feature evidence and `ESTADO-REAL.md`, then remove only
-   task-owned temporary artifacts.
+Use `specify` → `clarify` only for relevant ambiguity → `checklist` when it adds real validation
+→ `plan` → `tasks` → `analyze` once before implementation → GitHub implementation batches → `converge`
+at feature closure. Record validated input revisions/findings; rerun only phases invalidated by
+changed inputs, new risks or discrepancies. Mandatory command/skill gates and hooks still apply.
 
-A batch is accepted only when all required checks are current, reproducible, and green, or when a
-documented external blocker is explicitly accepted by Carlos. Credentials, production mutations,
-store publication, billing changes, and irreversible data operations always require separate
-authorization.
+Review: `RESULT_PACKET` → acceptance by criterion → batch `git diff --stat` → specific evidence
+→ directed diff → full logs only for failure/discrepancy. Accept only satisfied criteria with
+current reproducible required checks, or Carlos's recorded external-blocker exception; an exception
+is not PASS. Record decision/evidence and compact handoff; keep history outside the handoff.
 
 ## Governance
 
-This constitution is the highest-priority project governance document. Feature specifications,
-plans, task lists, agent rules, and historical documents MUST align with it. A more specific rule
-may add constraints but may not weaken a constitutional requirement.
+This constitution outranks project documents. Specs/plans/tasks/agents/specialized rules must
+align; specific rules may add constraints, never weaken these. Plans and final reviews record
+compliance. Amendments require rationale, affected-artifact review, Carlos's approval and semantic
+versioning: MAJOR for incompatible/removal changes, MINOR for expanded governance, PATCH for
+clarifications. Violations require correction or an approved time-bounded feature exception.
+Amendment impact/history belongs in decisions/evidence, not temporary embedded reports.
 
-Amendments require a written rationale, affected-artifact review, explicit approval from Carlos,
-and a semantic version change: MAJOR for removed or incompatible principles, MINOR for new or
-materially expanded governance, and PATCH for clarifications. Every plan and final review MUST
-include a constitution compliance check. Violations require correction or an explicitly approved,
-time-bounded exception recorded in the active feature.
-
-**Version**: 1.1.0 | **Ratified**: 2026-09-25 | **Last Amended**: 2026-09-25
+**Version**: 3.0.0 | **Ratified**: 2026-09-25 | **Last Amended**: 2026-10-19

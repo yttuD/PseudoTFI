@@ -1,4 +1,4 @@
-import { IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsBoolean, IsInt, IsNotEmpty, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateUnidadDto {
@@ -50,4 +50,22 @@ export class CreateUnidadDto {
   @IsOptional()
   @IsString()
   instagram?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(10)
+  @IsString({ each: true })
+  fotos?: string[];
+
+  @IsOptional()
+  @IsObject()
+  ubicacion_aprox?: { lat: number; lng: number };
+
+  @IsOptional()
+  @IsObject()
+  ubicacion_exacta?: { lat: number; lng: number };
+
+  @IsOptional()
+  @IsString()
+  direccion_texto?: string | null;
 }

@@ -1,0 +1,9 @@
+node_modules/
+.next/
+.next-*/
+dist/
+out/
+coverage/
+playwright-report/
+test-results/
+android/

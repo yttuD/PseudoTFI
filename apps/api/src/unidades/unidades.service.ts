@@ -25,18 +25,12 @@ export class UnidadesService {
     let { titulo_es, descripcion_es, titulo_en, titulo_pt, descripcion_en, descripcion_pt, auto_traducir } = createDto;
 
     if (auto_traducir !== false) {
-      if (titulo_es && !titulo_en) {
-        titulo_en = await this.traduccionService.traducir(titulo_es, 'en');
-      }
-      if (titulo_es && !titulo_pt) {
-        titulo_pt = await this.traduccionService.traducir(titulo_es, 'pt');
-      }
-      if (descripcion_es && !descripcion_en) {
-        descripcion_en = await this.traduccionService.traducir(descripcion_es, 'en');
-      }
-      if (descripcion_es && !descripcion_pt) {
-        descripcion_pt = await this.traduccionService.traducir(descripcion_es, 'pt');
-      }
+      [titulo_en, titulo_pt, descripcion_en, descripcion_pt] = await Promise.all([
+        titulo_es && !titulo_en ? this.traduccionService.traducir(titulo_es, 'en') : titulo_en,
+        titulo_es && !titulo_pt ? this.traduccionService.traducir(titulo_es, 'pt') : titulo_pt,
+        descripcion_es && !descripcion_en ? this.traduccionService.traducir(descripcion_es, 'en') : descripcion_en,
+        descripcion_es && !descripcion_pt ? this.traduccionService.traducir(descripcion_es, 'pt') : descripcion_pt,
+      ]);
     }
 
     const supabase = this.supabaseService.getClient(token);
@@ -47,11 +41,15 @@ export class UnidadesService {
         categoria: createDto.categoria,
         zona_id: createDto.zona_id,
         grupo_id: createDto.grupo_id,
-        estado: UnidadEstado.Publicada,
+        estado: UnidadEstado.Borrador,
         titulo_es: createDto.titulo_es,
         descripcion_es: createDto.descripcion_es,
         whatsapp: createDto.whatsapp,
         instagram: createDto.instagram,
+        fotos: createDto.fotos || [],
+        ubicacion_aprox: createDto.ubicacion_aprox,
+        ubicacion_exacta: createDto.ubicacion_exacta,
+        direccion_texto: createDto.direccion_texto,
         titulo_en,
         titulo_pt,
         descripcion_en,
@@ -139,26 +137,27 @@ export class UnidadesService {
       throw new NotFoundException('Unidad no encontrada');
     }
 
-    return data;
+    return {
+      ...data,
+      modalidades_precio: (data.modalidades_precio || []).filter((m: any) => !m.deleted_at),
+    };
   }
 
   async update(id: string, updateDto: UpdateUnidadDto, token: string, workspaceId?: string) {
     const finalUpdateDto = { ...updateDto };
 
     if (finalUpdateDto.auto_traducir !== false) {
-      if (finalUpdateDto.titulo_es && !finalUpdateDto.titulo_en) {
-        finalUpdateDto.titulo_en = await this.traduccionService.traducir(finalUpdateDto.titulo_es, 'en');
-      }
-      if (finalUpdateDto.titulo_es && !finalUpdateDto.titulo_pt) {
-        finalUpdateDto.titulo_pt = await this.traduccionService.traducir(finalUpdateDto.titulo_es, 'pt');
-      }
-
-      if (finalUpdateDto.descripcion_es && !finalUpdateDto.descripcion_en) {
-        finalUpdateDto.descripcion_en = await this.traduccionService.traducir(finalUpdateDto.descripcion_es, 'en');
-      }
-      if (finalUpdateDto.descripcion_es && !finalUpdateDto.descripcion_pt) {
-        finalUpdateDto.descripcion_pt = await this.traduccionService.traducir(finalUpdateDto.descripcion_es, 'pt');
-      }
+      [finalUpdateDto.titulo_en, finalUpdateDto.titulo_pt,
+        finalUpdateDto.descripcion_en, finalUpdateDto.descripcion_pt] = await Promise.all([
+        finalUpdateDto.titulo_es && !finalUpdateDto.titulo_en
+          ? this.traduccionService.traducir(finalUpdateDto.titulo_es, 'en') : finalUpdateDto.titulo_en,
+        finalUpdateDto.titulo_es && !finalUpdateDto.titulo_pt
+          ? this.traduccionService.traducir(finalUpdateDto.titulo_es, 'pt') : finalUpdateDto.titulo_pt,
+        finalUpdateDto.descripcion_es && !finalUpdateDto.descripcion_en
+          ? this.traduccionService.traducir(finalUpdateDto.descripcion_es, 'en') : finalUpdateDto.descripcion_en,
+        finalUpdateDto.descripcion_es && !finalUpdateDto.descripcion_pt
+          ? this.traduccionService.traducir(finalUpdateDto.descripcion_es, 'pt') : finalUpdateDto.descripcion_pt,
+      ]);
     }
     delete (finalUpdateDto as any).auto_traducir;
 
@@ -276,6 +275,16 @@ export class UnidadesService {
   async remove(id: string, token: string) {
     const supabase = this.supabaseService.getClient(token);
 
+    const { data: activeRentals, error: rentalsError } = await supabase
+      .from('alquileres')
+      .select('id')
+      .eq('unidad_id', id)
+      .eq('estado', 'activo')
+      .is('deleted_at', null)
+      .limit(1);
+    if (rentalsError) throw new UnprocessableEntityException('No se pudo verificar si la unidad tiene alquileres activos');
+    if (activeRentals?.length) throw new UnprocessableEntityException('La unidad tiene alquileres activos y no se puede eliminar');
+    
     // Borrado lógico atómico vía RPC archive_unidad
     const { data, error } = await supabase.rpc('archive_unidad', {
       p_unidad_id: id,

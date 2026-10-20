@@ -1,0 +1,156 @@
+{
+  "trackingVersion": "2.0.0-reconciled",
+  "reconciledAt": "2026-10-08T22:04:06.376Z",
+  "attempts": [
+    {
+      "attempt": "probe-initial",
+      "testFile": "apps/web/e2e/beta-probe.spec.ts",
+      "timestamp": "1791434382116",
+      "account": {
+        "email": "test_gestor_1791434382116@example.com",
+        "rol": "gestor",
+        "authResidual": true,
+        "note": "Creado durante verificación de registro de la beta; no borrable sin privilegios service_role"
+      },
+      "dataRecords": {
+        "grupos": [],
+        "unidades": []
+      }
+    },
+    {
+      "attempt": "suite-attempt-1",
+      "testFile": "apps/web/e2e/beta-remote-n01-suite.spec.ts",
+      "batchId": "b008_1791436199542",
+      "account": {
+        "email": "b008_1791436199542_ga@example.com",
+        "rol": "gestor",
+        "authResidual": true,
+        "note": "Registro enviado; interrumpido por redirect previo a creación de entidades"
+      },
+      "dataRecords": {
+        "grupos": [],
+        "unidades": []
+      }
+    },
+    {
+      "attempt": "suite-attempt-2-main",
+      "testFile": "apps/web/e2e/beta-remote-n01-suite.spec.ts",
+      "batchId": "b008_1791436312158",
+      "account": {
+        "email": "b008_1791436312158_ga@example.com",
+        "id": "7e83511a-0172-4ef1-9e1c-2c7e3e3c8c20",
+        "rol": "gestor",
+        "authResidual": true,
+        "note": "Cuenta autenticada real con sesión Supabase; residuo de Auth pendiente de purga administrativa"
+      },
+      "dataRecords": {
+        "grupos": [
+          {
+            "id": "c493f205-adeb-4599-bc3e-f3496e8c8381",
+            "nombre": "Grupo_Archivar_b008_1791436312158",
+            "status": "archivado",
+            "metodo": "DELETE /grupos/:id (archive_grupo RPC)",
+            "verificadoUI": true
+          },
+          {
+            "id": "b691c4d5-5685-4071-b520-d8e08987f37d",
+            "nombre": "Grupo_Paginacion_b008_1791436312158",
+            "status": "eliminado",
+            "metodo": "DELETE /grupos/:id",
+            "verificadoUI": true
+          }
+        ],
+        "unidades": []
+      }
+    },
+    {
+      "attempt": "suite-b008_1791497007632",
+      "testFile": "apps/web/e2e/beta-remote-n01-suite.spec.ts",
+      "batchId": "b008_1791497007632",
+      "timestamp": "2026-10-08T22:03:27.632Z",
+      "accounts": {
+        "gestorA": {
+          "email": "b008_1791497007632_ga@example.com",
+          "id": "b24659ce-9268-4831-9989-a4fb759e047a",
+          "authResidual": true,
+          "status": "creado_confirmado",
+          "confirmedAt": "2026-10-08T22:03:43.087Z"
+        }
+      },
+      "dataRecords": {
+        "grupos": [
+          {
+            "id": "2a5b8b2c-72da-4c43-84b3-029d80c9e4cc",
+            "nombre": "Grupo_Archivar_b008_1791497007632",
+            "status": "archivado_logico",
+            "owner": "Gestor A",
+            "verifiedArchived": true
+          },
+          {
+            "id": "5debeba4-0783-4424-9d7e-5231527497bf",
+            "nombre": "Grupo_Paginacion_b008_1791497007632",
+            "status": "archivado_logico",
+            "owner": "Gestor A",
+            "verifiedArchived": true
+          }
+        ],
+        "unidades": [
+          {
+            "id": "afbd7d16-6eb8-4768-8c07-3563fb8eb55a",
+            "titulo": "Depto A_1_b008_1791497007632",
+            "status": "activo",
+            "owner": "Gestor A"
+          },
+          {
+            "id": "c56502e5-1a17-465c-a3b5-f294dad1a10a",
+            "titulo": "Depto A_2_b008_1791497007632",
+            "status": "activo",
+            "owner": "Gestor A"
+          },
+          {
+            "id": "6f16f044-f827-4a7a-9b49-151e02551b36",
+            "titulo": "Depto A_3_b008_1791497007632",
+            "status": "activo",
+            "owner": "Gestor A"
+          }
+        ],
+        "invitaciones": [],
+        "delegaciones": []
+      },
+      "cleaned": false,
+      "cleanupStatus": "CLEANUP_FAILED_WITH_ERRORS"
+    }
+  ],
+  "summary": {
+    "authAccountsCreated": [
+      "test_gestor_1791434382116@example.com",
+      "b008_1791436199542_ga@example.com",
+      "b008_1791436312158_ga@example.com",
+      "b008_1791497007632_ga@example.com"
+    ],
+    "authAccountsDeleted": 0,
+    "authAccountsResidual": [
+      "test_gestor_1791434382116@example.com",
+      "b008_1791436199542_ga@example.com",
+      "7e83511a-0172-4ef1-9e1c-2c7e3e3c8c20",
+      "b24659ce-9268-4831-9989-a4fb759e047a"
+    ],
+    "accountsPendingReconciliation": [],
+    "gruposActivosResidual": 0,
+    "gruposArchivados": [
+      "c493f205-adeb-4599-bc3e-f3496e8c8381",
+      "2a5b8b2c-72da-4c43-84b3-029d80c9e4cc",
+      "5debeba4-0783-4424-9d7e-5231527497bf"
+    ],
+    "gruposEliminados": [
+      "b691c4d5-5685-4071-b520-d8e08987f37d"
+    ],
+    "unidadesCreadas": 3,
+    "unidadesResidual": 3,
+    "unverifiedDataResiduals": 4,
+    "cleaned": false,
+    "cleanupStatus": "CLEANUP_FAILED_WITH_ERRORS",
+    "physicalAbsenceVerification": "PENDING_ADMIN_ACCESS",
+    "blockerNote": "El cliente de pruebas HTTP no posee la clave service_role para auth.admin.deleteUser(); las identidades de Auth persisten como residuo conocido."
+  }
+}

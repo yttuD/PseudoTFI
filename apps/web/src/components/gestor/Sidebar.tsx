@@ -19,6 +19,7 @@ import {
   BarChart3,
   Sun,
   Moon,
+  UserRound,
 } from 'lucide-react';
 import { AccessContext } from '@tfi/types';
 import {
@@ -133,6 +134,10 @@ export default function Sidebar({
 
         {/* Footer info in sidebar */}
         <div className="border-t border-border pt-3 flex flex-col gap-1">
+          <Link href={`/${locale}/cuenta`} title="Mi perfil" className="flex items-center gap-3 p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors text-xs font-mono min-h-[44px] min-w-[44px]">
+            <UserRound className="h-4 w-4 shrink-0" />
+            {open && <span>Mi perfil</span>}
+          </Link>
           {/* Theme Toggle Button */}
           <button
             type="button"

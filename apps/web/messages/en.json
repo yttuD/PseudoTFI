@@ -254,7 +254,18 @@
     "rule4": "Check-in and Check-out schedules must be coordinated in advance via WhatsApp.",
     "directContactDisclaimer": "When contacting, you will speak directly with the designated Property Manager without intermediaries.",
     "noPhotos": "No photos available",
-    "consultPrice": "Inquire for price"
+    "consultPrice": "Inquire for price",
+    "whatsappMessage": "Hello, I am interested in the unit '{titulo}' I saw listed on Rendo.",
+    "exactAddressLabel": "Address",
+    "noExactAddress": "No street address recorded",
+    "priceUnavailable": "Price unavailable",
+    "estimatedConversion": "Estimated conversion",
+    "contactUnavailable": "Contact not available for this unit.",
+    "loginToContact": "Log in to contact",
+    "detailUnavailableTitle": "Detail temporarily unavailable",
+    "detailUnavailableDesc": "Sample information will not be displayed while the service is down.",
+    "backToCatalog": "Back to catalog",
+    "loadingMap": "Initializing map..."
   },
   "GestorDashboard": {
     "terminalTitle": "TERMINAL::DASHBOARD",
@@ -356,8 +367,8 @@
     "managementTerminal": "Management Terminal",
     "quotaPlans": "Quota Plans",
     "languageTitle": "Language",
-    "currencyNote": "Prices in ARS. Direct billing without rental commissions.",
-    "betaCurrencyNote": "Test beta: payments and invoicing are disabled.",
+    "currencyNote": "Prices shown in USD. Automatic conversions are estimates based on dated BCRA rates.",
+    "betaCurrencyNote": "Beta: prices shown in USD; payments and invoicing are disabled.",
     "allRightsReserved": "All rights reserved.",
     "terms": "Terms of Service",
     "privacy": "Data Privacy (Act 25.326)",
@@ -388,5 +399,27 @@
     "cancel": "Cancel Invitation",
     "emptyTeam": "No collaborators in your team yet",
     "emptyInbox": "You have no pending invitations"
+  },
+  "Inventario": {
+    "titulo": "Inventory & Groups",
+    "subtitulo": "Centralized management of buildings, complexes, and operational units",
+    "modoLectura": "Read-Only Mode",
+    "nuevaUnidad": "New Unit",
+    "crearGrupo": "Create New Group",
+    "anadirUnidadAGrupo": "Add Unit to this Group",
+    "nuevaUnidadIndividual": "New Individual Unit",
+    "sinUnidadesEnPagina": "No units on this page",
+    "totalMostrado": "Showing {mostrado} of {total} authorized units across {grupos} groups",
+    "paginaAnterior": "Previous",
+    "paginaSiguiente": "Next",
+    "paginaInfo": "Page {page} of {totalPages}",
+    "paginaFueraDeRango": "Page out of range ({page} of {totalPages})",
+    "irAPrimeraPagina": "Go to first page",
+    "errorCargaTitulo": "Inventory loading error",
+    "errorCargaMensaje": "Could not retrieve operational units. Please check connection or try again.",
+    "reintentar": "Retry",
+    "vacioTitulo": "Empty inventory",
+    "vacioDescripcion": "There are no registered units in your accessible workspace.",
+    "registrarUnidad": "Register unit"
   }
 }

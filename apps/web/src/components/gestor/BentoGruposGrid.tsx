@@ -17,6 +17,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { GrupoFormModal } from '@/components/gestor/GrupoFormModal';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useTranslations } from 'next-intl';
 
 export interface UnidadItem {
   id: string;
@@ -39,6 +40,21 @@ export interface GrupoItem {
   created_at?: string;
 }
 
+export interface BentoGruposGridProps {
+  unidades: UnidadItem[];
+  grupos: GrupoItem[];
+  locale: string;
+  token: string;
+  isReadOnly?: boolean;
+  canCreateGrupo?: boolean;
+  canCreateUnidad?: boolean;
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+  };
+}
+
 const ESTADO_STYLES: Record<string, string> = {
   borrador:           'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border-transparent font-mono uppercase text-[10px]',
   publicada:          'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200/50 font-mono uppercase text-[10px]',
@@ -56,22 +72,20 @@ export function BentoGruposGrid({
   locale,
   token,
   isReadOnly = false,
-}: {
-  unidades: UnidadItem[];
-  grupos: GrupoItem[];
-  locale: string;
-  token: string;
-  isReadOnly?: boolean;
-}) {
+  canCreateGrupo = false,
+  canCreateUnidad = false,
+  pagination,
+}: BentoGruposGridProps) {
+  const t = useTranslations('Inventario');
   const [viewMode, setViewMode] = useState<'bento' | 'table'>('bento');
 
-  // Mapear unidades a sus respectivos grupos
+  // Mapear unidades a sus respectivos grupos en esta página
   const gruposConUnidades = grupos.map((g) => ({
     ...g,
     unidades: unidades.filter((u) => u.grupo_id === g.id),
   }));
 
-  // Identificar unidades sin grupo o con grupo inexistente
+  // Identificar unidades sin grupo o con grupo inexistente en esta página
   const grupoIdsConocidos = new Set(grupos.map((g) => g.id));
   const unidadesSinGrupo = unidades.filter((u) => !u.grupo_id || !grupoIdsConocidos.has(u.grupo_id));
 
@@ -87,13 +101,21 @@ export function BentoGruposGrid({
     return null;
   };
 
+  const totalAutorizado = pagination ? pagination.total : unidades.length;
+  const currentPage = pagination?.page ?? 1;
+  const currentLimit = pagination?.limit ?? 12;
+  const totalPages = pagination ? Math.max(1, Math.ceil(pagination.total / currentLimit)) : 1;
+  const isOutOfRange = pagination ? currentPage > totalPages : false;
+  const hasPrev = currentPage > 1 && !isOutOfRange;
+  const hasNext = pagination ? currentPage < totalPages : false;
+
   return (
     <div className="space-y-6">
       {/* Barra superior de controles de vista */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border/60 pb-4">
         <div className="flex items-center gap-3">
           <span className="font-mono text-xs uppercase text-muted-foreground tracking-wider">
-            Total: <strong>{unidades.length}</strong> {unidades.length === 1 ? 'unidad' : 'unidades'} en <strong>{grupos.length}</strong> {grupos.length === 1 ? 'grupo' : 'grupos'}
+            {t('totalMostrado', { mostrado: unidades.length, total: totalAutorizado, grupos: grupos.length })}
           </span>
         </div>
 
@@ -125,13 +147,13 @@ export function BentoGruposGrid({
             </button>
           </div>
 
-          {!isReadOnly && (
+          {canCreateUnidad && (
             <Link
               href={`/${locale}/mis-unidades/nueva`}
               className={buttonVariants({ size: 'sm', className: 'font-mono uppercase text-xs min-h-[44px] min-w-[44px] inline-flex items-center justify-center' })}
             >
               <Plus className="w-3.5 h-3.5 mr-1.5" />
-              Nueva Unidad
+              {t('nuevaUnidad')}
             </Link>
           )}
         </div>
@@ -176,7 +198,7 @@ export function BentoGruposGrid({
                   <div className="py-8 px-4 text-center rounded-xl border border-dashed border-border/60 bg-muted/10 my-auto">
                     <Home className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
                     <p className="text-xs text-muted-foreground font-mono">
-                      Sin unidades asignadas a este grupo aún
+                      {t('sinUnidadesEnPagina')}
                     </p>
                   </div>
                 ) : (
@@ -267,14 +289,14 @@ export function BentoGruposGrid({
                 )}
 
                 {/* Botón rápido para añadir unidad a este grupo */}
-                {!isReadOnly && (
+                {canCreateUnidad && (
                   <div className="pt-2">
                     <Link
                       href={`/${locale}/mis-unidades/nueva?grupo_id=${grupo.id}`}
                       className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary text-xs font-semibold transition-colors min-h-[44px]"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      Añadir Unidad a este Grupo
+                      {t('anadirUnidadAGrupo')}
                     </Link>
                   </div>
                 )}
@@ -309,7 +331,7 @@ export function BentoGruposGrid({
               {unidadesSinGrupo.length === 0 ? (
                 <div className="py-8 px-4 text-center rounded-xl border border-dashed border-border/60 bg-muted/10 my-auto">
                   <p className="text-xs text-muted-foreground font-mono">
-                    Todas las unidades están organizadas en grupos.
+                    {t('sinUnidadesEnPagina')}
                   </p>
                 </div>
               ) : (
@@ -394,14 +416,14 @@ export function BentoGruposGrid({
                 </div>
               )}
 
-              {!isReadOnly && (
+              {canCreateUnidad && (
                 <div className="pt-2">
                   <Link
                     href={`/${locale}/mis-unidades/nueva`}
                     className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-dashed border-border/80 hover:border-foreground/40 bg-muted/20 hover:bg-muted/40 text-foreground text-xs font-semibold transition-colors min-h-[44px]"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    Nueva Unidad Individual
+                    {t('nuevaUnidadIndividual')}
                   </Link>
                 </div>
               )}
@@ -409,13 +431,13 @@ export function BentoGruposGrid({
           </Card>
 
           {/* Tarjeta interactiva final: "+ Crear Nuevo Grupo / Edificio" */}
-          {!isReadOnly && (
+          {canCreateGrupo && (
             <div className="flex flex-col justify-center items-center p-8 rounded-2xl border-2 border-dashed border-border/80 hover:border-primary/60 bg-muted/10 hover:bg-primary/5 transition-all text-center min-h-[300px]">
               <div className="p-4 rounded-2xl bg-primary/10 text-primary mb-3">
                 <Building2 className="w-8 h-8" />
               </div>
               <h3 className="font-bold text-base text-foreground mb-1">
-                Crear Nuevo Grupo / Edificio
+                {t('crearGrupo')}
               </h3>
               <p className="text-xs text-muted-foreground max-w-xs mb-5">
                 Organiza complejos de cabañas, pisos en un edificio o módulos de locales comerciales en un solo contenedor.
@@ -425,7 +447,7 @@ export function BentoGruposGrid({
                 trigger={
                   <Button className="font-mono text-xs uppercase tracking-wider min-h-[44px] min-w-[44px]">
                     <Plus className="w-4 h-4 mr-2" />
-                    Crear Nuevo Grupo
+                    {t('crearGrupo')}
                   </Button>
                 }
               />
@@ -433,71 +455,153 @@ export function BentoGruposGrid({
           )}
         </div>
       ) : (
-        /* VISTA 2: TABLA CLÁSICA ANALÍTICA DENSE */
+        /* VISTA 2: TABLA CLÁSICA ANALÍTICA DENSE CON SCROLL ACCESIBLE */
         <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead className="w-[100px] font-mono text-xs uppercase">ID Ref</TableHead>
-                <TableHead className="font-mono text-xs uppercase">Título</TableHead>
-                <TableHead className="font-mono text-xs uppercase">Grupo / Edificio</TableHead>
-                <TableHead className="font-mono text-xs uppercase">Categoría</TableHead>
-                <TableHead className="font-mono text-xs uppercase">Estado</TableHead>
-                <TableHead className="text-right font-mono text-xs uppercase">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {unidades.map((unidad) => {
-                const grupoNombre = grupos.find((g) => g.id === unidad.grupo_id)?.nombre || 'Sin Grupo';
-                const catName = typeof unidad.categoria === 'string' ? unidad.categoria : (unidad.categoria as { nombre?: string })?.nombre;
+          <div
+            className="overflow-x-auto w-full focus-visible:ring-2 focus-visible:ring-primary/40 focus:outline-hidden"
+            tabIndex={0}
+            role="region"
+            aria-label="Tabla de inventario con desplazamiento horizontal"
+          >
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="w-[100px] font-mono text-xs uppercase">ID Ref</TableHead>
+                  <TableHead className="font-mono text-xs uppercase">Título</TableHead>
+                  <TableHead className="font-mono text-xs uppercase">Grupo / Edificio</TableHead>
+                  <TableHead className="font-mono text-xs uppercase">Categoría</TableHead>
+                  <TableHead className="font-mono text-xs uppercase">Estado</TableHead>
+                  <TableHead className="text-right font-mono text-xs uppercase">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {unidades.map((unidad) => {
+                  const grupoNombre = grupos.find((g) => g.id === unidad.grupo_id)?.nombre || 'Sin Grupo';
+                  const catName = typeof unidad.categoria === 'string' ? unidad.categoria : (unidad.categoria as { nombre?: string })?.nombre;
 
-                return (
-                  <TableRow key={unidad.id}>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {unidad.id.substring(0, 8)}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      <div>
-                        <span>{unidad.titulo_es || 'Sin título'}</span>
-                        {(unidad.estado === 'en_revision' || unidad.estado === 'suspendida') && (
-                          <div className="mt-1.5 p-2 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200 text-[11px] flex items-start gap-1.5">
-                            <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-600 mt-0.5" />
-                            <span>
-                              <strong>{unidad.estado === 'en_revision' ? 'En Revisión:' : 'Suspendida:'}</strong> Superó el umbral automático (&gt;50 denuncias).
-                            </span>
-                          </div>
+                  return (
+                    <TableRow key={unidad.id}>
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        {unidad.id.substring(0, 8)}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        <div>
+                          <span>{unidad.titulo_es || 'Sin título'}</span>
+                          {(unidad.estado === 'en_revision' || unidad.estado === 'suspendida') && (
+                            <div className="mt-1.5 p-2 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200 text-[11px] flex items-start gap-1.5">
+                              <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-600 mt-0.5" />
+                              <span>
+                                <strong>{unidad.estado === 'en_revision' ? 'En Revisión:' : 'Suspendida:'}</strong> Superó el umbral automático (&gt;50 denuncias).
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm font-mono text-muted-foreground">
+                        {grupoNombre}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground capitalize">
+                        {catName || '—'}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={ESTADO_STYLES[unidad.estado] || ESTADO_STYLES.borrador}>
+                          {unidad.estado.replace(/_/g, ' ')}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {!isReadOnly ? (
+                          <Link
+                            href={`/${locale}/mis-unidades/${unidad.id}/editar`}
+                            className={buttonVariants({ variant: 'outline', size: 'sm', className: 'min-h-[44px] min-w-[44px] inline-flex items-center justify-center' })}
+                          >
+                            Editar
+                          </Link>
+                        ) : (
+                          <span className="text-xs font-mono text-muted-foreground">Solo lectura</span>
                         )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm font-mono text-muted-foreground">
-                      {grupoNombre}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground capitalize">
-                      {catName || '—'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={ESTADO_STYLES[unidad.estado] || ESTADO_STYLES.borrador}>
-                        {unidad.estado.replace(/_/g, ' ')}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {!isReadOnly ? (
-                        <Link
-                          href={`/${locale}/mis-unidades/${unidad.id}/editar`}
-                          className={buttonVariants({ variant: 'outline', size: 'sm', className: 'min-h-[44px] min-w-[44px] inline-flex items-center justify-center' })}
-                        >
-                          Editar
-                        </Link>
-                      ) : (
-                        <span className="text-xs font-mono text-muted-foreground">Solo lectura</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         </div>
+      )}
+
+      {/* Control accesible de paginación */}
+      {pagination && (totalPages > 1 || isOutOfRange) && (
+        <nav
+          aria-label="Paginación de inventario"
+          className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-border/60"
+        >
+          <span className="text-xs font-mono text-muted-foreground">
+            {isOutOfRange
+              ? t('paginaFueraDeRango', { page: currentPage, totalPages })
+              : t('paginaInfo', { page: currentPage, totalPages })}{' '}
+            ({totalAutorizado} unidades autorizadas)
+          </span>
+          <div className="flex items-center gap-2">
+            {isOutOfRange ? (
+              <Link
+                href={`/${locale}/mis-unidades?page=1&limit=${currentLimit}`}
+                className={buttonVariants({
+                  variant: 'default',
+                  size: 'sm',
+                  className: 'min-h-[44px] min-w-[44px] font-mono text-xs uppercase',
+                })}
+              >
+                {t('irAPrimeraPagina')}
+              </Link>
+            ) : (
+              <>
+                {hasPrev ? (
+                  <Link
+                    href={`/${locale}/mis-unidades?page=${currentPage - 1}&limit=${currentLimit}`}
+                    className={buttonVariants({
+                      variant: 'outline',
+                      size: 'sm',
+                      className: 'min-h-[44px] min-w-[44px] font-mono text-xs uppercase',
+                    })}
+                  >
+                    {t('paginaAnterior')}
+                  </Link>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled
+                    className="min-h-[44px] min-w-[44px] font-mono text-xs uppercase opacity-50 cursor-not-allowed"
+                  >
+                    {t('paginaAnterior')}
+                  </Button>
+                )}
+
+                {hasNext ? (
+                  <Link
+                    href={`/${locale}/mis-unidades?page=${currentPage + 1}&limit=${currentLimit}`}
+                    className={buttonVariants({
+                      variant: 'outline',
+                      size: 'sm',
+                      className: 'min-h-[44px] min-w-[44px] font-mono text-xs uppercase',
+                    })}
+                  >
+                    {t('paginaSiguiente')}
+                  </Link>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled
+                    className="min-h-[44px] min-w-[44px] font-mono text-xs uppercase opacity-50 cursor-not-allowed"
+                  >
+                    {t('paginaSiguiente')}
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
+        </nav>
       )}
     </div>
   );

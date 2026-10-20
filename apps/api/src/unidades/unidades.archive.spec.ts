@@ -10,11 +10,53 @@ interface RpcResult<T = unknown> {
   error: { message?: string; code?: string } | null;
 }
 
-function buildTestService(rpcImpl: (fn: string, args: Record<string, unknown>) => Promise<RpcResult>) {
-  const mockRpc = vi.fn().mockImplementation(rpcImpl);
+interface RentalsQueryResult {
+  data: Array<{ id: string }> | null;
+  error: { message?: string; code?: string } | null;
+}
+
+interface TestServiceOptions {
+  rpcImpl?: (fn: string, args: Record<string, unknown>) => Promise<RpcResult>;
+  rentalsImpl?: () => Promise<RentalsQueryResult>;
+}
+
+function buildTestService(
+  options: TestServiceOptions | ((fn: string, args: Record<string, unknown>) => Promise<RpcResult>),
+) {
+  const normalizedOptions: TestServiceOptions =
+    typeof options === 'function' ? { rpcImpl: options } : options;
+
+  const mockRpc = vi.fn().mockImplementation(
+    normalizedOptions.rpcImpl ?? (async () => ({ data: null, error: null })),
+  );
+
+  const defaultRentalsImpl = async (): Promise<RentalsQueryResult> => ({
+    data: [],
+    error: null,
+  });
+
+  const rentalsHandler = normalizedOptions.rentalsImpl ?? defaultRentalsImpl;
+
+  const createRentalsChain = () => {
+    const chain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockImplementation(rentalsHandler),
+    };
+    return chain;
+  };
+
+  const mockFrom = vi.fn().mockImplementation((table: string) => {
+    if (table === 'alquileres') {
+      return createRentalsChain();
+    }
+    throw new Error(`Tabla no mockeada: ${table}`);
+  });
 
   const mockSupabaseClient = {
     rpc: mockRpc,
+    from: mockFrom,
   } as unknown as SupabaseClient;
 
   const mockSupabaseService: Pick<SupabaseService, 'getClient'> = {
@@ -35,7 +77,7 @@ function buildTestService(rpcImpl: (fn: string, args: Record<string, unknown>) =
     mockTraduccionService as unknown as TraduccionService,
   );
 
-  return { service, mockRpc };
+  return { service, mockRpc, mockFrom };
 }
 
 describe('B009: UnidadesService.remove vía RPC archive_unidad', () => {
@@ -61,7 +103,7 @@ describe('B009: UnidadesService.remove vía RPC archive_unidad', () => {
     });
   });
 
-  it('lanza UnprocessableEntityException (422) cuando la unidad tiene alquileres activos', async () => {
+  it('lanza UnprocessableEntityException (422) cuando la unidad tiene alquileres activos en la RPC', async () => {
     const { service, mockRpc } = buildTestService(async () => ({
       data: null,
       error: {
@@ -107,5 +149,35 @@ describe('B009: UnidadesService.remove vía RPC archive_unidad', () => {
       status: 404,
       message: 'Unidad no encontrada',
     });
+  });
+
+  it('lanza UnprocessableEntityException (422) cuando la consulta previa detecta alquileres activos sin invocar la RPC', async () => {
+    const { service, mockRpc } = buildTestService({
+      rentalsImpl: async () => ({
+        data: [{ id: 'rental-active-1' }],
+        error: null,
+      }),
+    });
+
+    await expect(service.remove('unit-123', 'mock-token')).rejects.toMatchObject({
+      status: 422,
+      message: 'La unidad tiene alquileres activos y no se puede eliminar',
+    });
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  it('lanza UnprocessableEntityException (422) cuando falla la consulta previa de alquileres sin invocar la RPC', async () => {
+    const { service, mockRpc } = buildTestService({
+      rentalsImpl: async () => ({
+        data: null,
+        error: { message: 'db error', code: '08006' },
+      }),
+    });
+
+    await expect(service.remove('unit-123', 'mock-token')).rejects.toMatchObject({
+      status: 422,
+      message: 'No se pudo verificar si la unidad tiene alquileres activos',
+    });
+    expect(mockRpc).not.toHaveBeenCalled();
   });
 });

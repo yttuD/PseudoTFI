@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { CardUnidad } from '@/components/marketplace/CardUnidad';
 import { MarketplaceFiltrosSidebar } from '@/components/marketplace/MarketplaceFiltrosSidebar';
+import type { ExchangeRates } from '@/lib/public-price';
 
 export default async function UnidadesPage({
   params: { locale },
@@ -20,6 +21,7 @@ export default async function UnidadesPage({
   if (searchParams.precio_min) query.set('precio_min', searchParams.precio_min as string);
   if (searchParams.precio_max) query.set('precio_max', searchParams.precio_max as string);
   if (searchParams.q) query.set('q', searchParams.q as string);
+  query.set('locale', locale);
 
   let unidades = [];
   let favIds = new Set<string>();
@@ -27,6 +29,7 @@ export default async function UnidadesPage({
   let token: string | undefined;
   let catalogError = false;
   let catalogFetched = false;
+  let exchangeRates: ExchangeRates | null = null;
   const releaseMode = process.env.NODE_ENV === 'production' || process.env.RENDO_BETA_MODE === 'true';
 
   try {
@@ -99,6 +102,17 @@ export default async function UnidadesPage({
     catalogError = !catalogFetched;
   }
 
+  if (locale === 'en' || locale === 'pt') {
+    try {
+      const ratesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/marketplace/cotizaciones`, {
+        cache: 'no-store', signal: AbortSignal.timeout(5500),
+      });
+      if (ratesResponse.ok) exchangeRates = await ratesResponse.json();
+    } catch {
+      exchangeRates = null;
+    }
+  }
+
   // Fallback si no hay unidades y no hay ningún filtro aplicado
   const hayFiltros = !!(
     searchParams.categoria ||
@@ -166,6 +180,7 @@ export default async function UnidadesPage({
                   isFavorito={favIds.has(u.id as string)}
                   isLoggedIn={isAuth}
                   token={token}
+                  exchangeRates={exchangeRates}
                 />
               ))}
             </div>

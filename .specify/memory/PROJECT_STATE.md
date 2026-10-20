@@ -2,13 +2,15 @@
 
 - Milestone actual: beta publicada, no cerrada; resolver observaciones con evidencia real.
 - Feature actual: specs/008-beta-observaciones-2026-10-02; alcance y estados en issues.md.
-- Estado: N01 abierto. Migración 20261008040000_unit_archive_rpc.sql aplicada exitosamente en Supabase remoto (maeiuaketocznpogmtic). Candidato API aislado (solo UnidadesService.remove modificado a archive_unidad RPC) publicado en Vercel (dpl_9PD8rFu5ZZRRTTZ5Gwa2e5ezkpXN), estado READY y aliaseado a https://rendo-beta-api.vercel.app. Web preservada sin redespliegue. Endpoints de producción verificados (/health/live=200, /health/ready=200, /unidades=401, web /es=200). Rollback a dpl_6EQBEFvG6JsUcPfJ9rFuTzcUswcm preservado.
-- Evidencia: `specs/008-beta-observaciones-2026-10-02/evidence/N01/unit-archive-release.md`; migration list y definiciones de pg_proc/grants en remoto validadas; unit tests en `unidades.archive.spec.ts` (4/4 passed); smoke tests HTTP en producción.
-- Marco vigente: constitución v2.1.1; Spec Kit sigue siendo fuente de verdad. Carlos y Claude/Juez tienen la palabra final.
-- Autorización vigente: Lote B009 ejecutado según especificación autorizada. N01 permanece ABIERTO para la posterior reanudación controlada de suites remotas.
-- Riesgos: Las 3 unidades residuales del intento interrumpido previo permanecen en DB remota hasta que se ejecute la suite de archivado/limpieza autorizada; paridad de historial no acredita por sí sola igualdad total del esquema.
-- Próximo: Revisión del RESULT_PACKET por Carlos y el Juez (Claude). Preparación de la suite remota de verificación de inventario y archivado. N01 ABIERTO.
-
+- Coordinación vigente: GitHub; rama de handoff `codex/github-handoff-2026-10-19`. Entrada AGENTS.md y docs/GITHUB_WORKFLOW.md. El chat ChatGPT implementa; Codex opera la máquina, verifica y despliega; Carlos tiene autoridad final. Pi/Antigravity inactivos.
+- Estado: N01 abierto; N02–N08 pendientes de aceptación integral. Servicio local recuperado (SHA256 8016ca91a43c68cb9a3ee543daaf2a41e2ef86ab4feebb5f5cf94ee67d579081); contiene WIP distinto del deployment B009. Subirlo no autoriza desplegarlo.
+- Evidencia histórica B009/recuperación: `specs/008-beta-observaciones-2026-10-02/evidence/N01/`; límites de publicación en docs/GITHUB_SYNC.md.
+- Marco vigente: constitución v3.0.0; Spec Kit conserva intención y trazabilidad. Revisión según riesgo con RESULT_PACKET compacto, sin repetir historial ni checks verdes con inputs vigentes.
+- Autorización previa B010: una ejecución N01, hasta dos Gestores/un Delegado temporales y archivado propio; sin tocar testers ni purgar Auth. Sin ejecución acreditada.
+- Riesgos: Las 3 unidades residuales del intento interrumpido previo permanecen en DB remota hasta la ejecución de la suite de archivado/limpieza autorizada.
+- Blocker externo: última comprobación 2026-10-13, Supabase NXDOMAIN y API readiness 503; no revalidado en esta sincronización. No iniciar registros mientras la dependencia no se restablezca.
+- Evidencia reciente: API local 34 suites/281 tests PASS; auditoría pública en docs/GITHUB_SYNC.md. Capturas/respaldos privados siguen locales; typecheck histórico no aprobado.
+- Próximo: usar el handoff GitHub para un PR acotado de N01 y comprobar disponibilidad con Codex. La suite B010 autorizada sigue sin ejecución acreditada; no lanzar agentes históricos.
 
 
 

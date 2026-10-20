@@ -10,7 +10,7 @@ No considerar corregido en beta hasta migración, despliegue y prueba con dos cu
 
 | ID | Severidad | Hallazgo y relación anterior | Causa/evidencia | Criterio de aceptación | Estado |
 | --- | --- | --- | --- | --- | --- |
-| N01 | Crítica | Un gestor ve unidades de otros gestores (captura 1). Nuevo. | La política permite leer publicaciones ajenas y `GET /unidades` no limitaba por `gestor_id`; al agrupar todo lo recibido, el panel mezclaba inventarios. | Dos gestores distintos: el inventario, grupos y recuentos muestran solo unidades propias; un delegado solo las de su alcance. El marketplace sigue público. Probar listado, paginación, detalle directo y escrituras. | N01a aceptado y publicado: filtro por workspace/alcance antes de paginar y count total correcto, 73 regresiones y 3 pruebas locales reales verdes; commit96b0b30, Vercel READY y alias/smoke comprobados. Ver evidence/N01/review.md y deploy.md. N01 completo sigue abierto por accesos directos, escrituras y UI de B007. |
+| N01 | Crítica | Un gestor ve unidades de otros gestores (captura 1). Nuevo. | La política permite leer publicaciones ajenas y `GET /unidades` no limitaba por `gestor_id`; al agrupar todo lo recibido, el panel mezclaba inventarios. En mutaciones, DELETE fallaba por RLS WITH CHECK (deleted_at IS NOT NULL denegado) y RETURNING clause. | Dos gestores distintos: el inventario, grupos y recuentos muestran solo unidades propias; un delegado solo las de su alcance. El marketplace sigue público. Probar listado, paginación, detalle directo y escrituras. | N01a aceptado y publicado (commit 96b0b30). Borrado lógico resuelto localmente vía RPC `archive_unidad` (20261008040000) con 7/7 casos validados. Harness de paginación corregido a `created_at DESC, id ASC` y preservación combinada de fallos. N01 permanece abierto hasta autorización de migración y verificación remota. |
 | N02 | Alta | Al editar no deja cambiar categoría, por ejemplo Casa a Cancha. Solapa con observaciones 20/27/32. | Captura del documento y formulario previo con selector controlado de forma inconsistente. | Persistencia correcta tras guardar y recargar, con campos específicos de categoría coherentes. | Selector Casa→Cancha comprobado con Playwright en desktop/mobile usando fixture sintética; falta guardar y recargar contra API real. |
 | N03 | Alta | La publicación muestra muchas tarifas y el editor ninguna (capturas 2 y 3). Amplía observación 26. | El editor recibía `modalidades_precio` pero inicializaba `modalidades`; el detalle mostraba todas las tarifas no eliminadas, incluso duplicadas. | Editor y publicación presentan el mismo conjunto activo; editar/eliminar una tarifa no crea duplicados y persiste tras recargar. | Dos tarifas activas verificadas visualmente en editor desktop/mobile con fixture sintética; la escritura distingue PATCH/POST/DELETE. Falta prueba end-to-end con datos reales y saneamiento de duplicados existentes. |
 | N04 | Media | En detalle aparece pin/mapa pero no la dirección para usuario autenticado (captura 4). Solapa con observación 24. | Campo de dirección no persistido/proyectado; la ubicación exacta no es texto de dirección. | Usuario autenticado ve dirección guardada; anónimo solo ubicación aproximada sin divulgar dirección privada. Si falta dirección, no inventarla. | Migración aplicada; proyección API probada con doble de base de datos y UI desktop/mobile con fixture sintética. Falta prueba de integración remota con usuario real. |
@@ -21,12 +21,28 @@ No considerar corregido en beta hasta migración, despliegue y prueba con dos cu
 
 ## Orden de resolución
 
+Hallazgo adicional B007a: UPDATE de grupo autorizado falla SQLSTATE42703 porque
+audit_operational_mutation accede a OLD.estado en tablas sin esa columna. Ambas
+migraciones 20261005010000 y 20261005020000 ya aplicadas; cambios API todavía sin
+desplegar. Mantener auditoría atómica/RLS, no desactivar triggers. Evidencia N01/audit-runtime.md.
+La comprobación PostgREST anónima tenía una sesión residual: corregir el test antes
+de aceptar ese criterio, sin inferir una filtración real a partir del fallo de prueba.
+
 1. Aislamiento N01, incluyendo cobertura con dos cuentas y paneles dependientes.
 2. Esquema N07 y diagnóstico de RLS N08; no desplegar una política permisiva de emergencia.
 3. Integridad N03/N02 y dirección N04; migración remota coordinada con el despliegue.
 4. Localización N05 y perfil N06; verificación visual separada desktop/mobile.
 
 ## Encargo preparado para Antigravity
+
+Actualización de N01 (2026-10-04): accesos/mutaciones guard+controller+services con
+Auth/PostgREST reales locales30/30 aceptados, auditoría/archivo SQL60/60, gruposunit13/13.
+Git d0cfeae/73fb1ae/55b8e19 subidos; ambas migraciones 20261005010000 y 20261005020000
+ya aplicadas; cambios API todavía sin desplegar.
+N01/group-archive-review.md detalla fuente y límites: NO listenerHTTP ni navegador.
+N01 completo abierto por validación HTTP/UI/visual real y publicación pertinente.
+La preparación de runtimeB007b NO está aprobada por la autoafirmación del ejecutor;
+Codex exige revisión y resultados ejecutables. Sin evidencia visual todavía.
 
 Usar Gemini 3.8 Flash en esfuerzo medio cuando `agy` vuelva a estar disponible.
 Tomar N02, N03, N04 y N05 como bloque, respetando los cambios locales presentes.

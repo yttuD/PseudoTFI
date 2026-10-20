@@ -12,6 +12,8 @@ import { FavoritoButton } from '@/components/marketplace/FavoritoButton';
 import { ReporteModal } from '@/components/marketplace/ReporteModal';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
+import { publicPrice, type ExchangeRates } from '@/lib/public-price';
+import { categoriaLabel } from '@/lib/categorias';
 import { AnimatedTabs, TabItem } from '@/components/ui/tabs';
 import {
   Lock,
@@ -65,6 +67,7 @@ export default async function UnidadDetailPage({
   let isFavorito = false;
   let detailUnavailable = false;
   let detailMissing = false;
+  let exchangeRates: ExchangeRates | null = null;
 
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/marketplace/unidades/${id}`, {
@@ -76,7 +79,7 @@ export default async function UnidadDetailPage({
       if (releaseMode) {
         detailMissing = res.status === 404;
         detailUnavailable = !detailMissing;
-      } else if (id.includes('a0000000-0000-0000-0000-000000000001')) {
+      } else if (id === 'a0000000-0000-0000-0000-000000000001') {
         unidad = {
           id: 'a0000000-0000-0000-0000-000000000001',
           titulo: 'Departamento 2 Ambientes Frente al Río',
@@ -89,8 +92,9 @@ export default async function UnidadDetailPage({
           ],
           ubicacion_aprox: { lat: -29.1445, lng: -59.2645 },
           ubicacion_exacta: isAuth ? { lat: -29.1445, lng: -59.2645 } : null,
+          direccion_texto: isAuth ? 'Av. Caá Guazú 450, Goya, Corrientes' : null,
           whatsapp: '+5493777123456',
-          modalidades_precio: [{ id: 'm1', precio: 45000, tipo_periodo: 'mensual' }],
+          modalidades_precio: [{ id: 'm1', precio: 45000, unidad_tiempo: 'mes' }],
         };
       } else {
         detailMissing = true;
@@ -116,7 +120,7 @@ export default async function UnidadDetailPage({
       console.warn('Failed to fetch optional favorite state', error);
     } else if (releaseMode) {
       detailUnavailable = true;
-    } else if (id.includes('a0000000-0000-0000-0000-000000000001')) {
+    } else if (id === 'a0000000-0000-0000-0000-000000000001') {
       unidad = {
         id: 'a0000000-0000-0000-0000-000000000001',
         titulo: 'Departamento 2 Ambientes Frente al Río',
@@ -129,8 +133,9 @@ export default async function UnidadDetailPage({
         ],
         ubicacion_aprox: { lat: -29.1445, lng: -59.2645 },
         ubicacion_exacta: isAuth ? { lat: -29.1445, lng: -59.2645 } : null,
+        direccion_texto: isAuth ? 'Av. Caá Guazú 450, Goya, Corrientes' : null,
         whatsapp: '+5493777123456',
-        modalidades_precio: [{ id: 'm1', precio: 45000, tipo_periodo: 'mensual' }],
+        modalidades_precio: [{ id: 'm1', precio: 45000, unidad_tiempo: 'mes' }],
       };
     } else {
       console.error("Failed to fetch unidad detail", error);
@@ -142,11 +147,22 @@ export default async function UnidadDetailPage({
   if (detailUnavailable || !unidad) {
     return (
       <div role="alert" className="container mx-auto my-12 max-w-2xl rounded-2xl border border-border bg-card px-6 py-12 text-center">
-        <h1 className="text-xl font-bold text-foreground">El detalle no está disponible temporalmente</h1>
-        <p className="mt-2 text-sm text-muted-foreground">No se mostrará información de ejemplo mientras el servicio esté caído.</p>
-        <Link href={`/${locale}/unidades`} className="mt-6 inline-flex min-h-11 items-center rounded-lg bg-primary px-5 text-primary-foreground">Volver al catálogo</Link>
+        <h1 className="text-xl font-bold text-foreground">{tDetail('detailUnavailableTitle')}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{tDetail('detailUnavailableDesc')}</p>
+        <Link href={`/${locale}/unidades`} className="mt-6 inline-flex min-h-11 items-center rounded-lg bg-primary px-5 text-primary-foreground">{tDetail('backToCatalog')}</Link>
       </div>
     );
+  }
+
+  if (locale === 'en' || locale === 'pt') {
+    try {
+      const ratesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/marketplace/cotizaciones`, {
+        cache: 'no-store', signal: AbortSignal.timeout(5500),
+      });
+      if (ratesResponse.ok) exchangeRates = await ratesResponse.json();
+    } catch {
+      exchangeRates = null;
+    }
   }
 
   const location = unidad.ubicacion_exacta || unidad.ubicacion_aprox || { lat: -29.1445, lng: -59.2645 };
@@ -181,7 +197,7 @@ export default async function UnidadDetailPage({
                       {key.replace(/_/g, ' ')}:
                     </span>
                     <span className="text-muted-foreground">
-                      {typeof val === 'boolean' ? (val ? 'Sí' : 'No') : String(val)}
+                      {typeof val === 'boolean' ? (val ? (locale === 'en' ? 'Yes' : locale === 'pt' ? 'Sim' : 'Sí') : (locale === 'en' ? 'No' : locale === 'pt' ? 'Não' : 'No')) : String(val)}
                     </span>
                   </div>
                 ))}
@@ -198,25 +214,28 @@ export default async function UnidadDetailPage({
         <div className="space-y-4 pt-2">
           {unidad.modalidades_precio?.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {unidad.modalidades_precio.map((m: { id: string; tipo_periodo: string; precio: number }) => (
+              {unidad.modalidades_precio.map((m: { id: string; unidad_tiempo: string; precio: number; precio_usd?: number | null; precio_brl?: number | null }) => {
+                const price = publicPrice(m, locale, exchangeRates);
+                return (
                 <div
                   key={m.id}
                   className="p-4 rounded-2xl border border-border/80 bg-surface/80 backdrop-blur-sm space-y-2"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-primary font-mono">
-                      {m.tipo_periodo === 'mensual' ? tDetail('monthlyRental') : tDetail('dailyRental')}
+                      {m.unidad_tiempo === 'mes' ? tDetail('monthlyRental') : m.unidad_tiempo === 'hora' ? tDetail('hourlyRental') : tDetail('dailyRental')}
                     </span>
                     <FileCheck className="h-4 w-4 text-secondary" />
                   </div>
                   <div className="font-black text-2xl md:text-3xl font-mono text-foreground">
-                    ${m.precio.toLocaleString()} <span className="text-xs font-normal text-muted-foreground">ARS</span>
+                    {price ? price.text : tDetail('priceUnavailable')}
                   </div>
+                  {price?.approximate && <p className="text-[11px] text-muted-foreground">{tDetail('estimatedConversion')} · BCRA {price.asOf}</p>}
                   <p className="text-[11px] text-muted-foreground">
                     {tDetail('directPaymentNote')}
                   </p>
                 </div>
-              ))}
+              );})}
             </div>
           ) : (
             <div className="p-6 text-center rounded-2xl bg-muted/40 text-xs text-muted-foreground">
@@ -290,7 +309,7 @@ export default async function UnidadDetailPage({
         <div className="absolute top-6 w-full">
           <div className="container mx-auto px-4 flex justify-between items-center">
             <Badge className="bg-background/90 text-foreground backdrop-blur-md px-4 py-1.5 shadow-glass border-none font-mono tracking-wide text-xs">
-              {unidad.zonas?.nombre} • {unidad.categoria}
+              {unidad.zonas?.nombre ? `${unidad.zonas.nombre} • ` : ''}{categoriaLabel(unidad.categoria)}
             </Badge>
             <div className="flex gap-2">
               <FavoritoButton
@@ -332,7 +351,7 @@ export default async function UnidadDetailPage({
 
             <hr className="border-border/60" />
 
-            {/* Map Section */}
+            {/* Map & Address Section */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-bold flex items-center gap-2 text-foreground">
@@ -340,6 +359,27 @@ export default async function UnidadDetailPage({
                   <span>{tDetail('osmTitle')}</span>
                 </h3>
               </div>
+
+              {isAuth ? (
+                unidad.direccion_texto ? (
+                  <div data-testid="exact-address" className="flex items-center gap-2.5 text-sm text-foreground bg-surface/80 p-3.5 rounded-2xl border border-border/80 shadow-xs">
+                    <MapPin className="h-4 w-4 text-primary shrink-0" />
+                    <span className="font-semibold text-xs font-mono uppercase text-muted-foreground">{tDetail('exactAddressLabel')}:</span>
+                    <span className="text-sm font-medium">{unidad.direccion_texto}</span>
+                  </div>
+                ) : (
+                  <div data-testid="no-exact-address" className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 p-3 rounded-xl border border-border/40">
+                    <MapPin className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
+                    <span className="italic">{tDetail('noExactAddress')}</span>
+                  </div>
+                )
+              ) : (
+                <div data-testid="approximate-location-note" className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <MapPin className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
+                  <span>{tDetail('approximateLocation')}</span>
+                </div>
+              )}
+
               <div className="border border-border/80 rounded-2xl overflow-hidden h-80 relative shadow-sm">
                 <Map
                   location={location}
@@ -352,7 +392,7 @@ export default async function UnidadDetailPage({
                     <div className="bg-surface/95 p-6 rounded-2xl shadow-glass flex flex-col items-center text-center gap-3 max-w-sm border border-border mx-4">
                       <Lock className="w-7 h-7 text-primary" />
                       <p className="text-xs sm:text-sm font-medium text-foreground">
-                        Ubicación aproximada. Inicia sesión para ver la ubicación exacta.
+                        {tDetail('loginToViewLocation')}
                       </p>
                       <Link
                         href={`/${locale}/auth/login?portal=marketplace&next=/${locale}/unidades/${id}`}
@@ -377,17 +417,19 @@ export default async function UnidadDetailPage({
 
               {unidad.modalidades_precio?.length > 0 ? (
                 <ul className="space-y-4 mb-8">
-                  {unidad.modalidades_precio.map((m: { id: string; unidad_tiempo: string; precio: number }) => (
+                  {unidad.modalidades_precio.map((m: { id: string; unidad_tiempo: string; precio: number; precio_usd?: number | null; precio_brl?: number | null }) => {
+                    const price = publicPrice(m, locale, exchangeRates);
+                    return (
                     <li key={m.id} className="flex flex-col gap-1 pb-4 border-b border-border/50 last:border-0 last:pb-0">
                       <span className="text-xs text-muted-foreground uppercase tracking-widest font-mono">
                         {m.unidad_tiempo === 'mes' ? tDetail('monthlyRental') : m.unidad_tiempo === 'hora' ? tDetail('hourlyRental') : tDetail('dailyRental')}
                       </span>
                       <span className="font-black text-2xl md:text-3xl font-mono text-foreground">
-                        <span className="text-lg text-muted-foreground mr-1">$</span>
-                        {m.precio.toLocaleString()}
+                        {price ? price.text : tDetail('priceUnavailable')}
                       </span>
+                      {price?.approximate && <span className="text-[11px] text-muted-foreground">{tDetail('estimatedConversion')} · BCRA {price.asOf}</span>}
                     </li>
-                  ))}
+                    );})}
                 </ul>
               ) : (
                 <div className="py-6 text-center bg-muted/40 rounded-2xl mb-8">
@@ -406,11 +448,11 @@ export default async function UnidadDetailPage({
                     unidadId={id}
                   />
                 ) : isAuth ? (
-                  <p className="text-center text-sm text-muted-foreground">Contacto no disponible para esta unidad.</p>
+                  <p className="text-center text-sm text-muted-foreground">{tDetail('contactUnavailable')}</p>
                 ) : (
                   <Link href={`/${locale}/auth/login?portal=marketplace&next=/${locale}/unidades/${id}`}
                     className="flex min-h-11 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground">
-                    Iniciá sesión para contactar
+                    {tDetail('loginToContact')}
                   </Link>
                 )}
                 <p className="text-[11px] text-center text-muted-foreground font-medium px-2">

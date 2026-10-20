@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button';
 
 interface WhatsAppButtonProps {
@@ -9,9 +10,12 @@ interface WhatsAppButtonProps {
   titulo: string;
   unidadId?: string;
   className?: string;
+  text?: string;
+  mensaje?: string;
 }
 
-export function WhatsAppButton({ telefono, whatsapp, titulo, unidadId, className = '' }: WhatsAppButtonProps) {
+export function WhatsAppButton({ telefono, whatsapp, titulo, unidadId, className = '', text, mensaje }: WhatsAppButtonProps) {
+  const t = useTranslations('UnitDetail');
   const rawPhone = whatsapp || telefono;
   if (!rawPhone) return null;
 
@@ -26,9 +30,11 @@ export function WhatsAppButton({ telefono, whatsapp, titulo, unidadId, className
   // Remove plus sign for wa.me link
   cleanPhone = cleanPhone.replace('+', '');
 
-  const defaultMessage = `Hola, me interesa la unidad '${titulo}' que vi publicada en Rendo.`;
+  const defaultMessage = mensaje || t('whatsappMessage', { titulo: titulo || '' });
   const urlEncodedMessage = encodeURIComponent(defaultMessage);
   const whatsappUrl = `https://wa.me/${cleanPhone}?text=${urlEncodedMessage}`;
+
+  const buttonText = text || t('contactWhatsApp');
 
   const handleClick = () => {
     if (unidadId) {
@@ -49,7 +55,7 @@ export function WhatsAppButton({ telefono, whatsapp, titulo, unidadId, className
     >
       <InteractiveHoverButton
         variant="whatsapp"
-        text="Contactar por WhatsApp"
+        text={buttonText}
         className={`w-full h-14 text-sm justify-center rounded-2xl shadow-sm ${className}`}
       />
     </a>

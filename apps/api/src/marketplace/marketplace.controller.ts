@@ -4,6 +4,7 @@ import { BuscarUnidadesDto } from './dto/buscar-unidades.dto.js';
 import { SupabaseService } from '../supabase/supabase.service.js';
 import type { Request as ExpressRequest } from 'express';
 import { isReleaseRuntime } from '../config/release-readiness.js';
+import { getExchangeRates } from './exchange-rates.js';
 
 @Controller('marketplace')
 export class MarketplaceController {
@@ -55,6 +56,11 @@ export class MarketplaceController {
   @Get('zonas')
   getZonas() {
     return this.marketplaceService.getZonas();
+  }
+
+  @Get('cotizaciones')
+  getCotizaciones() {
+    return getExchangeRates();
   }
 
   private extractTokenFromHeader(request: ExpressRequest): string | undefined {

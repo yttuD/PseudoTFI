@@ -1,0 +1,14 @@
+{
+  "providers": {
+    "openai-codex": {
+      "models": [{
+        "id": "gpt-6.1-sol",
+        "name": "GPT-6.1 Sol — arquitecto Rendo",
+        "reasoning": true,
+        "input": ["text", "image"],
+        "contextWindow": 272000,
+        "maxTokens": 16384
+      }]
+    }
+  }
+}

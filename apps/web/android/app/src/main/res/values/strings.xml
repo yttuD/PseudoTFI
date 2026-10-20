@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Rendo</string>
+    <string name="title_activity_main">Rendo</string>
+    <string name="package_name">ar.com.rendo.app</string>
+    <string name="custom_url_scheme">ar.com.rendo.app</string>
+</resources>

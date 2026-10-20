@@ -7,7 +7,7 @@ import {
   getBuenosAiresCalendarDate,
 } from '@tfi/types';
 import * as fs from 'fs';
-import * as path from 'path';
+import { fileURLToPath } from 'node:url';
 
 function createMockChain(resolvedData: any, resolvedError: any = null) {
   const result = { data: resolvedData, error: resolvedError };
@@ -1026,10 +1026,10 @@ describe('AlquileresService Domain Logic (T033 & T034 - Correction Brief 09 & 10
 
   describe('Static Migration Integrity Verification (Fail-Fast Concurrency & Brief 10 Invariants)', () => {
     it('proves migration contains mandatory btree_gist and exclusion constraint without notice catch-all', () => {
-      const migrationPath = path.resolve(
-        process.cwd(),
-        '../../supabase/migrations/20260927100000_alquileres_modalidades_senas_intervalos.sql',
-      );
+      const migrationPath = fileURLToPath(new URL(
+        '../../../../supabase/migrations/20260927100000_alquileres_modalidades_senas_intervalos.sql',
+        import.meta.url,
+      ));
       expect(fs.existsSync(migrationPath)).toBe(true);
 
       const sql = fs.readFileSync(migrationPath, 'utf8');

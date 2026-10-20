@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Compass, MapPin, PlusCircle, Terminal } from 'lucide-react';
+import { Compass, MapPin, PlusCircle, Terminal, UserRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function NativeBottomNav({ locale }: { locale: string }) {
@@ -46,6 +46,12 @@ export function NativeBottomNav({ locale }: { locale: string }) {
         pathname.includes('/mis-unidades') ||
         pathname.includes('/alquileres') ||
         pathname.includes('/inquilinos'),
+    },
+    {
+      label: 'Cuenta',
+      href: `/${locale}/cuenta`,
+      icon: UserRound,
+      isActive: pathname.includes('/cuenta'),
     },
   ];
 

@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "feature": "specs/002-auth-guard-hardening",
+  "status": "PASS",
+  "iteration": "correction-pass-01",
+  "timestamp": "2026-09-25T18:02:40-03:00",
+  "scope": {
+    "modified_files": [
+      {
+        "path": "apps/api/src/auth/supabase-auth.guard.ts",
+        "purpose": "Hardened authentication guard with uniform generic 401 error message across all rejection classes, exact lowercase demo grammar, canonical profile resolution, and fail-closed authoritative validation"
+      },
+      {
+        "path": "apps/api/src/auth/auth.module.ts",
+        "purpose": "Removed unused JwtModule/JwtService wiring and explicitly imported SupabaseModule"
+      },
+      {
+        "path": "apps/api/src/auth/supabase-auth.guard.spec.ts",
+        "purpose": "Comprehensive Vitest regression suite covering 49 cases across US1, US2, and US3 with zero explicit any usage, exact uniform error message assertions, and strict lowercase role grammar checks"
+      },
+      {
+        "path": "apps/api/README.md",
+        "purpose": "Documented local demo opt-in, runtime gates, compatibility token formats, exact lowercase role requirement, and security notice"
+      },
+      {
+        "path": "specs/002-auth-guard-hardening/tasks.md",
+        "purpose": "Updated task completion status for T001 through T019"
+      }
+    ],
+    "retained_evidence_files": [
+      "specs/002-auth-guard-hardening/evidence/runs/targeted-tests.md",
+      "specs/002-auth-guard-hardening/evidence/runs/full-api-tests.md",
+      "specs/002-auth-guard-hardening/evidence/runs/api-build.md",
+      "specs/002-auth-guard-hardening/evidence/reports/codex-review-01.md",
+      "specs/002-auth-guard-hardening/evidence/reports/security-review.md",
+      "specs/002-auth-guard-hardening/evidence/reports/cleanup.md",
+      "specs/002-auth-guard-hardening/evidence/delivery.json"
+    ],
+    "unrelated_dirty_tree_preserved": true,
+    "outside_files_modified": false
+  },
+  "requirements_status": {
+    "FR-001": { "status": "COMPLETED", "evidence": "targeted-tests.md (tests 1-4, uniform 401 message)" },
+    "FR-002": { "status": "COMPLETED", "evidence": "targeted-tests.md (tests 9-12)" },
+    "FR-003": { "status": "COMPLETED", "evidence": "targeted-tests.md (tests 5-8), api-build.md" },
+    "FR-004": { "status": "COMPLETED", "evidence": "targeted-tests.md (tests 9-11)" },
+    "FR-005": { "status": "COMPLETED", "evidence": "targeted-tests.md (tests 14, 15, 17, 21-23)" },
+    "FR-006": { "status": "COMPLETED", "evidence": "targeted-tests.md (tests 21-23)" },
+    "FR-007": { "status": "COMPLETED", "evidence": "targeted-tests.md (tests 14-20)" },
+    "FR-008": { "status": "COMPLETED", "evidence": "targeted-tests.md (tests 25-30)" },
+    "FR-009": { "status": "COMPLETED", "evidence": "targeted-tests.md (tests 31-49, exact lowercase grammar)" },
+    "FR-010": { "status": "COMPLETED", "evidence": "targeted-tests.md (tests 1-13, 16, 18-23, 25-30, 39-49; exact equality against AUTH_UNAUTHORIZED_MESSAGE)" },
+    "FR-011": { "status": "COMPLETED", "evidence": "targeted-tests.md (49 tests), full-api-tests.md (88 tests)" },
+    "FR-012": { "status": "COMPLETED", "evidence": "full-api-tests.md, api-build.md" },
+    "FR-013": { "status": "COMPLETED", "evidence": "apps/api/README.md" }
+  },
+  "tasks_status": {
+    "T001": "COMPLETED",
+    "T002": "COMPLETED",
+    "T003": "COMPLETED",
+    "T004": "COMPLETED",
+    "T005": "COMPLETED",
+    "T006": "COMPLETED",
+    "T007": "COMPLETED",
+    "T008": "COMPLETED",
+    "T009": "COMPLETED",
+    "T010": "COMPLETED",
+    "T011": "COMPLETED",
+    "T012": "COMPLETED",
+    "T013": "COMPLETED",
+    "T014": "COMPLETED",
+    "T015": "COMPLETED",
+    "T016": "COMPLETED",
+    "T017": "COMPLETED",
+    "T018": "COMPLETED",
+    "T019": "COMPLETED"
+  },
+  "verification": {
+    "targeted_suite": {
+      "command": "pnpm --filter api exec vitest run src/auth/supabase-auth.guard.spec.ts",
+      "start_time": "2026-09-25T18:00:42.3219293-03:00",
+      "end_time": "2026-09-25T18:00:46.2291757-03:00",
+      "exit_code": 0,
+      "passed": 49,
+      "failed": 0,
+      "skipped": 0,
+      "evidence_path": "specs/002-auth-guard-hardening/evidence/runs/targeted-tests.md"
+    },
+    "full_api_suite": {
+      "command": "pnpm --filter api test",
+      "start_time": "2026-09-25T18:00:53.5714300-03:00",
+      "end_time": "2026-09-25T18:01:02.9554555-03:00",
+      "exit_code": 0,
+      "passed": 88,
+      "failed": 0,
+      "skipped": 0,
+      "evidence_path": "specs/002-auth-guard-hardening/evidence/runs/full-api-tests.md"
+    },
+    "production_build": {
+      "command": "pnpm --filter api build",
+      "start_time": "2026-09-25T18:01:14.9862773-03:00",
+      "end_time": "2026-09-25T18:01:23.6258170-03:00",
+      "exit_code": 0,
+      "evidence_path": "specs/002-auth-guard-hardening/evidence/runs/api-build.md"
+    },
+    "prohibited_patterns_search": {
+      "exit_code_search1": 0,
+      "matches_search1": "1 (test fixture only; 0 in production code)",
+      "exit_code_search2": 1,
+      "matches_search2": "0 (zero occurrences across entire api/src)",
+      "exit_code_search3_any": 1,
+      "matches_search3_any": "0 (zero explicit any occurrences in supabase-auth.guard.spec.ts)",
+      "evidence_path": "specs/002-auth-guard-hardening/evidence/runs/api-build.md"
+    }
+  },
+  "visual_evidence_disposition": "Not applicable: no rendered or interaction surface changed",
+  "security_summary": {
+    "p0_arbitrary_bypass_closed": true,
+    "decode_only_fallback_removed": true,
+    "provider_error_fail_closed": true,
+    "demo_in_production_denied": true,
+    "metadata_or_email_role_inference_removed": true,
+    "secrets_and_payloads_excluded": true,
+    "uniform_401_message_enforced": true,
+    "strict_lowercase_role_grammar_enforced": true,
+    "spec_explicit_any_count": 0
+  },
+  "cleanup": {
+    "temporary_files_removed": [],
+    "background_processes_terminated": true,
+    "status": "CLEAN"
+  }
+}

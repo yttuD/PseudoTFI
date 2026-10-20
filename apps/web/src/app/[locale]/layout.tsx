@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.WEB_PUBLIC_URL || 'http://localhost:3000'),
   title: { default: 'Rendo', template: '%s | Rendo' },
   description: 'Encontrá tu alquiler ideal en Goya, Corrientes.',
-  icons: { icon: '/favicon.ico', apple: '/apple-touch-icon.png' },
+  icons: { icon: '/brand/rendo-app-icon.png', apple: '/brand/rendo-app-icon.png' },
   manifest: '/site.webmanifest',
   openGraph: {
     title: 'Rendo',

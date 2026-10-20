@@ -7,7 +7,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Spinner } from '@/components/ui/spinner';
@@ -34,6 +34,7 @@ import {
   ImagePlus
 } from 'lucide-react';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { CATEGORIAS_UNIDAD, categoriaLabel } from '@/lib/categorias';
 
 const LocationPickerMap = dynamic(
   () => import('./LocationPickerMap'),
@@ -44,7 +45,9 @@ const modalidadSchema = z.object({
   id: z.string().optional(),
   unidad_tiempo: z.string().min(1),
   cantidad_tiempo: z.number().min(1),
-  precio: z.number().min(0)
+  precio: z.number().min(0),
+  precio_usd: z.number().positive().optional(),
+  precio_brl: z.number().positive().optional(),
 });
 
 const formSchema = z.object({
@@ -76,7 +79,7 @@ export function UnidadForm({
   token,
   grupos = []
 }: { 
-  initialData?: Record<string, unknown> & { modalidades?: Record<string, unknown>[] }, 
+  initialData?: Record<string, unknown> & { modalidades_precio?: Record<string, unknown>[] },
   locale: string, 
   unidadId?: string,
   zonas: Record<string, unknown>[],
@@ -88,6 +91,8 @@ export function UnidadForm({
   const preselectedGrupoId = searchParams.get('grupo_id') || undefined;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(searchParams.get('save_error') ? 'La unidad quedó como borrador. Revisá las tarifas y guardá nuevamente.' : null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState('basicos');
   const [openMobileMap, setOpenMobileMap] = useState(false);
 
@@ -96,7 +101,7 @@ export function UnidadForm({
   const [autoTraducir, setAutoTraducir] = useState<boolean>(true);
 
   // Estados de Geocodificación y Autocompletado Nominatim
-  const [searchAddress, setSearchAddress] = useState('');
+  const [searchAddress, setSearchAddress] = useState(typeof initialData?.direccion_texto === 'string' ? initialData.direccion_texto : '');
   const [suggestions, setSuggestions] = useState<{
     place_id: number;
     lat: string;
@@ -116,16 +121,48 @@ export function UnidadForm({
   }[]>([]);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [addressResultName, setAddressResultName] = useState<string | null>(null);
+  const [addressResultName, setAddressResultName] = useState<string | null>(typeof initialData?.direccion_texto === 'string' ? initialData.direccion_texto : null);
   const [addressError, setAddressError] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Lista de grupos
   const [gruposList, setGruposList] = useState<{ id: string; nombre: string }[]>(grupos);
 
+  const editValues: FormData | undefined = initialData ? {
+    categoria: String(initialData.categoria || 'departamento'),
+    zona_id: initialData.zona_id == null ? undefined : Number(initialData.zona_id),
+    grupo_id: typeof initialData.grupo_id === 'string' ? initialData.grupo_id : undefined,
+    titulo_es: String(initialData.titulo_es || ''),
+    descripcion_es: String(initialData.descripcion_es || ''),
+    titulo_en: String(initialData.titulo_en || ''),
+    descripcion_en: String(initialData.descripcion_en || ''),
+    titulo_pt: String(initialData.titulo_pt || ''),
+    descripcion_pt: String(initialData.descripcion_pt || ''),
+    auto_traducir: false,
+    whatsapp: String(initialData.whatsapp || ''),
+    instagram: String(initialData.instagram || ''),
+    modalidades: (initialData.modalidades_precio || [])
+      .filter((m) => !m.deleted_at)
+      .map((m) => {
+        const rawTiempo = m.unidad_tiempo || (m as Record<string, unknown>).modalidad || (m as Record<string, unknown>).tipo_periodo || 'día';
+        const normTiempo = String(rawTiempo).toLowerCase() === 'dia' ? 'día' : String(rawTiempo).toLowerCase() === 'mensual' ? 'mes' : String(rawTiempo);
+        return {
+          id: String(m.id),
+          unidad_tiempo: normTiempo,
+          cantidad_tiempo: Number(m.cantidad_tiempo || 1),
+          precio: Number(m.precio || 0),
+          precio_usd: m.precio_usd == null ? undefined : Number(m.precio_usd),
+          precio_brl: m.precio_brl == null ? undefined : Number(m.precio_brl),
+        };
+      }),
+    fotos: Array.isArray(initialData.fotos) ? initialData.fotos as string[] : [],
+    ubicacion_aprox: initialData.ubicacion_aprox as FormData['ubicacion_aprox'],
+    ubicacion_exacta: initialData.ubicacion_exacta as FormData['ubicacion_exacta'],
+  } : undefined;
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData || {
+    defaultValues: editValues || {
       categoria: 'departamento',
       grupo_id: preselectedGrupoId,
       auto_traducir: true,
@@ -141,6 +178,15 @@ export function UnidadForm({
 
   const fotos = form.watch('fotos') || [];
   const ubicacionExacta = form.watch('ubicacion_exacta');
+  const estadoActual = typeof initialData?.estado === 'string' ? initialData.estado : 'borrador';
+  const zonasDisponibles = zonas.flatMap((ciudad) =>
+    Array.isArray(ciudad.zonas)
+      ? (ciudad.zonas as { id: number; nombre: string }[]).map((zona) => ({
+          id: zona.id,
+          nombre: `${ciudad.nombre} · ${zona.nombre}`,
+        }))
+      : []
+  );
 
   // Supabase browser client
   const supabase = createBrowserClient(
@@ -284,15 +330,25 @@ export function UnidadForm({
   const handleLocationSelect = (loc: { lat: number, lng: number }) => {
     form.setValue('ubicacion_exacta', loc);
     form.setValue('ubicacion_aprox', loc);
+    setSearchAddress('');
+    setAddressResultName(null);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
+    if (!unidadId) {
+      setUploadError('Guardá primero la unidad como borrador para poder subir fotos.');
+      return;
+    }
+    const file = e.target.files[0];
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+      setUploadError('Seleccioná una imagen PNG, JPG o WEBP de hasta 5 MB.');
+      return;
+    }
+    setUploadError(null);
     setIsSubmitting(true);
     try {
-      const file = e.target.files[0];
-      const folder = unidadId || 'nuevas';
-      const filePath = `${folder}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const filePath = `${unidadId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
       
       const { error: uploadError } = await supabase.storage
         .from('unidades')
@@ -306,29 +362,29 @@ export function UnidadForm({
 
       const currentFotos = form.getValues('fotos') || [];
       const updatedFotos = [...currentFotos, publicUrl];
-      form.setValue('fotos', updatedFotos);
+      form.setValue('fotos', updatedFotos, { shouldDirty: true });
 
-      if (unidadId) {
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/unidades/${unidadId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/unidades/${unidadId}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({ fotos: updatedFotos })
-        });
-      }
+      });
+      if (!response.ok) throw new Error('La imagen subió, pero no se pudo vincular a la unidad. Intentá guardar de nuevo.');
     } catch (err) {
       console.error(err);
-      alert('Error al subir la imagen');
+      setUploadError(err instanceof Error ? err.message : 'No se pudo subir la imagen. Intentá nuevamente.');
     } finally {
       setIsSubmitting(false);
+      e.target.value = '';
     }
   };
 
   const handleNativeCameraUpload = async () => {
     if (!unidadId) {
-      alert("Debe guardar la unidad primero");
+      setUploadError('Guardá primero la unidad como borrador para poder subir fotos.');
       return;
     }
 
@@ -397,8 +453,14 @@ export function UnidadForm({
     }
   };
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: FormData, publishAfterSave = false) => {
+    if (publishAfterSave && (!data.titulo_es?.trim() || !data.modalidades.some((m) => m.precio > 0) || !data.ubicacion_aprox || !data.fotos?.length)) {
+      setSaveError('Para publicar, completá un título, una tarifa mayor a cero, la ubicación y al menos una foto.');
+      return;
+    }
     setIsSubmitting(true);
+    setSaveError(null);
+    let newlyCreatedId: string | null = null;
     try {
       const { modalidades, ...unidadData } = data;
       const url = unidadId 
@@ -410,6 +472,7 @@ export function UnidadForm({
       const payload = {
         ...unidadData,
         auto_traducir: autoTraducir,
+        direccion_texto: addressResultName || searchAddress || null,
       };
 
       const res = await fetch(url, {
@@ -421,40 +484,54 @@ export function UnidadForm({
         body: JSON.stringify(payload)
       });
 
-      if (!res.ok) {
-        throw new Error('Error al guardar la unidad');
-      }
+      if (!res.ok) throw new Error('No se pudieron guardar los datos de la unidad. Revisá tu sesión y volvé a intentar.');
 
       let id = unidadId;
       const savedUnidad = await res.json();
       id = savedUnidad.id;
+      if (!id) throw new Error('El servidor no devolvió el identificador de la unidad.');
+      if (!unidadId) newlyCreatedId = id;
 
-      if (initialData?.modalidades && id) {
-        const removed = initialData.modalidades.filter((m: Record<string, unknown>) => !modalidades.find((nm) => nm.id === m.id));
+      if (initialData?.modalidades_precio && id) {
+        const removed = initialData.modalidades_precio
+          .filter((m: Record<string, unknown>) => !m.deleted_at)
+          .filter((m: Record<string, unknown>) => !modalidades.find((nm) => nm.id === m.id));
         for (const m of removed) {
-          await fetch(`${process.env.NEXT_PUBLIC_API_URL}/unidades/${id}/modalidades/${m.id}`, {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/unidades/${id}/modalidades/${m.id}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
           });
+          if (!response.ok) throw new Error('No se pudo quitar una tarifa. Revisá la unidad e intentá de nuevo.');
         }
       }
 
       if (id) {
         for (const mod of modalidades) {
           if (mod.id) {
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/unidades/${id}/modalidades/${mod.id}`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/unidades/${id}/modalidades/${mod.id}`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-              body: JSON.stringify({ unidad_tiempo: mod.unidad_tiempo, cantidad_tiempo: mod.cantidad_tiempo, precio: mod.precio })
+              body: JSON.stringify({ unidad_tiempo: mod.unidad_tiempo, cantidad_tiempo: mod.cantidad_tiempo, precio: mod.precio, precio_usd: mod.precio_usd ?? null, precio_brl: mod.precio_brl ?? null })
             });
+            if (!response.ok) throw new Error('No se pudo actualizar una tarifa. Revisá la unidad e intentá de nuevo.');
           } else {
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/unidades/${id}/modalidades`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/unidades/${id}/modalidades`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-              body: JSON.stringify({ unidad_tiempo: mod.unidad_tiempo, cantidad_tiempo: mod.cantidad_tiempo, precio: mod.precio })
+              body: JSON.stringify({ unidad_tiempo: mod.unidad_tiempo, cantidad_tiempo: mod.cantidad_tiempo, precio: mod.precio, precio_usd: mod.precio_usd ?? null, precio_brl: mod.precio_brl ?? null })
             });
+            if (!response.ok) throw new Error('No se pudo guardar una tarifa. Revisá la unidad e intentá de nuevo.');
           }
         }
+      }
+
+      if (publishAfterSave) {
+        const publishResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/unidades/${id}/estado`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ estado: 'publicada' }),
+        });
+        if (!publishResponse.ok) throw new Error('Los cambios se guardaron, pero no se pudo publicar. La unidad sigue como borrador.');
       }
 
       if (!unidadId) {
@@ -465,7 +542,49 @@ export function UnidadForm({
       router.refresh();
     } catch (e) {
       console.error(e);
-      alert('Hubo un error al guardar');
+      if (newlyCreatedId) {
+        router.push(`/${locale}/mis-unidades/${newlyCreatedId}/editar?save_error=tarifas`);
+      } else {
+        setSaveError(e instanceof Error ? e.message : 'No se pudo guardar. Intentá nuevamente.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleStatusChange = async (newStatus: 'pausada' | 'publicada') => {
+    if (!unidadId) return;
+    if (form.formState.isDirty && !window.confirm('Tenés cambios sin guardar. ¿Querés continuar sin guardarlos?')) return;
+    setSaveError(null);
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/unidades/${unidadId}/estado`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ estado: newStatus }),
+      });
+      if (!response.ok) throw new Error(`No se pudo ${newStatus === 'pausada' ? 'pausar' : 'reactivar'} la unidad.`);
+      router.refresh();
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'No se pudo cambiar el estado.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!unidadId || !window.confirm('¿Eliminar esta unidad? Dejará de aparecer en el inventario y en el catálogo. Esta acción no se puede deshacer desde la app.')) return;
+    setSaveError(null);
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/unidades/${unidadId}`, {
+        method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('No se pudo eliminar la unidad. Si tiene alquileres activos, finalizalos antes de volver a intentar.');
+      router.push(`/${locale}/mis-unidades`);
+      router.refresh();
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'No se pudo eliminar la unidad.');
     } finally {
       setIsSubmitting(false);
     }
@@ -480,10 +599,10 @@ export function UnidadForm({
   };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-7xl mx-auto flex flex-col gap-8 relative">
+    <form onSubmit={form.handleSubmit((data) => onSubmit(data), () => setSaveError('Revisá los campos del formulario: una categoría, precio o plazo tiene un valor inválido.'))} className="w-full max-w-7xl mx-auto flex flex-col gap-8 relative">
       <div className="flex flex-col md:flex-row gap-8 items-start w-full">
         {/* Sticky ScrollSpy Sidebar */}
-        <aside className="hidden md:block w-52 sticky top-24 shrink-0">
+        <aside className="hidden md:block w-52 sticky top-6 self-start max-h-[calc(100dvh-3rem)] overflow-y-auto shrink-0">
           <nav className="flex flex-col gap-1 font-mono text-xs uppercase tracking-wider bg-card/50 p-2 rounded-2xl border border-border/60">
             <button type="button" onClick={() => scrollTo('basicos')} className={`text-left border-l-2 pl-4 py-2.5 rounded-r-lg transition-colors ${activeSection === 'basicos' ? 'border-primary text-primary bg-primary/5 font-bold' : 'border-transparent text-muted-foreground hover:bg-muted'}`}>1. Básicos &amp; Grupo</button>
             <button type="button" onClick={() => scrollTo('marketplace')} className={`text-left border-l-2 pl-4 py-2.5 rounded-r-lg transition-colors ${activeSection === 'marketplace' ? 'border-primary text-primary bg-primary/5 font-bold' : 'border-transparent text-muted-foreground hover:bg-muted'}`}>2. Ficha &amp; Idiomas</button>
@@ -502,7 +621,7 @@ export function UnidadForm({
             <CardHeader className="p-0 space-y-1">
               <CardTitle className="text-xl font-bold font-sans flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-dorado-600 dark:text-dorado-400" />
-                📦 Datos Básicos &amp; Grupo
+                Datos Básicos &amp; Grupo
               </CardTitle>
               <CardDescription className="font-mono text-xs">Clasificación y pertenencia edilicia de la unidad</CardDescription>
             </CardHeader>
@@ -510,17 +629,12 @@ export function UnidadForm({
               {/* Categoría */}
               <div className="grid gap-2">
                 <Label className="font-mono text-xs uppercase text-muted-foreground">Categoría *</Label>
-                <Select onValueChange={(val) => form.setValue('categoria', val as string)} defaultValue={form.getValues('categoria')}>
-                  <SelectTrigger className="h-12 rounded-xl"><SelectValue placeholder="Seleccione categoría..." /></SelectTrigger>
+                <Select value={form.watch('categoria')} onValueChange={(val) => form.setValue('categoria', val as string, { shouldDirty: true, shouldValidate: true })}>
+                  <SelectTrigger id="categoria-select" className="h-12 rounded-xl"><span className="truncate">{categoriaLabel(form.watch('categoria'))}</span></SelectTrigger>
                   <SelectContent className="rounded-xl">
-                    <SelectItem value="departamento">Departamento</SelectItem>
-                    <SelectItem value="cabaña">Cabaña</SelectItem>
-                    <SelectItem value="casa">Casa</SelectItem>
-                    <SelectItem value="salón">Salón de Eventos</SelectItem>
-                    <SelectItem value="cancha">Cancha</SelectItem>
-                    <SelectItem value="local comercial">Local Comercial</SelectItem>
-                    <SelectItem value="oficina">Oficina</SelectItem>
-                    <SelectItem value="lote">Lote / Terreno</SelectItem>
+                    {CATEGORIAS_UNIDAD.map((categoria) => (
+                      <SelectItem key={categoria.value} value={categoria.value}>{categoria.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -529,12 +643,12 @@ export function UnidadForm({
               <div className="grid gap-2">
                 <Label className="font-mono text-xs uppercase text-muted-foreground">Grupo / Edificio</Label>
                 <Select 
-                  onValueChange={(val) => form.setValue('grupo_id', val === 'none' || !val ? undefined : val)} 
-                  defaultValue={form.getValues('grupo_id') || preselectedGrupoId || 'none'}
+                  value={form.watch('grupo_id') || 'sin-grupo'}
+                  onValueChange={(val) => form.setValue('grupo_id', val === 'sin-grupo' || !val ? undefined : val, { shouldDirty: true })}
                 >
-                  <SelectTrigger className="h-12 rounded-xl"><SelectValue placeholder="Sin grupo asignado" /></SelectTrigger>
+                  <SelectTrigger className="h-12 rounded-xl"><span className="truncate">{gruposList.find((grupo) => grupo.id === form.watch('grupo_id'))?.nombre || 'Sin grupo / unidad individual'}</span></SelectTrigger>
                   <SelectContent className="rounded-xl">
-                    <SelectItem value="none">Sin grupo asignado (Individual)</SelectItem>
+                    <SelectItem value="sin-grupo">Sin grupo / unidad individual</SelectItem>
                     {gruposList.map((g) => (
                       <SelectItem key={g.id} value={g.id}>
                         {g.nombre}
@@ -542,18 +656,20 @@ export function UnidadForm({
                     ))}
                   </SelectContent>
                 </Select>
+                <p className="text-[11px] text-muted-foreground">Opcional. Agrupa unidades de un mismo edificio o complejo.</p>
               </div>
 
               {/* Zona Operativa */}
               <div className="grid gap-2">
                 <Label className="font-mono text-xs uppercase text-muted-foreground">Zona Operativa</Label>
-                <Select onValueChange={(val) => form.setValue('zona_id', Number(val))} defaultValue={form.getValues('zona_id')?.toString()}>
-                  <SelectTrigger className="h-12 rounded-xl"><SelectValue placeholder="Opcional" /></SelectTrigger>
+                <Select value={form.watch('zona_id')?.toString() || 'sin-zona'} onValueChange={(val) => form.setValue('zona_id', val === 'sin-zona' ? undefined : Number(val), { shouldDirty: true })}>
+                  <SelectTrigger className="h-12 rounded-xl"><span className="truncate">{zonasDisponibles.find((zona) => zona.id === form.watch('zona_id'))?.nombre || 'Sin zona predefinida'}</span></SelectTrigger>
                   <SelectContent className="rounded-xl">
-                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                    {(Array.isArray(zonas) ? zonas : []).map((z: any) => <SelectItem key={z.id} value={z.id.toString()}>{z.nombre}</SelectItem>)}
+                    <SelectItem value="sin-zona">Sin zona predefinida</SelectItem>
+                    {zonasDisponibles.map((zona) => <SelectItem key={zona.id} value={zona.id.toString()}>{zona.nombre}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                <p className="text-[11px] text-muted-foreground">Opcional; dejala vacía si está sobre la ruta o fuera de estas zonas. La ubicación se fija más abajo.</p>
               </div>
             </CardContent>
           </Card>
@@ -569,7 +685,7 @@ export function UnidadForm({
                 <div>
                   <CardTitle className="text-xl font-bold font-sans flex items-center gap-2">
                     <Languages className="w-5 h-5 text-dorado-600 dark:text-dorado-400" />
-                    🌐 Ficha de Marketplace
+                    Ficha de Marketplace
                   </CardTitle>
                   <CardDescription className="font-mono text-xs">Información pública visible para inquilinos y turistas</CardDescription>
                 </div>
@@ -742,7 +858,7 @@ export function UnidadForm({
             <CardHeader className="p-0 space-y-1">
               <CardTitle className="text-xl font-bold font-sans flex items-center gap-2">
                 <Sun className="w-5 h-5 text-dorado-600 dark:text-dorado-400" />
-                💰 Esquema de Tarifas (Lenguaje Natural)
+                Esquema de Tarifas
               </CardTitle>
               <CardDescription className="font-mono text-xs">
                 Configura cómo deseas cobrar y los plazos mínimos de estadía o contrato
@@ -873,6 +989,18 @@ export function UnidadForm({
                             </span>
                           </div>
                         </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-border/60 pt-4">
+                          <div className="grid gap-2">
+                            <Label htmlFor={`precio_usd_${index}`} className="font-mono text-xs uppercase text-muted-foreground">Precio para público en inglés (USD)</Label>
+                            <Input id={`precio_usd_${index}`} type="number" min="0.01" step="0.01" placeholder="Automático desde ARS" className="h-11 rounded-xl" {...form.register(`modalidades.${index}.precio_usd`, { setValueAs: (value) => value === '' ? undefined : Number(value) })} />
+                            <span className="text-[11px] text-muted-foreground">Dejá vacío para convertir automáticamente con la cotización fechada del BCRA; ingresá un importe para fijarlo a mano.</span>
+                          </div>
+                          <div className="grid gap-2">
+                            <Label htmlFor={`precio_brl_${index}`} className="font-mono text-xs uppercase text-muted-foreground">Precio para público en portugués (BRL)</Label>
+                            <Input id={`precio_brl_${index}`} type="number" min="0.01" step="0.01" placeholder="Automático desde ARS" className="h-11 rounded-xl" {...form.register(`modalidades.${index}.precio_brl`, { setValueAs: (value) => value === '' ? undefined : Number(value) })} />
+                            <span className="text-[11px] text-muted-foreground">Dejá vacío para convertir automáticamente; ingresá un importe para fijarlo a mano.</span>
+                          </div>
+                        </div>
                       </div>
                     );
                   })}
@@ -889,13 +1017,14 @@ export function UnidadForm({
             <CardHeader className="px-0">
               <CardTitle className="text-xl font-bold font-sans flex items-center gap-2">
                 <ImagePlus className="w-5 h-5 text-dorado-600 dark:text-dorado-400" />
-                📸 Galería de Fotos
+                Galería de Fotos
               </CardTitle>
               <CardDescription className="font-mono text-xs">
-                ({fotos.length}/10) imágenes publicadas de alta calidad para el marketplace
+                ({fotos.length}/10) fotos de la unidad{!unidadId ? ' · Guardá el borrador antes de subirlas' : ''}
               </CardDescription>
             </CardHeader>
             <CardContent className="px-0 space-y-4">
+              {uploadError && <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">{uploadError}</p>}
               {fotos.length > 0 && (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
                   {fotos.map((foto, index) => (
@@ -934,19 +1063,19 @@ export function UnidadForm({
                       type="button"
                       variant="secondary"
                       onClick={handleNativeCameraUpload}
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || !unidadId}
                       className="flex items-center justify-center gap-2 font-mono text-xs uppercase rounded-xl min-h-[44px] min-w-[44px]"
                     >
                       <CameraIcon className="w-4 h-4 text-primary" />
                       Cámara / Galería Móvil
                     </Button>
-                    <label className="cursor-pointer inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-mono text-xs font-semibold rounded-xl hover:bg-primary/90 transition-colors shadow-xs min-h-[44px] min-w-[44px]">
+                    <label className={`inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-mono text-xs font-semibold rounded-xl transition-colors shadow-xs min-h-[44px] min-w-[44px] ${unidadId ? 'cursor-pointer hover:bg-primary/90' : 'cursor-not-allowed opacity-50'}`}>
                       <span>Seleccionar Archivos</span>
                       <input
                         type="file"
                         accept="image/*"
                         onChange={handleFileUpload}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || !unidadId}
                         className="hidden"
                       />
                     </label>
@@ -970,7 +1099,7 @@ export function UnidadForm({
             <CardHeader className="p-0 space-y-1">
               <CardTitle className="text-xl font-bold font-sans flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-dorado-600 dark:text-dorado-400" />
-                📍 Geolocalización &amp; Ubicación
+                Geolocalización &amp; Ubicación
               </CardTitle>
               <CardDescription className="font-mono text-xs">
                 Busca la dirección exacta por texto o coloca el pin manualmente sobre el mapa Leaflet con geocodificación inversa bidireccional
@@ -1003,6 +1132,8 @@ export function UnidadForm({
                         setSearchAddress(e.target.value);
                         if (addressResultName && e.target.value !== addressResultName) {
                           setAddressResultName(null);
+                          form.setValue('ubicacion_exacta', undefined, { shouldDirty: true });
+                          form.setValue('ubicacion_aprox', undefined, { shouldDirty: true });
                         }
                       }}
                       onFocus={() => {
@@ -1169,16 +1300,21 @@ export function UnidadForm({
         </div>
       </div>
 
-      {/* Barra de Acciones Fija (Sticky Footer Despejado) */}
-      <div className="sticky bottom-0 z-40 w-full bg-card/95 backdrop-blur-md border border-border p-4 shadow-2xl flex items-center justify-between gap-4 rounded-2xl">
+      {/* En móvil queda al final del formulario para no tapar los campos. */}
+      <div className="relative lg:sticky lg:bottom-0 z-40 w-full bg-card/95 backdrop-blur-md border border-border p-4 shadow-2xl flex flex-col gap-3 rounded-2xl">
+        {saveError && <p role="alert" className="w-full rounded-lg border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">{saveError}</p>}
+        <div className="flex flex-wrap items-center justify-between gap-3 w-full">
         <span className="text-sm font-mono text-muted-foreground hidden sm:inline-block">
-          {isSubmitting ? 'Guardando en BD...' : 'Formulario listo para sincronizar'}
+          {isSubmitting ? 'Procesando...' : `Estado: ${estadoActual.replace(/_/g, ' ')}`}
         </span>
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+          {unidadId && estadoActual === 'publicada' && <Button type="button" variant="outline" disabled={isSubmitting} onClick={() => handleStatusChange('pausada')} className="min-h-11">Pausar</Button>}
+          {unidadId && estadoActual === 'pausada' && <Button type="button" variant="outline" disabled={isSubmitting} onClick={() => handleStatusChange('publicada')} className="min-h-11">Reactivar</Button>}
+          {unidadId && <Button type="button" variant="ghost" disabled={isSubmitting} onClick={handleDelete} className="min-h-11 text-destructive">Eliminar</Button>}
           <Button 
             type="button" 
             variant="ghost" 
-            onClick={() => router.back()} 
+            onClick={() => router.push(`/${locale}/mis-unidades`)}
             className="font-mono uppercase text-xs tracking-wider rounded-xl hover:bg-muted min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
           >
             Cancelar
@@ -1194,9 +1330,11 @@ export function UnidadForm({
                 Guardando...
               </>
             ) : (
-              'Guardar Unidad'
+              unidadId ? 'Guardar cambios' : 'Guardar borrador'
             )}
           </Button>
+          {unidadId && estadoActual === 'borrador' && <Button type="button" disabled={isSubmitting} onClick={form.handleSubmit((data) => onSubmit(data, true), () => setSaveError('Revisá los campos del formulario antes de publicar.'))} className="min-h-11 bg-emerald-700 hover:bg-emerald-800 text-white">Guardar y publicar</Button>}
+        </div>
         </div>
       </div>
     </form>

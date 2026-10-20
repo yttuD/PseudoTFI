@@ -5,10 +5,15 @@
 .claude
 .codex
 .specify
+.pi
+.impeccable
+/scripts/
 specs
 /supabase/
 scratch
 .tmp
+RENDO_observaciones_mejoradas
+entregables
 .pnpm-store
 **/node_modules
 **/.next

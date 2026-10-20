@@ -1,25 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Search, Filter, Building2, MapPin, RotateCcw, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
+import { CATEGORIAS_UNIDAD, categoriaLabel } from '@/lib/categorias';
+import { useLocale } from 'next-intl';
 
-const CATEGORIAS = [
-  { label: 'Todas', value: '' },
-  { label: 'Casa', value: 'casa' },
-  { label: 'Departamento', value: 'departamento' },
-  { label: 'Oficina', value: 'oficina' },
-  { label: 'Local Comercial', value: 'local comercial' },
-  { label: 'Lote', value: 'lote' },
-];
+const CATEGORIAS = [{ label: 'Todas', value: '' }, ...CATEGORIAS_UNIDAD];
 
 export function MarketplaceFiltrosSidebar({ collapsedOnMobile = false }: { collapsedOnMobile?: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const locale = useLocale();
+  const currency = locale === 'en' ? 'USD' : locale === 'pt' ? 'BRL' : 'ARS';
 
   const [q, setQ] = useState(searchParams.get('q') || '');
   const [categoria, setCategoria] = useState(searchParams.get('categoria') || '');
@@ -28,6 +25,7 @@ export function MarketplaceFiltrosSidebar({ collapsedOnMobile = false }: { colla
   const [precioMax, setPrecioMax] = useState(searchParams.get('precio_max') || '');
   const [zonas, setZonas] = useState<{ id: string | number; nombre: string }[]>([]);
   const [mobileOpen, setMobileOpen] = useState(!collapsedOnMobile);
+  const precioMaxRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (collapsedOnMobile) setMobileOpen(false);
@@ -46,8 +44,10 @@ export function MarketplaceFiltrosSidebar({ collapsedOnMobile = false }: { colla
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/marketplace/zonas`)
       .then((res) => res.json())
       .then((data) => {
-        if (data && data[0] && data[0].zonas) {
-          setZonas(data[0].zonas);
+        if (Array.isArray(data)) {
+          setZonas(data.flatMap((ciudad: { nombre: string; zonas?: { id: number; nombre: string }[] }) =>
+            (ciudad.zonas || []).map((zona) => ({ id: zona.id, nombre: `${ciudad.nombre} · ${zona.nombre}` }))
+          ));
         }
       })
       .catch(() => {});
@@ -116,13 +116,14 @@ export function MarketplaceFiltrosSidebar({ collapsedOnMobile = false }: { colla
             <Input
               type="text"
               name="q"
-              placeholder="Buscar por zona, título..."
+              placeholder="Ej.: casa con jardín"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && aplicarFiltros()}
               className="pl-8 text-xs h-11 min-h-[44px] bg-background"
             />
           </div>
+          <p className="mt-1.5 text-[11px] text-muted-foreground">Busca por título o descripción de la unidad.</p>
         </div>
 
         {/* Categoría */}
@@ -134,7 +135,7 @@ export function MarketplaceFiltrosSidebar({ collapsedOnMobile = false }: { colla
             <SelectTrigger className="h-11 min-h-[44px] text-xs bg-background">
               <div className="flex items-center gap-2">
                 <Building2 className="h-3.5 w-3.5 text-primary shrink-0" />
-                <SelectValue placeholder="Todas las categorías" />
+                <span className="truncate">{categoria ? categoriaLabel(categoria) : 'Todas las categorías'}</span>
               </div>
             </SelectTrigger>
             <SelectContent>
@@ -156,7 +157,7 @@ export function MarketplaceFiltrosSidebar({ collapsedOnMobile = false }: { colla
             <SelectTrigger className="h-11 min-h-[44px] text-xs bg-background">
               <div className="flex items-center gap-2">
                 <MapPin className="h-3.5 w-3.5 text-accent shrink-0" />
-                <SelectValue placeholder="Todas las zonas" />
+                <span className="truncate">{zonas.find((zona) => String(zona.id) === zonaId)?.nombre || 'Todas las zonas'}</span>
               </div>
             </SelectTrigger>
             <SelectContent>
@@ -168,12 +169,13 @@ export function MarketplaceFiltrosSidebar({ collapsedOnMobile = false }: { colla
               ))}
             </SelectContent>
           </Select>
+          <p className="mt-1.5 text-[11px] text-muted-foreground">“Todas” también incluye unidades fuera de las zonas listadas.</p>
         </div>
 
         {/* Rango de Precios */}
         <div>
           <label className="text-xs font-semibold text-foreground/80 block mb-1.5">
-            Rango de Precio ($ ARS)
+            Rango de Precio ({currency})
           </label>
           <div className="grid grid-cols-2 gap-2">
             <Input
@@ -181,18 +183,30 @@ export function MarketplaceFiltrosSidebar({ collapsedOnMobile = false }: { colla
               placeholder="Mínimo"
               value={precioMin}
               onChange={(e) => setPrecioMin(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && aplicarFiltros()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  precioMaxRef.current?.focus();
+                }
+              }}
               className="text-xs h-11 min-h-[44px] bg-background"
             />
             <Input
               type="number"
+              ref={precioMaxRef}
               placeholder="Máximo"
               value={precioMax}
               onChange={(e) => setPrecioMax(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && aplicarFiltros()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  aplicarFiltros();
+                }
+              }}
               className="text-xs h-11 min-h-[44px] bg-background"
             />
           </div>
+          {locale !== 'es' && <p className="mt-1.5 text-[11px] text-muted-foreground">Los precios automáticos se convierten con la cotización BCRA; los importes fijados por el gestor se muestran tal cual.</p>}
         </div>
 
         {/* Botón Aplicar */}
@@ -217,17 +231,17 @@ export function MarketplaceFiltrosSidebar({ collapsedOnMobile = false }: { colla
             )}
             {categoria && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] bg-primary/10 text-primary border border-primary/20 capitalize">
-                {categoria}
+                {categoriaLabel(categoria)}
               </span>
             )}
             {zonaId && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] bg-accent/10 text-accent border border-accent/20">
-                Zona #{zonaId}
+                {zonas.find((z) => String(z.id) === zonaId)?.nombre || 'Zona seleccionada'}
               </span>
             )}
             {(precioMin || precioMax) && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                ${precioMin || '0'} - ${precioMax || '∞'}
+                {currency} {precioMin || '0'} - {precioMax || '∞'}
               </span>
             )}
           </div>

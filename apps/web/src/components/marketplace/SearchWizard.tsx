@@ -1,21 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Search, MapPin, Building2, Wallet } from 'lucide-react';
 
-const CATEGORIAS = ['Casa', 'Departamento', 'Oficina', 'Local Comercial', 'Lote'];
+import { CATEGORIAS_UNIDAD, categoriaLabel } from '@/lib/categorias';
 
 export function SearchWizard() {
   const t = useTranslations('busqueda');
   const tComun = useTranslations('comun');
   const router = useRouter();
   const searchParams = useSearchParams();
-  const pathname = usePathname();
+  const locale = useLocale();
+  const currency = locale === 'en' ? 'USD' : locale === 'pt' ? 'BRL' : 'ARS';
   
   const [categoria, setCategoria] = useState('');
   const [zonaId, setZonaId] = useState('');
@@ -40,9 +41,9 @@ export function SearchWizard() {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/marketplace/zonas`)
       .then((res) => res.json())
       .then((data) => {
-        if (data && data[0] && data[0].zonas) {
-          setZonas(data[0].zonas);
-        }
+        if (Array.isArray(data)) setZonas(data.flatMap((ciudad: { nombre: string; zonas?: { id: string; nombre: string }[] }) =>
+          (ciudad.zonas || []).map((zona) => ({ id: zona.id, nombre: `${ciudad.nombre} · ${zona.nombre}` }))
+        ));
       })
       .catch(console.error);
   }, []);
@@ -54,7 +55,6 @@ export function SearchWizard() {
     if (precioMax) params.set('precio_max', precioMax);
     if (q) params.set('q', q);
     
-    const locale = pathname?.split('/')[1] || 'es';
     router.push(`/${locale}/unidades?${params.toString()}`);
   };
 
@@ -68,7 +68,7 @@ export function SearchWizard() {
           </div>
           <Input 
             type="text" 
-            placeholder="Buscar por zona, título..." 
+            placeholder="Buscar por título o descripción..."
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -83,14 +83,14 @@ export function SearchWizard() {
               <div className="flex items-center gap-2 truncate min-w-0 flex-1 overflow-hidden">
                 <Building2 className="h-4 w-4 text-azul-800 dark:text-dorado-300 shrink-0" />
                 <span className="truncate min-w-0 flex-1 text-left text-azul-900 dark:text-crema">
-                  <SelectValue placeholder={t('tipo') || 'Tipo de Unidad'} />
+                  {categoria ? categoriaLabel(categoria) : (t('tipo') || 'Tipo de Unidad')}
                 </span>
               </div>
             </SelectTrigger>
             <SelectContent className="rounded-xl bg-white dark:bg-azul-800 border border-azul-900/10 dark:border-azul-700/60">
-              {CATEGORIAS.map((c) => (
-                <SelectItem key={c} value={c.toLowerCase()} className="cursor-pointer text-azul-900 dark:text-crema focus:bg-azul-50 dark:focus:bg-azul-700">
-                  {c}
+              {CATEGORIAS_UNIDAD.map((c) => (
+                <SelectItem key={c.value} value={c.value} className="cursor-pointer text-azul-900 dark:text-crema focus:bg-azul-50 dark:focus:bg-azul-700">
+                  {c.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -104,7 +104,7 @@ export function SearchWizard() {
               <div className="flex items-center gap-2 truncate min-w-0 flex-1 overflow-hidden">
                 <MapPin className="h-4 w-4 text-azul-800 dark:text-dorado-300 shrink-0" />
                 <span className="truncate min-w-0 flex-1 text-left text-azul-900 dark:text-crema">
-                  <SelectValue placeholder={t('zona') || 'Seleccionar Zona'} />
+                  {zonas.find((zona) => String(zona.id) === zonaId)?.nombre || (t('zona') || 'Seleccionar Zona')}
                 </span>
               </div>
             </SelectTrigger>
@@ -125,7 +125,7 @@ export function SearchWizard() {
           </div>
           <Input 
             type="number" 
-            placeholder={t('precio') || 'Precio Máx ($)'} 
+            placeholder={`${t('precio') || 'Precio máximo'} (${currency})`}
             value={precioMax}
             onChange={(e) => setPrecioMax(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}

@@ -15,6 +15,7 @@ export interface ResilientUnidad {
   fotos?: string[];
   ubicacion_aprox?: { lat: number; lng: number };
   ubicacion_exacta?: { lat: number; lng: number } | null;
+  direccion_texto?: string | null;
   whatsapp?: string;
   instagram?: string;
   estado: string;

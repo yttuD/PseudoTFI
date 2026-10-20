@@ -7,6 +7,21 @@ export async function updateSession(request: NextRequest, response?: NextRespons
     request,
   })
 
+  const pathname = request.nextUrl.pathname;
+  const isGestorRoute =
+    pathname.includes('/dashboard') ||
+    pathname.includes('/mis-unidades') ||
+    pathname.includes('/grupos') ||
+    pathname.includes('/inquilinos') ||
+    pathname.includes('/alquileres') ||
+    pathname.includes('/facturacion') ||
+    pathname.includes('/delegados');
+
+  // The operational server layout verifies the actual session and canonical
+  // database role. A 400 ms middleware timeout must never turn a slow check
+  // into a login redirect or reuse stale signup role metadata.
+  if (isGestorRoute) return supabaseResponse;
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -60,7 +75,6 @@ export async function updateSession(request: NextRequest, response?: NextRespons
 
   const isNative = request.cookies.get('renda-native-mode')?.value === 'true';
 
-  const pathname = request.nextUrl.pathname;
   const isLanding =
     pathname === '/' ||
     pathname === '/es' ||
@@ -80,40 +94,6 @@ export async function updateSession(request: NextRequest, response?: NextRespons
 
     const url = request.nextUrl.clone();
     url.pathname = isGestor ? `/${locale}/dashboard` : `/${locale}/unidades`;
-    return NextResponse.redirect(url);
-  }
-
-  const isGestorRoute =
-    request.nextUrl.pathname.includes('/dashboard') ||
-    request.nextUrl.pathname.includes('/mis-unidades') ||
-    request.nextUrl.pathname.includes('/grupos') ||
-    request.nextUrl.pathname.includes('/inquilinos') ||
-    request.nextUrl.pathname.includes('/alquileres') ||
-    request.nextUrl.pathname.includes('/facturacion') ||
-    request.nextUrl.pathname.includes('/delegados');
-
-  if (
-    !currentUser &&
-    !request.nextUrl.pathname.includes('/auth/login') &&
-    !request.nextUrl.pathname.includes('/auth/registro') &&
-    isGestorRoute
-  ) {
-    // no user, potentially respond by redirecting the user to the login page
-    const url = request.nextUrl.clone()
-    url.pathname = '/es/auth/login'
-    return NextResponse.redirect(url)
-  }
-
-  // Si está logueado pero su rol es buscador, interceptar rutas administrativas y ofrecer onboarding amigable
-  if (
-    currentUser &&
-    (currentUser.user_metadata?.role === 'buscador' || currentUser.user_metadata?.rol === 'buscador') &&
-    isGestorRoute
-  ) {
-    const segments = pathname.split('/').filter(Boolean);
-    const locale = segments[0] && ['es', 'en', 'pt'].includes(segments[0]) ? segments[0] : 'es';
-    const url = request.nextUrl.clone();
-    url.pathname = `/${locale}/auth/onboarding-gestor`;
     return NextResponse.redirect(url);
   }
 

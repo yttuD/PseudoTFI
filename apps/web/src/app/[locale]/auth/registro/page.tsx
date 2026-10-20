@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { isTestAdapterEnabled } from "@/lib/test-adapter";
 import { AuthLayout } from "@/components/ui/auth-layout";
 import { SignupFormContainer, LabelInputContainer } from "@/components/ui/signup-form";
+import { PasswordInput } from '@/components/ui/password-input';
 import { ClerkOtpInput } from "@/components/ui/clerk-otp";
 import { Phone, Mail, ArrowRight, AlertCircle } from "lucide-react";
 
@@ -261,8 +262,16 @@ export default function RegisterPage() {
           return;
         }
 
-        // Error real de Supabase (ej: usuario ya registrado, contraseña débil)
-        setError(regError.message);
+        // El mismo correo usa una sola cuenta; el rol se amplía desde la cuenta existente.
+        if (/user already registered|already registered|already exists/i.test(regError.message)) {
+          setError(isGestorPortal
+            ? 'Este correo ya tiene una cuenta en Rendo. Iniciá sesión con ella y activá el acceso de Gestor; no necesitás otro registro.'
+            : 'Este correo ya tiene una cuenta en Rendo. Iniciá sesión o usá otro correo.');
+        } else if (/password/i.test(regError.message)) {
+          setError('La contraseña no cumple los requisitos de seguridad. Probá con una contraseña más larga.');
+        } else {
+          setError('No pudimos crear la cuenta. Revisá los datos e intentá nuevamente.');
+        }
         setLoading(false);
         return;
       }
@@ -499,18 +508,15 @@ export default function RegisterPage() {
               <label htmlFor="password" className="text-xs font-medium text-foreground">
                 {t("password")}
               </label>
-              <div className="relative">
-                <input
+              <PasswordInput
                   id="password"
                   name="password"
-                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={t("passwordPlaceholder")}
+                  autoComplete="new-password"
                   className="w-full min-h-[44px] rounded-xl border border-border/80 bg-surface px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                  required
                 />
-              </div>
             </LabelInputContainer>
 
             <button

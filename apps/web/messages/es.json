@@ -254,7 +254,18 @@
     "rule4": "Horarios de Check-in y Check-out a coordinar con anticipación por WhatsApp.",
     "directContactDisclaimer": "Al contactar, hablarás directamente con el Gestor titular sin intermediarios.",
     "noPhotos": "Sin fotos disponibles",
-    "consultPrice": "Consultar precio"
+    "consultPrice": "Consultar precio",
+    "whatsappMessage": "Hola, me interesa la unidad '{titulo}' que vi publicada en Rendo.",
+    "exactAddressLabel": "Dirección",
+    "noExactAddress": "Sin dirección textual registrada",
+    "priceUnavailable": "Precio no disponible",
+    "estimatedConversion": "Conversión estimada",
+    "contactUnavailable": "Contacto no disponible para esta unidad.",
+    "loginToContact": "Iniciá sesión para contactar",
+    "detailUnavailableTitle": "El detalle no está disponible temporalmente",
+    "detailUnavailableDesc": "No se mostrará información de ejemplo mientras el servicio esté caído.",
+    "backToCatalog": "Volver al catálogo",
+    "loadingMap": "Iniciando geolocalización..."
   },
   "GestorDashboard": {
     "terminalTitle": "TERMINAL::DASHBOARD",
@@ -357,7 +368,7 @@
     "quotaPlans": "Planes de Cupo",
     "languageTitle": "Idioma / Language",
     "currencyNote": "Precios expresados en ARS. Facturación directa sin comisión por alquiler.",
-    "betaCurrencyNote": "Beta de prueba: cobros y facturación deshabilitados.",
+    "betaCurrencyNote": "Beta: precios en ARS; cobros y facturación deshabilitados.",
     "allRightsReserved": "Todos los derechos reservados.",
     "terms": "Términos del Servicio",
     "privacy": "Privacidad de Datos (Ley 25.326)",
@@ -388,5 +399,27 @@
     "cancel": "Cancelar Invitación",
     "emptyTeam": "No tienes colaboradores en tu equipo",
     "emptyInbox": "No tienes invitaciones pendientes"
+  },
+  "Inventario": {
+    "titulo": "Inventario & Grupos",
+    "subtitulo": "Gestión centralizada de edificios, complejos y unidades operativas",
+    "modoLectura": "Modo Solo Lectura",
+    "nuevaUnidad": "Nueva Unidad",
+    "crearGrupo": "Crear Nuevo Grupo",
+    "anadirUnidadAGrupo": "Añadir Unidad a este Grupo",
+    "nuevaUnidadIndividual": "Nueva Unidad Individual",
+    "sinUnidadesEnPagina": "Sin unidades en esta página",
+    "totalMostrado": "Mostrando {mostrado} de {total} unidades autorizadas en {grupos} grupos",
+    "paginaAnterior": "Anterior",
+    "paginaSiguiente": "Siguiente",
+    "paginaInfo": "Página {page} de {totalPages}",
+    "paginaFueraDeRango": "Página fuera de rango ({page} de {totalPages})",
+    "irAPrimeraPagina": "Ir a la primera página",
+    "errorCargaTitulo": "Error de carga de inventario",
+    "errorCargaMensaje": "No se pudieron recuperar las unidades operativas. Comprueba la conexión o intenta nuevamente.",
+    "reintentar": "Reintentar",
+    "vacioTitulo": "Inventario Vacío",
+    "vacioDescripcion": "No hay unidades registradas en tu workspace accesible.",
+    "registrarUnidad": "Registrar Unidad"
   }
 }

@@ -15,7 +15,8 @@ import {
   PlusCircle,
   ChevronDown,
   Shield,
-  Home
+  Home,
+  UserRound
 } from 'lucide-react';
 import { LanguageSelector } from '@/components/marketplace/LanguageSelector';
 import { getVerifiedClientSessionUser, signOutClient, type ClientAuthUser } from '@/lib/supabase/client-auth';
@@ -33,11 +34,13 @@ export function Navbar({ locale }: { locale: string }) {
 
   useEffect(() => {
     let active = true;
-    getVerifiedClientSessionUser().then((resolvedUser) => {
+    const refreshProfile = () => getVerifiedClientSessionUser().then((resolvedUser) => {
       if (!active) return;
       setUser(resolvedUser);
       setMounted(true);
     });
+    refreshProfile();
+    window.addEventListener('rendo:profile-updated', refreshProfile);
 
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -47,6 +50,7 @@ export function Navbar({ locale }: { locale: string }) {
     document.addEventListener('pointerdown', handleClickOutside);
     return () => {
       active = false;
+      window.removeEventListener('rendo:profile-updated', refreshProfile);
       document.removeEventListener('pointerdown', handleClickOutside);
     };
   }, []);
@@ -158,6 +162,10 @@ export function Navbar({ locale }: { locale: string }) {
 
                   {/* Menu Options */}
                   <div className="py-1 space-y-1">
+                    <Link href={`/${locale}/cuenta`} onClick={() => setDropdownOpen(false)} className="flex items-center gap-2.5 px-3 py-2 text-xs rounded-xl hover:bg-muted/70 text-foreground transition-colors">
+                      <UserRound className="h-4 w-4 text-primary" />
+                      <span>Mi perfil</span>
+                    </Link>
                     <Link
                       href={`/${locale}/favoritos`}
                       onClick={() => setDropdownOpen(false)}

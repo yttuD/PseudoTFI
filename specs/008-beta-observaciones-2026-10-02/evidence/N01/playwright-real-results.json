@@ -1,0 +1,1511 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "D:\\Programacion-Cosas\\Proyecto_inmobiliaria\\TFI\\apps\\web\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config",
+      "playwright.beta-real.config.ts"
+    ],
+    "configFile": "D:\\Programacion-Cosas\\Proyecto_inmobiliaria\\TFI\\apps\\web\\playwright.beta-real.config.ts",
+    "rootDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "auth-matrix-1440-light",
+        "name": "auth-matrix-1440-light",
+        "testDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/beta_isolation_real.spec.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "visual-1440-light",
+        "name": "visual-1440-light",
+        "testDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/beta_isolation_real.spec.ts"
+        ],
+        "timeout": 75000
+      },
+      {
+        "outputDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "visual-1440-dark",
+        "name": "visual-1440-dark",
+        "testDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/beta_isolation_real.spec.ts"
+        ],
+        "timeout": 75000
+      },
+      {
+        "outputDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "visual-1024-light",
+        "name": "visual-1024-light",
+        "testDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/beta_isolation_real.spec.ts"
+        ],
+        "timeout": 75000
+      },
+      {
+        "outputDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "visual-1024-dark",
+        "name": "visual-1024-dark",
+        "testDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/beta_isolation_real.spec.ts"
+        ],
+        "timeout": 75000
+      },
+      {
+        "outputDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "visual-768-light",
+        "name": "visual-768-light",
+        "testDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/beta_isolation_real.spec.ts"
+        ],
+        "timeout": 75000
+      },
+      {
+        "outputDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "visual-375-light",
+        "name": "visual-375-light",
+        "testDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/beta_isolation_real.spec.ts"
+        ],
+        "timeout": 75000
+      },
+      {
+        "outputDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "visual-375-dark",
+        "name": "visual-375-dark",
+        "testDir": "D:/Programacion-Cosas/Proyecto_inmobiliaria/TFI/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/beta_isolation_real.spec.ts"
+        ],
+        "timeout": 75000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "D:\\Programacion-Cosas\\Proyecto_inmobiliaria\\TFI\\specs\\008-beta-observaciones-2026-10-02\\evidence\\N01\\playwright-real-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "beta_isolation_real.spec.ts",
+      "file": "beta_isolation_real.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "B007b — Inventario y Aislamiento Real Navegador",
+          "file": "beta_isolation_real.spec.ts",
+          "line": 16,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Escenario 2: Matriz completa de alcances de Delegado (cuenta, grupo, IDs, pending, revoked) @auth",
+              "ok": true,
+              "tags": [
+                "auth"
+              ],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "auth-matrix-1440-light",
+                  "projectName": "auth-matrix-1440-light",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 28312,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:53:23.468Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-c5cb6d02477f2f9a9c51",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 358,
+              "column": 7
+            },
+            {
+              "title": "Escenario 1: Aislamiento A/B con contextos separados y HTTP negatives @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-1440-light",
+                  "projectName": "visual-1440-light",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8441,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:53:55.045Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-988b777d24d332a234d6",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 69,
+              "column": 7
+            },
+            {
+              "title": "Escenario 1b: Capturas de tabla y modo solo lectura en matriz @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-1440-light",
+                  "projectName": "visual-1440-light",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4175,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:54:04.492Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-938535c8322b1704dde7",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 184,
+              "column": 7
+            },
+            {
+              "title": "Inventario vacío localizado sin overflow @empty @visual",
+              "ok": true,
+              "tags": [
+                "empty",
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-1440-light",
+                  "projectName": "visual-1440-light",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6503,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:54:08.689Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-ac39aae630eec86120ae",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 543,
+              "column": 7
+            },
+            {
+              "title": "Escenario 3: Paginación explícita, out-of-range y límites inválidos @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-1440-light",
+                  "projectName": "visual-1440-light",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6583,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:54:15.212Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-9022c5d6a7018e99e29e",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 573,
+              "column": 7
+            },
+            {
+              "title": "Escenario 4: Manejo de errores de SSR, fallo de grupos y recuperación con retry @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-1440-light",
+                  "projectName": "visual-1440-light",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6047,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:54:21.813Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-4578bafa9f8cb2ad716f",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 617,
+              "column": 7
+            },
+            {
+              "title": "Escenario 1: Aislamiento A/B con contextos separados y HTTP negatives @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-1440-dark",
+                  "projectName": "visual-1440-dark",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8747,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:54:29.445Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-9a856eff6e4cf0de3e15",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 69,
+              "column": 7
+            },
+            {
+              "title": "Escenario 1b: Capturas de tabla y modo solo lectura en matriz @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-1440-dark",
+                  "projectName": "visual-1440-dark",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4287,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:54:39.248Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-e867c3e22f03ef88f646",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 184,
+              "column": 7
+            },
+            {
+              "title": "Inventario vacío localizado sin overflow @empty @visual",
+              "ok": true,
+              "tags": [
+                "empty",
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-1440-dark",
+                  "projectName": "visual-1440-dark",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6639,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:54:43.553Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-c290f4d227856da18e93",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 543,
+              "column": 7
+            },
+            {
+              "title": "Escenario 3: Paginación explícita, out-of-range y límites inválidos @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-1440-dark",
+                  "projectName": "visual-1440-dark",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6604,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:54:50.208Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-16d09cece779c42ffa49",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 573,
+              "column": 7
+            },
+            {
+              "title": "Escenario 4: Manejo de errores de SSR, fallo de grupos y recuperación con retry @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-1440-dark",
+                  "projectName": "visual-1440-dark",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6083,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:54:56.835Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-1ebb92ce6fefa85f7fb0",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 617,
+              "column": 7
+            },
+            {
+              "title": "Escenario 1: Aislamiento A/B con contextos separados y HTTP negatives @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-1024-light",
+                  "projectName": "visual-1024-light",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8459,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:55:04.518Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-f96112935cbefb1298e1",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 69,
+              "column": 7
+            },
+            {
+              "title": "Escenario 1b: Capturas de tabla y modo solo lectura en matriz @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-1024-light",
+                  "projectName": "visual-1024-light",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4237,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:55:13.970Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-b606d837c64f3672c68d",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 184,
+              "column": 7
+            },
+            {
+              "title": "Inventario vacío localizado sin overflow @empty @visual",
+              "ok": true,
+              "tags": [
+                "empty",
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-1024-light",
+                  "projectName": "visual-1024-light",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6512,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:55:18.234Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-7d4e2748362ce30bc97a",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 543,
+              "column": 7
+            },
+            {
+              "title": "Escenario 3: Paginación explícita, out-of-range y límites inválidos @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-1024-light",
+                  "projectName": "visual-1024-light",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6738,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:55:24.764Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-f6b83f2179ca7e68c5fd",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 573,
+              "column": 7
+            },
+            {
+              "title": "Escenario 4: Manejo de errores de SSR, fallo de grupos y recuperación con retry @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-1024-light",
+                  "projectName": "visual-1024-light",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6011,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:55:31.517Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-d5f2faee9c39c0c1e930",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 617,
+              "column": 7
+            },
+            {
+              "title": "Escenario 1: Aislamiento A/B con contextos separados y HTTP negatives @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-1024-dark",
+                  "projectName": "visual-1024-dark",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8379,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:55:39.053Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-e64b002301a9de0c96c0",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 69,
+              "column": 7
+            },
+            {
+              "title": "Escenario 1b: Capturas de tabla y modo solo lectura en matriz @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-1024-dark",
+                  "projectName": "visual-1024-dark",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4223,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:55:48.463Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-f9a63efe0aae1704dc93",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 184,
+              "column": 7
+            },
+            {
+              "title": "Inventario vacío localizado sin overflow @empty @visual",
+              "ok": true,
+              "tags": [
+                "empty",
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-1024-dark",
+                  "projectName": "visual-1024-dark",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6690,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:55:52.703Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-af6fdf7e223d06124de9",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 543,
+              "column": 7
+            },
+            {
+              "title": "Escenario 3: Paginación explícita, out-of-range y límites inválidos @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-1024-dark",
+                  "projectName": "visual-1024-dark",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6591,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:55:59.410Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-908263312109a8f49115",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 573,
+              "column": 7
+            },
+            {
+              "title": "Escenario 4: Manejo de errores de SSR, fallo de grupos y recuperación con retry @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-1024-dark",
+                  "projectName": "visual-1024-dark",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5960,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:56:06.018Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-dc99af087c0992d50d29",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 617,
+              "column": 7
+            },
+            {
+              "title": "Escenario 1: Aislamiento A/B con contextos separados y HTTP negatives @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-768-light",
+                  "projectName": "visual-768-light",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8443,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:56:13.507Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-41fa0a9605fb52696b0b",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 69,
+              "column": 7
+            },
+            {
+              "title": "Escenario 1b: Capturas de tabla y modo solo lectura en matriz @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-768-light",
+                  "projectName": "visual-768-light",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4220,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:56:22.936Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-d1e25e641c8237001c58",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 184,
+              "column": 7
+            },
+            {
+              "title": "Inventario vacío localizado sin overflow @empty @visual",
+              "ok": true,
+              "tags": [
+                "empty",
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-768-light",
+                  "projectName": "visual-768-light",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6553,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:56:27.176Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-2c8e8cd92cc1015c068e",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 543,
+              "column": 7
+            },
+            {
+              "title": "Escenario 3: Paginación explícita, out-of-range y límites inválidos @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-768-light",
+                  "projectName": "visual-768-light",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7378,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:56:33.749Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-615a2345c99ffc58bc4a",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 573,
+              "column": 7
+            },
+            {
+              "title": "Escenario 4: Manejo de errores de SSR, fallo de grupos y recuperación con retry @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-768-light",
+                  "projectName": "visual-768-light",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6425,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:56:41.150Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-3612845de78e14e3b0bf",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 617,
+              "column": 7
+            },
+            {
+              "title": "Escenario 1: Aislamiento A/B con contextos separados y HTTP negatives @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-375-light",
+                  "projectName": "visual-375-light",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8994,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:56:49.409Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-6713d6b874fd9f5eb5bf",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 69,
+              "column": 7
+            },
+            {
+              "title": "Escenario 1b: Capturas de tabla y modo solo lectura en matriz @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-375-light",
+                  "projectName": "visual-375-light",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4301,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:56:59.582Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-51825d435e64ff46f2fb",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 184,
+              "column": 7
+            },
+            {
+              "title": "Inventario vacío localizado sin overflow @empty @visual",
+              "ok": true,
+              "tags": [
+                "empty",
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-375-light",
+                  "projectName": "visual-375-light",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6820,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:57:03.899Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-fa0f1d9ed718cd0f0e82",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 543,
+              "column": 7
+            },
+            {
+              "title": "Escenario 3: Paginación explícita, out-of-range y límites inválidos @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-375-light",
+                  "projectName": "visual-375-light",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6897,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:57:10.740Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-d46ac3f912566d9cba7e",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 573,
+              "column": 7
+            },
+            {
+              "title": "Escenario 4: Manejo de errores de SSR, fallo de grupos y recuperación con retry @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-375-light",
+                  "projectName": "visual-375-light",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5886,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:57:17.655Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-1e813163b174cf765ce7",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 617,
+              "column": 7
+            },
+            {
+              "title": "Escenario 1: Aislamiento A/B con contextos separados y HTTP negatives @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-375-dark",
+                  "projectName": "visual-375-dark",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8840,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:57:25.025Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-5c13e3a86f39621ee842",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 69,
+              "column": 7
+            },
+            {
+              "title": "Escenario 1b: Capturas de tabla y modo solo lectura en matriz @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-375-dark",
+                  "projectName": "visual-375-dark",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4314,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:57:34.987Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-c3f1149e5fd33a5bbda3",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 184,
+              "column": 7
+            },
+            {
+              "title": "Inventario vacío localizado sin overflow @empty @visual",
+              "ok": true,
+              "tags": [
+                "empty",
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-375-dark",
+                  "projectName": "visual-375-dark",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6643,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:57:39.322Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-1955a2551e823207ed34",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 543,
+              "column": 7
+            },
+            {
+              "title": "Escenario 3: Paginación explícita, out-of-range y límites inválidos @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-375-dark",
+                  "projectName": "visual-375-dark",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6746,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:57:45.981Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-5670499cae8ec3ebc479",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 573,
+              "column": 7
+            },
+            {
+              "title": "Escenario 4: Manejo de errores de SSR, fallo de grupos y recuperación con retry @visual",
+              "ok": true,
+              "tags": [
+                "visual"
+              ],
+              "tests": [
+                {
+                  "timeout": 75000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visual-375-dark",
+                  "projectName": "visual-375-dark",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5878,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-08T00:57:52.742Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b0e37fdf46acae7ecccc-f735fa3e958cb97c352d",
+              "file": "beta_isolation_real.spec.ts",
+              "line": 617,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-08T00:53:22.289Z",
+    "duration": 277124.87299999996,
+    "expected": 36,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

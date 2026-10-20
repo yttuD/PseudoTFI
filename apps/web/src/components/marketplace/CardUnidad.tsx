@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { FavoritoButton } from "./FavoritoButton";
 import { Badge } from "@/components/ui/badge";
+import { publicPrice, type ExchangeRates } from '@/lib/public-price';
+import { categoriaLabel } from '@/lib/categorias';
 
 interface CardUnidadProps {
   unidad: Record<string, unknown>;
@@ -11,16 +13,22 @@ interface CardUnidadProps {
   isFavorito?: boolean;
   isLoggedIn?: boolean;
   token?: string;
+  exchangeRates?: ExchangeRates | null;
 }
 
-export function CardUnidad({ unidad, locale, isFavorito = false, isLoggedIn = false, token }: CardUnidadProps) {
+export function CardUnidad({ unidad, locale, isFavorito = false, isLoggedIn = false, token, exchangeRates }: CardUnidadProps) {
   const t = useTranslations('unidad');
   const tDetail = useTranslations('UnitDetail');
   
   const modalidades = Array.isArray(unidad.modalidades_precio) ? unidad.modalidades_precio : [];
-  const precioMinimo = modalidades.length > 0 
-    ? Math.min(...modalidades.map((m: { precio: number }) => m.precio)) 
-    : 0;
+  const prices = modalidades.map((m: { precio: number; precio_usd?: number | null; precio_brl?: number | null; unidad_tiempo?: string }) => ({
+    price: publicPrice(m, locale, exchangeRates), period: m.unidad_tiempo,
+  }));
+  const firstPrice = prices.filter((entry) => entry.price !== null)
+    .sort((a, b) => (a.price?.amount || 0) - (b.price?.amount || 0))[0];
+  const periodLabel = firstPrice?.period === 'hora' ? (locale === 'en' ? 'hour' : locale === 'pt' ? 'hora' : 'hora')
+    : firstPrice?.period === 'mes' ? (locale === 'en' ? 'month' : locale === 'pt' ? 'mês' : 'mes')
+    : (locale === 'en' ? 'day' : locale === 'pt' ? 'dia' : 'día');
     
   return (
     <Link href={`/${locale}/unidades/${unidad.id}`} className="block group">
@@ -61,10 +69,11 @@ export function CardUnidad({ unidad, locale, isFavorito = false, isLoggedIn = fa
           
           {/* Bottom details on image */}
           <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
-            {precioMinimo > 0 && (
+            {firstPrice && (
               <div className="bg-card/95 backdrop-blur-md rounded-xl px-3 py-1.5 shadow-sm border border-border">
                 <span className="text-[10px] text-muted-foreground uppercase font-mono mr-1 tracking-wider">{t('desde')}</span>
-                <span className="font-bold font-mono text-dorado-600 dark:text-dorado-500">${precioMinimo.toLocaleString()}</span>
+                <span className="font-bold font-mono text-dorado-600 dark:text-dorado-500">{firstPrice.price?.text}{firstPrice.price?.approximate ? ' aprox.' : ''}</span>
+                <span className="text-[10px] text-muted-foreground ml-1">/ {periodLabel}</span>
               </div>
             )}
           </div>
@@ -73,7 +82,7 @@ export function CardUnidad({ unidad, locale, isFavorito = false, isLoggedIn = fa
         <CardContent className="p-4 flex flex-col flex-1 gap-2">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground uppercase font-mono tracking-wider">
             <MapPin className="w-3.5 h-3.5 text-dorado-600 dark:text-dorado-400" />
-            <span className="truncate">{((unidad.zonas as Record<string, unknown>)?.nombre as string) || 'Zona sin especificar'} • {unidad.categoria as string}</span>
+            <span className="truncate">{((unidad.zonas as Record<string, unknown>)?.nombre as string) || 'Fuera de zonas predefinidas'} • {categoriaLabel(unidad.categoria as string)}</span>
           </div>
           <h3 className="font-bold text-base md:text-lg line-clamp-2 leading-tight text-balance group-hover:text-dorado-600 dark:group-hover:text-dorado-400 transition-colors">
             {(unidad.titulo || unidad.titulo_es) as string}

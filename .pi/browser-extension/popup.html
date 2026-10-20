@@ -1,0 +1,7 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Pi · Rendo</title><link rel="stylesheet" href="popup.css"></head>
+<body><h1>Chats de Rendo</h1><p id="status">Comprobando conexión…</p>
+<form id="connection"><label>Puerto local<input id="port" type="number" min="1025" max="65535" value="8789" required></label><label>Código de vinculación<input id="token" type="password" autocomplete="off" required pattern="[a-f0-9]{64}"></label><button>Vincular con Pi</button></form>
+<p>El código se obtiene con <code>node .pi/sdd/cli.mjs web pair</code>. Iniciá también <code>web serve</code>.</p>
+<details><summary>Ajustar controles del chat</summary><p>Si la página cambió, sobrescribí los selectores CSS necesarios. Modelo y nivel deben identificar controles visibles de la selección actual, no el texto de una conversación.</p><textarea id="selectors" rows="10" spellcheck="false" placeholder='{"chatgpt":{"effort":"button[data-testid=...]"},"gemini":{}}'></textarea><button id="save-selectors" type="button">Guardar controles</button></details>
+<p>Elegí previamente los modelos y niveles en cada web. Pi abre conversaciones nuevas y verifica la selección; las pestañas permanecen disponibles para revisar resultados.</p><script src="popup.js"></script></body></html>

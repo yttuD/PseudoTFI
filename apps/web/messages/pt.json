@@ -254,7 +254,18 @@
     "rule4": "Horários de Check-in e Check-out a combinar com antecedência pelo WhatsApp.",
     "directContactDisclaimer": "Ao entrar em contato, você falará diretamente com o Gestor Imobiliário responsável sem intermediários.",
     "noPhotos": "Sem fotos disponíveis",
-    "consultPrice": "Consultar preço"
+    "consultPrice": "Consultar preço",
+    "whatsappMessage": "Olá, tenho interesse na unidade '{titulo}' que vi anunciada no Rendo.",
+    "exactAddressLabel": "Endereço",
+    "noExactAddress": "Nenhum endereço cadastrado",
+    "priceUnavailable": "Preço indisponível",
+    "estimatedConversion": "Conversão estimada",
+    "contactUnavailable": "Contato não disponível para esta unidade.",
+    "loginToContact": "Faça login para contatar",
+    "detailUnavailableTitle": "Detalhe temporariamente indisponível",
+    "detailUnavailableDesc": "Informações de exemplo não serão exibidas enquanto o serviço estiver fora do ar.",
+    "backToCatalog": "Voltar ao catálogo",
+    "loadingMap": "Iniciando mapa..."
   },
   "GestorDashboard": {
     "terminalTitle": "TERMINAL::DASHBOARD",
@@ -356,8 +367,8 @@
     "managementTerminal": "Terminal de Gestão",
     "quotaPlans": "Planos de Cota",
     "languageTitle": "Idioma",
-    "currencyNote": "Preços em ARS. Faturamento direto sem comissão por aluguel.",
-    "betaCurrencyNote": "Beta de teste: pagamentos e faturamento desativados.",
+    "currencyNote": "Preços exibidos em BRL. Conversões automáticas são estimativas com cotação datada do BCRA.",
+    "betaCurrencyNote": "Beta: preços em BRL; pagamentos e faturamento desativados.",
     "allRightsReserved": "Todos os direitos reservados.",
     "terms": "Termos de Serviço",
     "privacy": "Privacidade de Dados (Lei 25.326)",
@@ -388,5 +399,27 @@
     "cancel": "Cancelar Convite",
     "emptyTeam": "Você não possui colaboradores na sua equipe",
     "emptyInbox": "Você não tem convites pendentes"
+  },
+  "Inventario": {
+    "titulo": "Inventário & Grupos",
+    "subtitulo": "Gestão centralizada de edifícios, complexos e unidades operacionais",
+    "modoLectura": "Modo Apenas Leitura",
+    "nuevaUnidad": "Nova Unidade",
+    "crearGrupo": "Criar Novo Grupo",
+    "anadirUnidadAGrupo": "Adicionar Unidade a este Grupo",
+    "nuevaUnidadIndividual": "Nova Unidade Individual",
+    "sinUnidadesEnPagina": "Sem unidades nesta página",
+    "totalMostrado": "Exibindo {mostrado} de {total} unidades autorizadas em {grupos} grupos",
+    "paginaAnterior": "Anterior",
+    "paginaSiguiente": "Próxima",
+    "paginaInfo": "Página {page} de {totalPages}",
+    "paginaFueraDeRango": "Página fora de alcance ({page} de {totalPages})",
+    "irAPrimeraPagina": "Ir para a primeira página",
+    "errorCargaTitulo": "Erro ao carregar inventário",
+    "errorCargaMensaje": "Não foi possível recuperar as unidades operacionais. Verifique a conexão ou tente novamente.",
+    "reintentar": "Tentar novamente",
+    "vacioTitulo": "Inventário vazio",
+    "vacioDescripcion": "Não há unidades cadastradas no seu espaço de trabalho acessível.",
+    "registrarUnidad": "Cadastrar unidade"
   }
 }

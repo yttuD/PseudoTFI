@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import Sidebar from '@/components/gestor/Sidebar';
-import { FloatingDock } from '@/components/ui/floating-dock';
+import { QuickActionsDock } from '@/components/gestor/QuickActionsDock';
 import { PlusCircle, Users, FileText, AlertTriangle, Eye } from 'lucide-react';
 import { getServerAuth } from '@/lib/supabase/server-auth';
 import { getServerAccessContext } from '@/lib/access-context';
@@ -152,9 +152,7 @@ export default async function GestorLayout({
 
             {/* Desktop Quick-Action Floating Dock - Only for Gestor */}
             {!isDelegado && (
-              <div className="fixed bottom-6 right-8 z-30 hidden md:block">
-                <FloatingDock items={gestorQuickActions} mobileAriaLabel={tNav('toggleMenuAria')} />
-              </div>
+              <QuickActionsDock items={gestorQuickActions} mobileAriaLabel={tNav('toggleMenuAria')} />
             )}
           </>
         )}

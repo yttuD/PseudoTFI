@@ -23,13 +23,27 @@ export default function OnboardingGestorPage() {
     setError(null);
 
     try {
+      const withDeadline = async <T,>(promise: PromiseLike<T>): Promise<T> => {
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        try {
+          return await Promise.race([
+            Promise.resolve(promise),
+            new Promise<T>((_, reject) => { timer = setTimeout(() => reject(new Error('La operación tardó demasiado. Revisá tu conexión y volvé a intentar.')), 10000); }),
+          ]);
+        } finally {
+          if (timer) clearTimeout(timer);
+        }
+      };
       // 1. Obtener usuario actual
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await withDeadline(supabase.auth.getUser());
       if (authError || !user) throw new Error('Iniciá sesión para continuar.');
 
       // Canonical role and trial quota change atomically on the database.
-      const { error: convertError } = await supabase.rpc('become_gestor');
-      if (convertError) throw convertError;
+      const { error: convertError } = await withDeadline(supabase.rpc('become_gestor'));
+      if (convertError) {
+        const { data: profile } = await withDeadline(supabase.from('users').select('rol').eq('id', user.id).maybeSingle());
+        if (profile?.rol !== 'gestor') throw new Error(convertError.message || 'No se pudo activar el acceso de Gestor. Intentá nuevamente.');
+      }
 
       setSuccess(true);
       setTimeout(() => {
@@ -37,7 +51,7 @@ export default function OnboardingGestorPage() {
         router.refresh();
       }, 900);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error al actualizar el perfil. Intenta nuevamente.';
+      const msg = err instanceof Error ? err.message : 'No se pudo activar el acceso de Gestor. Intentá nuevamente.';
       setError(msg);
     } finally {
       setLoading(false);

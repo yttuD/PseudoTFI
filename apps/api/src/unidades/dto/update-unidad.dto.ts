@@ -69,6 +69,10 @@ export class UpdateUnidadDto extends PartialType(CreateUnidadDto) {
   instagram?: string;
 
   @IsOptional()
+  @IsString()
+  direccion_texto?: string | null;
+
+  @IsOptional()
   @IsBoolean()
   auto_traducir?: boolean;
 }

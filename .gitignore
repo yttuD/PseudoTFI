@@ -9,10 +9,16 @@ playwright-report/
 **/.turbo/
 **/test-results/
 **/playwright-report/
+.dist-beta-real/
+.next-beta-real/
 
 # Local configuration and disposable tooling
 .env
+.env.*
 .env.*.local
+!**/.env.example
+**/.auth/
+*.log
 .vercel/
 .railway/
 .pnpm-store/
@@ -21,3 +27,39 @@ scratch/
 **/scratch/
 .claude/settings.local.json
 supabase/.temp/
+
+# Pi SDD: credentials, isolated sessions, logs and generated packets
+.pi/local/
+.pi/runtime/node_modules/
+.pi/runtime/antigravity/
+.pi/sdd/.test-tmp/
+
+# Machine-only state (never publish, including files previously tracked)
+*.tsbuildinfo
+**/local.properties
+**/*.keystore
+**/*.jks
+.impeccable/config.local.json
+
+# Reproducible deployment copies and unreviewed private/raw evidence stay local
+/snapshots/
+/snapshots-vercel/
+**/evidence/**/candidates/
+**/evidence/**/backup-*
+**/evidence/**/screenshots/
+**/evidence/**/contact-sheets/
+**/evidence/**/captures/
+**/evidence/**/captures-remote/
+**/evidence/**/*.har
+**/evidence/**/*.zip
+**/evidence/**/*.png
+**/evidence/**/*.jpg
+**/evidence/**/*.webp
+**/evidence/**/*.mp4
+**/evidence/**/*.webm
+/RENDO_observaciones_mejoradas/**/*.png
+/RENDO_observaciones_mejoradas/**/*.jpg
+/entregables/*.pdf
+/scripts/seed_demo_accounts.js
+/scripts/seed_demo_accounts.sql
+/scripts/verify_demo_accounts.js

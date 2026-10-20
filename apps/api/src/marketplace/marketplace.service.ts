@@ -4,6 +4,7 @@ import { BuscarUnidadesDto } from './dto/buscar-unidades.dto.js';
 import { resilientStore } from '../common/resilient-store.js';
 import { createHash } from 'node:crypto';
 import { isReleaseRuntime } from '../config/release-readiness.js';
+import { getExchangeRates } from './exchange-rates.js';
 
 const databaseUnavailable = () => new ServiceUnavailableException('El catálogo no está disponible temporalmente');
 const queryTimeoutMs = () => isReleaseRuntime() ? 5000 : 400;
@@ -52,8 +53,8 @@ export class MarketplaceService {
         const qLower = q.toLowerCase();
         fallbackUnidades = fallbackUnidades.filter(
           (u) =>
-            (u.titulo_es && u.titulo_es.toLowerCase().includes(qLower)) ||
-            ((u as any).descripcion_es && (u as any).descripcion_es.toLowerCase().includes(qLower))
+            ['titulo_es', 'descripcion_es', 'titulo_en', 'descripcion_en', 'titulo_pt', 'descripcion_pt']
+              .some((field) => String((u as any)[field] || '').toLowerCase().includes(qLower))
         );
       }
       if (precio_min !== undefined || precio_max !== undefined) {
@@ -98,7 +99,7 @@ export class MarketplaceService {
         ubicacion_aprox, 
         created_at,
         zonas(nombre),
-        modalidades_precio(id, unidad_tiempo, cantidad_tiempo, precio, deleted_at)
+        modalidades_precio(id, unidad_tiempo, cantidad_tiempo, precio, precio_usd, precio_brl, deleted_at)
       `, { count: 'exact' })
       .eq('estado', 'publicada')
       .is('deleted_at', null)
@@ -112,7 +113,13 @@ export class MarketplaceService {
     }
 
     if (q) {
-      queryBuilder = queryBuilder.ilike(`titulo_${locale}`, `%${q}%`);
+      const searchTerm = q.replace(/[,%().]/g, ' ').trim();
+      if (searchTerm) {
+        queryBuilder = queryBuilder.or(
+          ['titulo_es', 'descripcion_es', 'titulo_en', 'descripcion_en', 'titulo_pt', 'descripcion_pt']
+            .map((field) => `${field}.ilike.%${searchTerm}%`).join(',')
+        );
+      }
     }
 
     if (precio_min !== undefined || precio_max !== undefined) {
@@ -121,8 +128,25 @@ export class MarketplaceService {
         .select('unidad_id')
         .is('deleted_at', null);
       
-      if (precio_min !== undefined) precioQuery = precioQuery.gte('precio', precio_min);
-      if (precio_max !== undefined) precioQuery = precioQuery.lte('precio', precio_max);
+      if (locale === 'en' || locale === 'pt') {
+        const rates = await getExchangeRates();
+        const column = locale === 'en' ? 'precio_usd' : 'precio_brl';
+        const rate = locale === 'en' ? rates.arsPerUsd : rates.arsPerBrl;
+        const autoBounds = [
+          `${column}.is.null`,
+          ...(precio_min !== undefined ? [`precio.gte.${precio_min * rate}`] : []),
+          ...(precio_max !== undefined ? [`precio.lte.${precio_max * rate}`] : []),
+        ];
+        const manualBounds = [
+          `${column}.not.is.null`,
+          ...(precio_min !== undefined ? [`${column}.gte.${precio_min}`] : []),
+          ...(precio_max !== undefined ? [`${column}.lte.${precio_max}`] : []),
+        ];
+        precioQuery = precioQuery.or(`and(${autoBounds.join(',')}),and(${manualBounds.join(',')})`);
+      } else {
+        if (precio_min !== undefined) precioQuery = precioQuery.gte('precio', precio_min);
+        if (precio_max !== undefined) precioQuery = precioQuery.lte('precio', precio_max);
+      }
 
       const modalidadesRes = await withFastTimeout(precioQuery, queryTimeoutMs());
       if (isReleaseRuntime() && (!modalidadesRes || modalidadesRes.error)) throw databaseUnavailable();
@@ -165,8 +189,8 @@ export class MarketplaceService {
         const qLower = q.toLowerCase();
         fallbackUnidades = fallbackUnidades.filter(
           (u) =>
-            (u.titulo_es && u.titulo_es.toLowerCase().includes(qLower)) ||
-            ((u as any).descripcion_es && (u as any).descripcion_es.toLowerCase().includes(qLower))
+            ['titulo_es', 'descripcion_es', 'titulo_en', 'descripcion_en', 'titulo_pt', 'descripcion_pt']
+              .some((field) => String((u as any)[field] || '').toLowerCase().includes(qLower))
         );
       }
       if (precio_min !== undefined || precio_max !== undefined) {
@@ -207,7 +231,7 @@ export class MarketplaceService {
         created_at: item.created_at,
         modalidades_precio: (item.modalidades_precio || [])
           .filter((m: any) => !m.deleted_at)
-          .map((m: any) => ({ id: m.id, unidad_tiempo: m.unidad_tiempo, cantidad_tiempo: m.cantidad_tiempo, precio: m.precio })),
+          .map((m: any) => ({ id: m.id, unidad_tiempo: m.unidad_tiempo, cantidad_tiempo: m.cantidad_tiempo, precio: m.precio, precio_usd: m.precio_usd ?? null, precio_brl: m.precio_brl ?? null })),
       };
     });
 
@@ -227,6 +251,7 @@ export class MarketplaceService {
           titulo: titulo || null,
           descripcion: descripcion || null,
           ubicacion_exacta: isAuthenticated ? fallback.ubicacion_exacta : null,
+          direccion_texto: isAuthenticated ? (fallback.direccion_texto || null) : null,
           whatsapp: isAuthenticated ? fallback.whatsapp : null,
           telefono: isAuthenticated ? (fallback as any).telefono || null : null,
         };
@@ -241,7 +266,7 @@ export class MarketplaceService {
       const supabase = this.supabaseService.getAdminClient();
       const queryPromise = supabase
         .from('unidades')
-        .select('*, zonas(nombre), modalidades_precio(id, unidad_tiempo, cantidad_tiempo, precio, deleted_at)')
+        .select('*, zonas(nombre), modalidades_precio(id, unidad_tiempo, cantidad_tiempo, precio, precio_usd, precio_brl, deleted_at)')
         .eq('id', id)
         .eq('estado', 'publicada')
         .is('deleted_at', null)
@@ -267,6 +292,7 @@ export class MarketplaceService {
           titulo: titulo || null,
           descripcion: descripcion || null,
           ubicacion_exacta: isAuthenticated ? fallback.ubicacion_exacta : null,
+          direccion_texto: isAuthenticated ? (fallback.direccion_texto || null) : null,
           whatsapp: isAuthenticated ? fallback.whatsapp : null,
           telefono: isAuthenticated ? (fallback as any).telefono || null : null,
         };
@@ -286,11 +312,12 @@ export class MarketplaceService {
       fotos: data.fotos || [],
       ubicacion_aprox: data.ubicacion_aprox || null,
       ubicacion_exacta: isAuthenticated ? data.ubicacion_exacta || null : null,
+      direccion_texto: isAuthenticated ? (data.direccion_texto || null) : null,
       whatsapp: isAuthenticated ? data.whatsapp || null : null,
       caracteristicas: data.atributos || {},
       modalidades_precio: (data.modalidades_precio || [])
         .filter((m: any) => !m.deleted_at)
-        .map((m: any) => ({ id: m.id, unidad_tiempo: m.unidad_tiempo, cantidad_tiempo: m.cantidad_tiempo, precio: m.precio })),
+        .map((m: any) => ({ id: m.id, unidad_tiempo: m.unidad_tiempo, cantidad_tiempo: m.cantidad_tiempo, precio: m.precio, precio_usd: m.precio_usd ?? null, precio_brl: m.precio_brl ?? null })),
     };
   }
 

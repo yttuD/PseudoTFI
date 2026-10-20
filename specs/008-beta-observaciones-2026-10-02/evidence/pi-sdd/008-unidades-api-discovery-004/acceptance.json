@@ -1,0 +1,23 @@
+{
+  "decision": {
+    "decision": "ACCEPT",
+    "reason": "AC1 satisfecho como DISCOVERY de interfaces: rutas y métodos contrastados en UnidadesController; req.user.workspace_id y su mapeo a gestor_id contrastados en create/findAll/update; campos contrastados en UpdateUnidadDto y CRUD con borrado lógico de modalidades en UnidadesService. Revisados VERIFICATION.md y affected.diff, sin cambios declarados. La lectura dirigida de fuentes complementa el índice ejecutado, que por sí solo no cubría el service. La dependencia de autorización/RLS es un límite de diseño identificado, no una garantía de aislamiento validada. No se acepta integración remota ni validación documental integral.",
+    "nextAction": "Usar estos hallazgos para continuar el plan de N01/N02/N03 en specs/008-beta-observaciones-2026-10-02. Mantener bloqueados sdd-context-validation-001, la acreditación del handoff de sdd-context-facts-002 y las verificaciones operativas N01-N08 hasta evidencia real aceptada; no habilitar backfill remoto ni Android nativo.",
+    "reviewedArtifacts": [
+      ".pi/local/runs/1791053467330-008-unidades-api-discovery-004-executor-gv49f/VERIFICATION.md",
+      ".pi/local/runs/1791053467330-008-unidades-api-discovery-004-executor-gv49f/affected.diff"
+    ],
+    "reviewedRanges": {
+      ".pi/local/runs/1791053467330-008-unidades-api-discovery-004-executor-gv49f/VERIFICATION.md": [
+        [
+          0,
+          326
+        ]
+      ]
+    }
+  },
+  "mode": "DISCOVERY",
+  "taskIds": [],
+  "run": "1791053467330-008-unidades-api-discovery-004-executor-gv49f",
+  "acceptedAt": "2026-10-03T18:54:50.179Z"
+}
