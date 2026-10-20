@@ -47,6 +47,9 @@ interface GrupoRow {
   gestor_id: string;
   nombre: string;
   descripcion?: string | null;
+  sena_default_activa?: boolean | null;
+  sena_default_tipo?: string | null;
+  sena_default_valor?: number | null;
   deleted_at?: string | null;
 }
 
@@ -920,6 +923,131 @@ describe('B007a: Aislamiento API Real y Autorización Multi-Tenant (T005 / T001)
     });
   });
 
+  describe('N02/N03. Persistencia real de categoría y tarifas por HTTP + Supabase local', () => {
+    it('N02 cambia casa/departamento a cancha, recarga el detalle y mantiene la categoría en PostgreSQL', async () => {
+      const server = httpApp.getHttpServer();
+      const authA = `Bearer ${tokenGestorA}`;
+
+      // Existing fixture: unitA2 starts as departamento, is owned by Gestor A.
+      const original = await httpRequest(server)
+        .get(`/unidades/${unitA2Id}`)
+        .set('Authorization', authA)
+        .expect(200);
+      expect((original.body as UnidadRow).categoria).toBe('departamento');
+
+      const edited = await httpRequest(server)
+        .patch(`/unidades/${unitA2Id}`)
+        .set('Authorization', authA)
+        .send({ categoria: 'cancha', auto_traducir: false })
+        .expect(200);
+      expect((edited.body as UnidadRow).categoria).toBe('cancha');
+
+      // A new API request—not the React form state—must return persisted data.
+      const reloaded = await httpRequest(server)
+        .get(`/unidades/${unitA2Id}`)
+        .set('Authorization', authA)
+        .expect(200);
+      expect((reloaded.body as UnidadRow).categoria).toBe('cancha');
+
+      const { data: persisted, error } = await adminClient.from('unidades')
+        .select('id,gestor_id,categoria').eq('id', unitA2Id).single();
+      expect(error).toBeNull();
+      expect(persisted).toMatchObject({ id: unitA2Id, gestor_id: gestorAId, categoria: 'cancha' });
+
+      // Revert this local fixture so unrelated scenarios remain order-independent.
+      await httpRequest(server)
+        .patch(`/unidades/${unitA2Id}`)
+        .set('Authorization', authA)
+        .send({ categoria: 'departamento', auto_traducir: false })
+        .expect(200);
+    });
+
+    it('N03 crea dos tarifas, actualiza la primera sin duplicar y archiva la segunda', async () => {
+      const server = httpApp.getHttpServer();
+      const authA = `Bearer ${tokenGestorA}`;
+      const url = `/unidades/${unitA2Id}/modalidades`;
+
+      const initial = await httpRequest(server).get(`/unidades/${unitA2Id}`)
+        .set('Authorization', authA).expect(200);
+      expect(initial.body.modalidades_precio).toEqual([]);
+
+      const first = await httpRequest(server).post(url)
+        .set('Authorization', authA)
+        .send({ unidad_tiempo: 'día', cantidad_tiempo: 1, precio: 40000 })
+        .expect(201);
+      const firstId = first.body.id as string;
+      expect(firstId).toEqual(expect.any(String));
+      createdModalidadIds.push(firstId);
+
+      const second = await httpRequest(server).post(url)
+        .set('Authorization', authA)
+        .send({ unidad_tiempo: 'mes', cantidad_tiempo: 1, precio: 280000 })
+        .expect(201);
+      const secondId = second.body.id as string;
+      expect(secondId).toEqual(expect.any(String));
+      createdModalidadIds.push(secondId);
+
+      const before = await httpRequest(server).get(`/unidades/${unitA2Id}`)
+        .set('Authorization', authA).expect(200);
+      expect(new Set(before.body.modalidades_precio.map((m: ModalidadRow) => m.id)))
+        .toEqual(new Set([firstId, secondId]));
+
+      await httpRequest(server).patch(`${url}/${firstId}`)
+        .set('Authorization', authA)
+        .send({ precio: 45000, cantidad_tiempo: 2 })
+        .expect(200);
+      const updated = await httpRequest(server).get(`/unidades/${unitA2Id}`)
+        .set('Authorization', authA).expect(200);
+      const rates = updated.body.modalidades_precio as (ModalidadRow & { cantidad_tiempo: number })[];
+      expect(rates).toHaveLength(2);
+      expect(new Set(rates.map(m => m.id))).toEqual(new Set([firstId, secondId]));
+      expect(rates.find(m => m.id === firstId)).toMatchObject({ precio: 45000, cantidad_tiempo: 2 });
+
+      await httpRequest(server).delete(`${url}/${secondId}`)
+        .set('Authorization', authA).expect(200);
+      const after = await httpRequest(server).get(`/unidades/${unitA2Id}`)
+        .set('Authorization', authA).expect(200);
+      expect(after.body.modalidades_precio.map((m: ModalidadRow) => m.id)).toEqual([firstId]);
+
+      const { data: stored, error } = await adminClient.from('modalidades_precio')
+        .select('id,precio,deleted_at').in('id', [firstId, secondId]);
+      expect(error).toBeNull();
+      expect(stored).toHaveLength(2);
+      expect(stored?.find(x => x.id === firstId)).toMatchObject({ precio: 45000, deleted_at: null });
+      expect(stored?.find(x => x.id === secondId)?.deleted_at).toBeTruthy();
+    });
+
+    it('N02/N03 impide mutaciones de categoría y tarifas entre gestores, sin alterar la base', async () => {
+      const server = httpApp.getHttpServer();
+      const authB = `Bearer ${tokenGestorB}`;
+      await httpRequest(server).patch(`/unidades/${unitA1Id}`)
+        .set('Authorization', authB)
+        .send({ categoria: 'cancha', auto_traducir: false })
+        .expect(404);
+      await httpRequest(server).post(`/unidades/${unitA1Id}/modalidades`)
+        .set('Authorization', authB)
+        .send({ unidad_tiempo: 'mes', cantidad_tiempo: 1, precio: 100 })
+        .expect(404);
+      await httpRequest(server).patch(`/unidades/${unitA1Id}/modalidades/${modalidadA1Id}`)
+        .set('Authorization', authB)
+        .send({ precio: 100 })
+        .expect(404);
+      await httpRequest(server).delete(`/unidades/${unitA1Id}/modalidades/${modalidadA1Id}`)
+        .set('Authorization', authB)
+        .expect(404);
+
+      const { data: unidad, error: unitError } = await adminClient.from('unidades')
+        .select('categoria').eq('id', unitA1Id).single();
+      expect(unitError).toBeNull();
+      expect(unidad?.categoria).toBe('departamento');
+
+      const { data: modalidad, error: modError } = await adminClient.from('modalidades_precio')
+        .select('precio,deleted_at').eq('id', modalidadA1Id).single();
+      expect(modError).toBeNull();
+      expect(modalidad).toMatchObject({ precio: 50000, deleted_at: null });
+    });
+  });
+
   describe('2. Ciclo de vida y alcances del Delegado (pendiente, grupo, cuenta, unidades, vacío)', () => {
     it('Delegado antes de configurar (aceptada_sin_configurar) obtiene lista vacía y recuento 0', async () => {
       const { executionContext, request } = createExecutionContext(tokenDelegado);
@@ -1381,6 +1509,85 @@ describe('B007a: Aislamiento API Real y Autorización Multi-Tenant (T005 / T001)
       expect(grpErr).toBeNull();
       expect((dbGrupo as GrupoRow).nombre).not.toBe('Nombre Hackeado');
       expect((dbGrupo as GrupoRow).deleted_at).toBeNull();
+    });
+
+    it.each([
+      {
+        etiqueta: 'solo nombre',
+        payload: { nombre: 'Grupo N07 sin opcionales', },
+        descripcionEsperada: null,
+        senaEsperada: false,
+      },
+      {
+        etiqueta: 'solo descripción',
+        payload: { nombre: 'Grupo N07 descripción', descripcion: 'Detalle del edificio compartido', },
+        descripcionEsperada: 'Detalle del edificio compartido',
+        senaEsperada: false,
+      },
+      {
+        etiqueta: 'solo seña',
+        payload: { nombre: 'Grupo N08 seña', sena_default_activa: true, sena_default_tipo: 'porcentaje', sena_default_valor: 20, },
+        descripcionEsperada: null,
+        senaEsperada: true,
+      },
+      {
+        etiqueta: 'descripción y seña',
+        payload: { nombre: 'Grupo N07 completo', descripcion: 'Seña monto fijo', sena_default_activa: true, sena_default_tipo: 'monto_fijo', sena_default_valor: 12500, },
+        descripcionEsperada: 'Seña monto fijo',
+        senaEsperada: true,
+      },
+    ] as const)('POST/GET Grupos persiste $etiqueta sin cruce de Gestores (N07/N08)', async ({ payload, descripcionEsperada, senaEsperada }) => {
+      const server = httpApp.getHttpServer();
+      const result = await httpRequest(server)
+        .post('/grupos')
+        .set('Authorization', `Bearer ${tokenGestorA}`)
+        .send({ ...payload, nombre: `${payload.nombre} ${fixtureMarker}` })
+        .expect(201);
+      const createdId = (result.body as { id?: string }).id;
+      expect(createdId).toBeTruthy();
+      createdGrupoIds.push(createdId!);
+
+      const listA = await httpRequest(server).get('/grupos')
+        .set('Authorization', `Bearer ${tokenGestorA}`).expect(200);
+      const group = (listA.body as GrupoRow[]).find((g) => g.id === createdId);
+      expect(group).toBeDefined();
+
+      const { data, error } = await adminClient.from('grupos')
+        .select('id, gestor_id, descripcion, sena_default_activa, sena_default_tipo, sena_default_valor, deleted_at')
+        .eq('id', createdId!).single();
+      expect(error).toBeNull();
+      expect(data).toBeTruthy();
+      expect(data!.gestor_id).toBe(gestorAId);
+      expect(data!.deleted_at).toBeNull();
+
+      const checkDescripcion = (value: string | null | undefined) => {
+        if (descripcionEsperada === null) {
+          expect(value == null || value === '').toBe(true);
+        } else {
+          expect(value).toBe(descripcionEsperada);
+        }
+      };
+      checkDescripcion(group?.descripcion);
+      checkDescripcion(data!.descripcion);
+
+      if (senaEsperada) {
+        if (!('sena_default_tipo' in payload) || !('sena_default_valor' in payload)) {
+          throw new Error('La variante de seña requiere tipo y valor');
+        }
+        expect(data!.sena_default_activa).toBe(true);
+        expect(data!.sena_default_tipo).toBe(payload.sena_default_tipo);
+        expect(Number(data!.sena_default_valor)).toBe(payload.sena_default_valor);
+        expect(group?.sena_default_activa).toBe(true);
+        expect(group?.sena_default_tipo).toBe(payload.sena_default_tipo);
+        expect(Number(group?.sena_default_valor)).toBe(payload.sena_default_valor);
+      } else {
+        expect(data!.sena_default_activa).not.toBe(true);
+        expect(group?.sena_default_activa).not.toBe(true);
+      }
+
+      const listB = await httpRequest(server).get('/grupos')
+        .set('Authorization', `Bearer ${tokenGestorB}`).expect(200);
+      expect((listB.body as GrupoRow[]).some((g) => g.id === createdId)).toBe(false);
     });
 
     it('Delegado con alcance cuenta: ver solo lee; gestionar permite create y update pero rechaza ajenos', async () => {
