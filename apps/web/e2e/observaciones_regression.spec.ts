@@ -65,6 +65,10 @@ test('formulario de gestor: borrador, categorías y fotos', async ({ page, conte
   await expect(page.getByText('Sin zona predefinida').first()).toBeVisible();
   await expect(page.getByText('Guardá el borrador antes de subirlas')).toBeVisible();
   await expect(page.locator('input[type="file"]')).toBeDisabled();
+  // New units intentionally have no fictional default tariff.
+  await expect(page.getByTestId('input-precio')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Alquiler por Día', exact: false }).click();
+  await expect(page.getByTestId('input-precio')).toHaveValue('');
   await expect(page.getByText('Precio para público en inglés (USD)')).toBeVisible();
   await expect(page.getByText('Precio para público en portugués (BRL)')).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('gestor-formulario.png'), fullPage: true });
