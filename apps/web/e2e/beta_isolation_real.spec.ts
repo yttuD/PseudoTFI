@@ -66,6 +66,37 @@ test.describe('B007b — Inventario y Aislamiento Real Navegador', () => {
     }
   });
 
+  test('N06: perfil de Gestor se guarda y persiste al recargar con Auth real', async ({ browser }, testInfo) => {
+    const context = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
+    try {
+      const page = await context.newPage();
+      await fixtures.loginViaUI(page, gestorA);
+      await page.goto('/es/cuenta');
+      await expect(page.getByRole('heading', { name: 'Mi perfil' })).toBeVisible();
+
+      const fullNameInput = page.getByRole('textbox', { name: 'Nombre completo' });
+      await expect(fullNameInput).toBeVisible();
+      const nextName = `Gestor N06 ${gestorA.id.slice(0, 8)}`;
+      await fullNameInput.fill(nextName);
+      await page.getByRole('button', { name: 'Guardar cambios' }).click();
+      await expect(page.getByRole('status', { name: 'Datos guardados.' }).or(
+        page.getByText('Datos guardados.', { exact: true })
+      ).first()).toBeVisible();
+      await page.reload();
+      await expect(page.getByRole('heading', { name: 'Mi perfil' })).toBeVisible();
+      await expect(page.getByRole('textbox', { name: 'Nombre completo' })).toHaveValue(nextName);
+
+      const { data: saved, error } = await fixtures.adminClient.from('users')
+        .select('id,full_name').eq('id', gestorA.id).single();
+      expect(error).toBeNull();
+      expect(saved).toMatchObject({ id: gestorA.id, full_name: nextName });
+
+      await page.screenshot({ path: testInfo.outputPath('n06-profile-real-auth.png'), fullPage: true });
+    } finally {
+      await context.close();
+    }
+  });
+
   test('Escenario 1: Aislamiento A/B con contextos separados y HTTP negatives @visual', async ({ browser }, testInfo) => {
     const contextOptions = {
       baseURL: testInfo.project.use.baseURL,
@@ -120,8 +151,8 @@ test.describe('B007b — Inventario y Aislamiento Real Navegador', () => {
       const capTableA = `${testInfo.project.name}_gestorA_tabla.png`;
       await pageA.screenshot({ path: path.join(CAPTURES_DIR, capTableA) });
 
-      // Direct HTTP Negatives: Gestor A intenta mutar recurso de Gestor B por API directa (3201)
-      const directApiUrl = 'http://127.0.0.1:3201';
+      // Direct HTTP Negatives: Gestor A intenta mutar recurso de Gestor B por API directa (configurada por API_URL o proxy local 3201)
+      const directApiUrl = process.env.API_URL || 'http://127.0.0.1:3201';
       const patchRes = await fetch(`${directApiUrl}/unidades/${unitB1Id}`, {
         method: 'PATCH',
         headers: {
@@ -361,7 +392,7 @@ test.describe('B007b — Inventario y Aislamiento Real Navegador', () => {
       viewport: testInfo.project.use.viewport,
       colorScheme: testInfo.project.use.colorScheme,
     };
-    const directApiUrl = 'http://127.0.0.1:3201';
+    const directApiUrl = process.env.API_URL || 'http://127.0.0.1:3201';
 
     // 2.1 Delegado gestionar/cuenta: puede crear unidad y grupo
     const delGestionarCuenta = await fixtures.createDelegado(gestorA, 'GestCuenta', {
