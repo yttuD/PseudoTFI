@@ -420,6 +420,14 @@
     "reintentar": "Retry",
     "vacioTitulo": "Empty inventory",
     "vacioDescripcion": "There are no registered units in your accessible workspace.",
-    "registrarUnidad": "Register unit"
+    "registrarUnidad": "Register unit",
+    "verDetalleGrupo": "View details",
+    "detalleGrupoDescripcion": "Group information and optional settings.",
+    "grupoDescripcion": "Description",
+    "grupoSinDescripcion": "No description",
+    "grupoSenaPredeterminada": "Default deposit",
+    "grupoSinSena": "No default deposit",
+    "grupoSenaNoDisponible": "Deposit settings unavailable",
+    "grupoSenaNoCobro": "This is a setting for future rentals, not a payment received."
   }
 }
