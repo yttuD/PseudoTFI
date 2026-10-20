@@ -85,14 +85,29 @@ export function getClientSessionToken(): string | null {
 }
 
 export async function signOutClient(): Promise<void> {
-  if (typeof document !== 'undefined') {
-    document.cookie = 'sb-127-auth-token=; path=/; max-age=0; SameSite=Lax';
-    document.cookie = 'sb-localhost-auth-token=; path=/; max-age=0; SameSite=Lax';
-    document.cookie = 'sb-auth-token=; path=/; max-age=0; SameSite=Lax';
+  // The legacy demo adapter has no Supabase Auth session. Clear only its
+  // synthetic cookies, never consider a failed real signOut successful.
+  const clearLegacyCookies = () => {
+    if (typeof document !== 'undefined') {
+      document.cookie = 'sb-127-auth-token=; path=/; max-age=0; SameSite=Lax';
+      document.cookie = 'sb-localhost-auth-token=; path=/; max-age=0; SameSite=Lax';
+      document.cookie = 'sb-auth-token=; path=/; max-age=0; SameSite=Lax';
+    }
+  };
+  if (isTestAdapterEnabled()) {
+    clearLegacyCookies();
+    return;
   }
-  try {
-    const { createClient } = await import('./client');
-    const supabase = createClient();
-    await supabase.auth.signOut();
-  } catch {}
+
+  // Supabase SSR may split Auth state into multiple project-prefixed cookie
+  // chunks; only its SDK knows the complete set of session cookies.
+  const supabase = createClient();
+  const { error } = await supabase.auth.signOut();
+  if (error) throw new Error('No se pudo confirmar el cierre de sesión');
+
+  const { data, error: remainingError } = await supabase.auth.getSession();
+  if (remainingError || data.session) {
+    throw new Error('La sesión sigue activa después de intentar cerrarla');
+  }
+  clearLegacyCookies();
 }
