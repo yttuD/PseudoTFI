@@ -124,7 +124,9 @@ jobs:
       - name: Playwright with genuine Supabase Auth and two managers
         working-directory: apps/web
         timeout-minutes: 7
-        run: node node_modules/@playwright/test/cli.js test -c playwright.real-local.config.ts --grep 'Escenario 1: Aislamiento A/B' --reporter=list
+        run: >-
+          node node_modules/@playwright/test/cli.js test -c playwright.real-local.config.ts
+          --grep 'Escenario 1: Aislamiento A/B' --reporter=list
       - name: Keep failure captures and traces
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
