@@ -344,6 +344,12 @@ export default async function UnidadDetailPage({
               <h1 className="text-3xl sm:text-4xl font-extrabold mb-4 tracking-tight leading-[1.15] text-foreground">
                 {unidad.titulo || unidad.titulo_es}
               </h1>
+              {unidad.traduccion_pendiente === true && (
+                <p role="status" data-testid="translation-pending"
+                  className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-foreground">
+                  {tDetail('translationPendingNotice')}
+                </p>
+              )}
             </div>
 
             {/* Aceternity Animated Tabs */}
