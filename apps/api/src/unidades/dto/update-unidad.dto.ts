@@ -16,7 +16,8 @@ export class UpdateUnidadDto extends PartialType(CreateUnidadDto) {
 
   @IsOptional()
   @IsUUID()
-  grupo_id?: string;
+  // null explicitly detaches an existing unit from its group; omission means unchanged.
+  grupo_id?: string | null;
 
   @IsOptional()
   @IsObject()
