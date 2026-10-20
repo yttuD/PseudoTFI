@@ -49,6 +49,12 @@ export class UnidadesController {
       );
     }
 
+    // A gestor may own the workspace yet supply a foreign group UUID.
+    // Validate the destination independently of the create-unit permission.
+    if (createUnidadDto.grupo_id && !await this.authzService.canReadGrupo(req.user, createUnidadDto.grupo_id)) {
+      throw new NotFoundException('Grupo no encontrado o sin permisos de gestión');
+    }
+
     const token = this.extractToken(req);
     return this.unidadesService.create(createUnidadDto, token, req.user.workspace_id);
   }
@@ -112,6 +118,26 @@ export class UnidadesController {
     }
 
     const token = this.extractToken(req);
+    if (Object.prototype.hasOwnProperty.call(updateUnidadDto, 'grupo_id')) {
+      const current = await this.unidadesService.findOne(id, token);
+      const previousGroupId = current.grupo_id ?? null;
+      const requestedGroupId = updateUnidadDto.grupo_id ?? null;
+      if (requestedGroupId !== previousGroupId) {
+        // Moving a unit between groups (or detaching it) changes delegated scope.
+        // Only the owner or a delegate with account-wide Manage may do so.
+        if (req.user.rol === 'delegado') {
+          const canChangeMembership = previousGroupId
+            ? await this.authzService.canManageGrupoMembership(req.user, previousGroupId)
+            : await this.authzService.canCreateUnidad(req.user, req.user.workspace_id, null);
+          if (!canChangeMembership) {
+            throw new NotFoundException('Unidad no encontrada o sin permisos de gestión');
+          }
+        }
+        if (requestedGroupId && !await this.authzService.canManageGrupoMembership(req.user, requestedGroupId)) {
+          throw new NotFoundException('Grupo no encontrado o sin permisos de gestión');
+        }
+      }
+    }
     return this.unidadesService.update(id, updateUnidadDto, token, req.user.workspace_id);
   }
 
