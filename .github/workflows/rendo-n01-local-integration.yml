@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - codex/github-handoff-2026-10-19
+      - codex/n01b-http-local-read-2026-10-20
     paths:
       - 'apps/api/**'
       - 'packages/**'
@@ -77,6 +78,11 @@ jobs:
       - name: API production typecheck
         working-directory: apps/api
         run: node node_modules/typescript/bin/tsc --noEmit -p tsconfig.build.json
+      - name: Install web workspace dependencies
+        run: pnpm install --frozen-lockfile --filter web...
+      - name: Web TypeScript guard
+        working-directory: apps/web
+        run: node node_modules/typescript/bin/tsc --noEmit --pretty false
       - name: Stop only CI-owned local stack
         if: always()
         run: |
