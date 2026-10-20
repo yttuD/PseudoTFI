@@ -1,0 +1,27 @@
+name: Rendo web release read-only gate
+
+on:
+  pull_request:
+    branches:
+      - codex/release-candidate-n01-n08-2026-10-20
+    paths:
+      - 'scripts/release/**'
+      - 'docs/WEB_RELEASE_PREFLIGHT_2026-10-20.md'
+      - '.github/workflows/rendo-web-release-readonly.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  release-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Test allowlisted GET-only Vercel smoke without network
+        run: node --test scripts/release/tests/readonly-vercel-smoke.test.mjs
