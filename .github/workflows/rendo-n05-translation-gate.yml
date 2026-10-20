@@ -9,6 +9,9 @@ on:
       - 'apps/web/src/app/**'
       - 'apps/web/messages/**'
       - 'packages/**'
+      - 'scripts/backfill-beta-unit-translations.mjs'
+      - 'scripts/translation-backfill-plan.mjs'
+      - 'scripts/tests/translation-backfill-plan.test.mjs'
       - '.github/workflows/rendo-n05-translation-gate.yml'
 
 permissions:
@@ -33,6 +36,8 @@ jobs:
         run: pnpm install --frozen-lockfile --filter api... --filter web...
       - name: Build shared types
         run: pnpm --filter @tfi/types build
+      - name: Audit conservative translation planning without credentials
+        run: node --test scripts/tests/translation-backfill-plan.test.mjs
       - name: Test Marketplace translation status, projection, privacy
         working-directory: apps/api
         run: node node_modules/vitest/vitest.mjs run src/marketplace/marketplace.service.spec.ts --reporter=dot
