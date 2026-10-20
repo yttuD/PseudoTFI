@@ -34,6 +34,8 @@ jobs:
           corepack prepare pnpm@9.0.0 --activate
       - name: Install API dependencies from lockfile
         run: pnpm install --frozen-lockfile --filter api...
+      - name: Build internal shared types
+        run: pnpm --filter @tfi/types build
       - name: Public detail authentication regression
         working-directory: apps/api
         run: node node_modules/vitest/vitest.mjs run src/marketplace/marketplace.controller.spec.ts --reporter=dot
