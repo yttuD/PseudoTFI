@@ -1446,10 +1446,15 @@ describe('B007a: Aislamiento API Real y Autorización Multi-Tenant (T005 / T001)
       checkDescripcion(data!.descripcion);
 
       if (senaEsperada) {
+        if (!('sena_default_tipo' in payload) || !('sena_default_valor' in payload)) {
+          throw new Error('La variante de seña requiere tipo y valor');
+        }
         expect(data!.sena_default_activa).toBe(true);
         expect(data!.sena_default_tipo).toBe(payload.sena_default_tipo);
         expect(Number(data!.sena_default_valor)).toBe(payload.sena_default_valor);
         expect(group?.sena_default_activa).toBe(true);
+        expect(group?.sena_default_tipo).toBe(payload.sena_default_tipo);
+        expect(Number(group?.sena_default_valor)).toBe(payload.sena_default_valor);
       } else {
         expect(data!.sena_default_activa).not.toBe(true);
         expect(group?.sena_default_activa).not.toBe(true);
