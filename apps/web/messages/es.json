@@ -225,6 +225,7 @@
     "publishUnit": "Publicar una Unidad"
   },
   "UnitDetail": {
+    "translationPendingNotice": "Esta ficha todavía no tiene la traducción completa. Se muestra parte del texto original en español.",
     "tabDescription": "Descripción & Comodidades",
     "tabPricing": "Modalidades de Cobro",
     "tabRules": "Reglas & Condiciones",
