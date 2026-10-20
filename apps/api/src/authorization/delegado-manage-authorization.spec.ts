@@ -97,6 +97,10 @@ describe('Delegado Manage Authorization (T032 / US3)', () => {
       vi.spyOn(authzService, 'canCreateUnidad').mockImplementation(async (user, ws, grupoId) => {
         return grupoId === 'grupo-assigned';
       });
+      // Creating in a group now also verifies ownership of that destination.
+      // This unit test explicitly models a visible assigned group.
+      const canReadGroup = vi.spyOn(authzService, 'canReadGrupo')
+        .mockImplementation(async (_user, grupoId) => grupoId === 'grupo-assigned');
       const req = {
         user: delegadoGestionarGrupoUser,
         headers: { authorization: 'Bearer tok' },
@@ -108,6 +112,7 @@ describe('Delegado Manage Authorization (T032 / US3)', () => {
         req,
       );
       expect(res).toEqual({ id: 'u-created' });
+      expect(canReadGroup).toHaveBeenCalledWith(delegadoGestionarGrupoUser, 'grupo-assigned');
 
       // Outside assigned grupo
       await expect(
