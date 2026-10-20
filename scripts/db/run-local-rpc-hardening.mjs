@@ -20,7 +20,8 @@ const directory = dirname(fileURLToPath(import.meta.url));
 const connection = ['-X', '-h', u.hostname, '-p', u.port,
   '-U', decodeURIComponent(u.username), '-d', decodeURIComponent(u.pathname.slice(1)),
   '-v', 'ON_ERROR_STOP=1'];
-for (const name of ['rendo-rpc-hardening-local.sql', 'rendo-rpc-hardening-check.sql']) {
+// The CLI applies the versioned migration during supabase start; only verify it.
+for (const name of ['rendo-rpc-hardening-check.sql']) {
   const result = spawnSync('psql', [...connection, '-f', resolve(directory, name)], {
     env: { ...process.env, PGPASSWORD: decodeURIComponent(u.password) },
     encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
@@ -34,4 +35,4 @@ for (const name of ['rendo-rpc-hardening-local.sql', 'rendo-rpc-hardening-check.
     throw new Error(`Local SQL ${name} failed: ${msg || 'unspecified error'}`);
   }
 }
-process.stdout.write('PASS: isolated RPC grants, fixed function paths and signup trigger checks\n');
+process.stdout.write('PASS: versioned local migration RPC grants, search paths and signup trigger checks\n');
