@@ -513,6 +513,10 @@ describe('B007a: Aislamiento API Real y Autorización Multi-Tenant (T005 / T001)
         { provide: GruposService, useValue: gruposService },
         { provide: AuthorizationService, useValue: authzService },
         { provide: ActionLogService, useValue: actionLogService },
+        // Nest resolves @UseGuards() metadata even for in-memory HTTP tests.
+        // Explicit provider tokens keep the test on the same real local clients.
+        { provide: SupabaseService, useValue: supabaseService },
+        { provide: ConfigService, useValue: configService },
         { provide: SupabaseAuthGuard, useValue: guard },
       ],
     }).compile();
