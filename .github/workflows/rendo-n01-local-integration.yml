@@ -40,6 +40,14 @@ jobs:
         run: pnpm install --frozen-lockfile --filter api...
       - name: Compile shared TypeScript workspace types
         run: pnpm --filter @tfi/types build
+      - name: API production typecheck
+        working-directory: apps/api
+        run: node node_modules/typescript/bin/tsc --noEmit -p tsconfig.build.json
+      - name: Install web workspace dependencies
+        run: pnpm install --frozen-lockfile --filter web...
+      - name: Web TypeScript guard
+        working-directory: apps/web
+        run: node node_modules/typescript/bin/tsc --noEmit --pretty false
       - name: Install pinned Supabase CLI without hosted credentials
         uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
         with:
@@ -75,14 +83,6 @@ jobs:
         working-directory: apps/api
         timeout-minutes: 8
         run: node node_modules/vitest/vitest.mjs run --config vitest.config.e2e.ts test/beta-isolation.e2e-spec.ts --reporter=dot
-      - name: API production typecheck
-        working-directory: apps/api
-        run: node node_modules/typescript/bin/tsc --noEmit -p tsconfig.build.json
-      - name: Install web workspace dependencies
-        run: pnpm install --frozen-lockfile --filter web...
-      - name: Web TypeScript guard
-        working-directory: apps/web
-        run: node node_modules/typescript/bin/tsc --noEmit --pretty false
       - name: Stop only CI-owned local stack
         if: always()
         run: |
