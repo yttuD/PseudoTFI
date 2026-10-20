@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - codex/github-handoff-2026-10-19
+      - codex/n01b-http-local-read-2026-10-20
     paths:
       - 'apps/api/**'
       - 'packages/**'
