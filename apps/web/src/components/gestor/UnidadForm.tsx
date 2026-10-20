@@ -901,7 +901,7 @@ export function UnidadForm({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <button
                   type="button"
-                  onClick={() => append({ unidad_tiempo: 'día', cantidad_tiempo: 1, precio: 45000 })}
+                  onClick={() => append({ unidad_tiempo: 'día', cantidad_tiempo: 1, precio: Number.NaN })}
                   className="min-h-[90px] p-4 flex items-center gap-3.5 rounded-2xl border border-border/80 bg-surface/80 hover:border-dorado-500/60 hover:bg-dorado-500/5 hover:shadow-md transition-all text-left group cursor-pointer"
                 >
                   <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 group-hover:scale-105 transition-transform shrink-0">
@@ -915,7 +915,7 @@ export function UnidadForm({
 
                 <button
                   type="button"
-                  onClick={() => append({ unidad_tiempo: 'mes', cantidad_tiempo: 1, precio: 250000 })}
+                  onClick={() => append({ unidad_tiempo: 'mes', cantidad_tiempo: 1, precio: Number.NaN })}
                   className="min-h-[90px] p-4 flex items-center gap-3.5 rounded-2xl border border-border/80 bg-surface/80 hover:border-dorado-500/60 hover:bg-dorado-500/5 hover:shadow-md transition-all text-left group cursor-pointer"
                 >
                   <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform shrink-0">
@@ -929,7 +929,7 @@ export function UnidadForm({
 
                 <button
                   type="button"
-                  onClick={() => append({ unidad_tiempo: 'hora', cantidad_tiempo: 1, precio: 15000 })}
+                  onClick={() => append({ unidad_tiempo: 'hora', cantidad_tiempo: 1, precio: Number.NaN })}
                   className="min-h-[90px] p-4 flex items-center gap-3.5 rounded-2xl border border-border/80 bg-surface/80 hover:border-dorado-500/60 hover:bg-dorado-500/5 hover:shadow-md transition-all text-left group cursor-pointer"
                 >
                   <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 group-hover:scale-105 transition-transform shrink-0">
@@ -997,6 +997,9 @@ export function UnidadForm({
                                 type="number"
                                 placeholder="Precio ($ ARS)"
                                 data-testid="input-precio"
+                                min={0}
+                                step="0.01"
+                                required
                                 className="h-12 pl-8 font-mono text-base rounded-xl font-semibold"
                                 {...form.register(`modalidades.${index}.precio`, { valueAsNumber: true })}
                               />
