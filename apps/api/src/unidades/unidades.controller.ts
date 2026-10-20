@@ -49,6 +49,12 @@ export class UnidadesController {
       );
     }
 
+    // A gestor may own the workspace yet supply a foreign group UUID.
+    // Validate the destination independently of the create-unit permission.
+    if (createUnidadDto.grupo_id && !await this.authzService.canReadGrupo(req.user, createUnidadDto.grupo_id)) {
+      throw new NotFoundException('Grupo no encontrado o sin permisos de gestión');
+    }
+
     const token = this.extractToken(req);
     return this.unidadesService.create(createUnidadDto, token, req.user.workspace_id);
   }
