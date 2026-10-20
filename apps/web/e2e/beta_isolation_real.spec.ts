@@ -97,6 +97,63 @@ test.describe('B007b — Inventario y Aislamiento Real Navegador', () => {
     }
   });
 
+  test('N07/N08: cuatro variantes de grupo desde UI y recarga real', async ({ browser }, testInfo) => {
+    const context = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
+    const variants = [
+      { label: 'nombre', description: null, deposit: null },
+      { label: 'descripcion', description: 'Descripción persistida para QA', deposit: null },
+      { label: 'sena', description: null, deposit: { type: 'monto_fijo', value: 5000 } },
+      { label: 'ambas', description: 'Edificio con seña y descripción', deposit: { type: 'porcentaje', value: 15 } },
+    ] as const;
+    try {
+      const page = await context.newPage();
+      await fixtures.loginViaUI(page, gestorA);
+      await page.goto('/es/mis-unidades');
+      for (const variant of variants) {
+        const name = `Grupo QA ${variant.label} ${gestorA.id.slice(0, 8)}`;
+        await page.getByTestId('btn-nuevo-grupo').first().click();
+        const dialog = page.getByRole('dialog');
+        await expect(dialog).toBeVisible();
+        await dialog.locator('#nombre').fill(name);
+        if (variant.description) {
+          await dialog.locator('#descripcion').fill(variant.description);
+        }
+        if (variant.deposit) {
+          await dialog.locator('#sena_default_activa').check();
+          await dialog.locator('#sena_default_tipo').selectOption(variant.deposit.type);
+          await dialog.locator('#sena_default_valor').fill(String(variant.deposit.value));
+        }
+        const responsePromise = page.waitForResponse(response =>
+          response.url().endsWith('/grupos') && response.request().method() === 'POST');
+        await dialog.getByRole('button', { name: 'Guardar', exact: true }).click();
+        const response = await responsePromise;
+        expect(response.status()).toBe(201);
+        const result = await response.json() as { id: string };
+        expect(result.id).toMatch(/^[0-9a-f-]{36}$/i);
+        fixtures.trackedGrupoIds.push(result.id);
+        await expect(dialog).not.toBeVisible();
+
+        const { data: stored, error } = await fixtures.adminClient.from('grupos')
+          .select('id,gestor_id,nombre,descripcion,sena_default_activa,sena_default_tipo,sena_default_valor')
+          .eq('id', result.id).single();
+        expect(error).toBeNull();
+        expect(stored).toMatchObject({
+          id: result.id, gestor_id: gestorA.id, nombre: name,
+          sena_default_activa: !!variant.deposit,
+        });
+        expect(stored?.descripcion ?? null).toBe(variant.description);
+        if (variant.deposit) {
+          expect(stored?.sena_default_tipo).toBe(variant.deposit.type);
+          expect(Number(stored?.sena_default_valor)).toBe(variant.deposit.value);
+        }
+        await page.reload();
+        await expect(page.getByText(name, { exact: true }).first()).toBeVisible();
+      }
+    } finally {
+      await context.close();
+    }
+  });
+
   test('Escenario 1: Aislamiento A/B con contextos separados y HTTP negatives @visual', async ({ browser }, testInfo) => {
     const contextOptions = {
       baseURL: testInfo.project.use.baseURL,
