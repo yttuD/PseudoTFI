@@ -1,0 +1,84 @@
+name: Rendo N01 isolated Auth and RLS integration
+
+on:
+  pull_request:
+    branches:
+      - codex/github-handoff-2026-10-19
+    paths:
+      - 'apps/api/**'
+      - 'packages/**'
+      - 'supabase/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/rendo-n01-local-integration.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: n01-local-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  isolated-supabase:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Activate pinned pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.0.0 --activate
+      - name: Install API and shared dependencies
+        run: pnpm install --frozen-lockfile --filter api...
+      - name: Compile shared TypeScript workspace types
+        run: pnpm --filter @tfi/types build
+      - name: Install pinned Supabase CLI without hosted credentials
+        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: 2.84.2
+      - name: Create loopback-only Docker network
+        run: docker network create -o 'com.docker.network.bridge.host_binding_ipv4=127.0.0.1' rendo-n01-ci
+      - name: Start isolated local Supabase (Auth, PostgREST, Postgres)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! supabase start --network-id rendo-n01-ci -x realtime,storage-api,imgproxy,studio,edge-runtime,logflare,vector,supavisor,postgres-meta,mailpit > "$RUNNER_TEMP/n01-start.log" 2>&1; then
+            echo 'Local stack startup failed. Selected sanitized diagnostics:'
+            grep -Ei 'migration|error|failed|timeout|healthy|docker|cannot' "$RUNNER_TEMP/n01-start.log" | sed -E 's/(token|password|secret|apikey|api_key|authorization).*/[redacted]/I' | tail -n 35 || true
+            exit 1
+          fi
+          echo 'Local Supabase started; startup output withheld to avoid printing local keys.'
+      - name: Verify loopback before any fixture mutation
+        shell: bash
+        run: |
+          node --input-type=module -e '
+          import { execFileSync } from "node:child_process";
+          const status = JSON.parse(execFileSync("supabase", ["status","-o","json"], {encoding:"utf8",stdio:["ignore","pipe","ignore"]}));
+          for (const [key, fallbackPort] of [["API_URL",54321],["DB_URL",54322]]) {
+            const value = status[key] ?? status[key.toLowerCase()];
+            if (!value) throw new Error("Missing expected local endpoint: " + key);
+            const url = new URL(value);
+            if (!["localhost","127.0.0.1"].includes(url.hostname) || Number(url.port) !== fallbackPort) throw new Error("Refusing non-loopback endpoint: " + key);
+          }
+          echo("Preflight PASS: local API and DB only");
+          function echo(message) { process.stdout.write(message + "\n"); }
+          '
+      - name: N01 actual Auth RLS HTTP suite (isolated local database)
+        working-directory: apps/api
+        timeout-minutes: 8
+        run: node node_modules/vitest/vitest.mjs run --config vitest.config.e2e.ts test/beta-isolation.e2e-spec.ts --reporter=dot
+      - name: API production typecheck
+        working-directory: apps/api
+        run: node node_modules/typescript/bin/tsc --noEmit -p tsconfig.build.json
+      - name: Stop only CI-owned local stack
+        if: always()
+        run: |
+          supabase stop --no-backup >/dev/null 2>&1 || true
+          docker network rm rendo-n01-ci >/dev/null 2>&1 || true
