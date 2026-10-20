@@ -6,6 +6,7 @@ on:
       - codex/ui-playwright-matrix-2026-10-20
       - codex/github-handoff-2026-10-19
       - codex/n01b-http-local-read-2026-10-20
+      - codex/release-candidate-n01-n08-2026-10-20
     paths:
       - 'apps/api/**'
       - 'packages/**'
