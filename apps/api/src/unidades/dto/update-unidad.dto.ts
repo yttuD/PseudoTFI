@@ -1,9 +1,9 @@
 import { IsInt, IsObject, IsOptional, IsString, IsUUID, IsNotEmpty, IsArray, ArrayMaxSize, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
-import { PartialType } from '@nestjs/mapped-types';
+import { OmitType, PartialType } from '@nestjs/mapped-types';
 import { CreateUnidadDto } from './create-unidad.dto.js';
 
-export class UpdateUnidadDto extends PartialType(CreateUnidadDto) {
+export class UpdateUnidadDto extends PartialType(OmitType(CreateUnidadDto, ['grupo_id'] as const)) {
   @IsOptional()
   @IsString()
   @IsNotEmpty()
