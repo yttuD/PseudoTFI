@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { assertApiReleaseConfiguration, parseAllowedWebOrigins } from './release-readiness.js';
+import { assertApiReleaseConfiguration, parseAllowedWebOrigins, allowSyntheticFallback } from './release-readiness.js';
 
 const betaEnv = {
   NODE_ENV: 'production',
@@ -37,6 +37,16 @@ describe('closed beta API release configuration', () => {
     expect(() => assertApiReleaseConfiguration({ ...betaEnv, AUTH_ALLOW_DEV_TOKENS: 'true' })).toThrow('AUTH_ALLOW_DEV_TOKENS');
     expect(() => assertApiReleaseConfiguration({ ...betaEnv, PAYMENTS_ENABLED: 'true' })).toThrow('PAYMENTS_ENABLED');
     expect(() => assertApiReleaseConfiguration({ ...betaEnv, FISCAL_ENABLED: 'true' })).toThrow('FISCAL_ENABLED');
+  });
+
+
+  it('never enables synthetic records in ordinary development or release', () => {
+    expect(allowSyntheticFallback({ NODE_ENV: 'development' })).toBe(false);
+    expect(allowSyntheticFallback({ NODE_ENV: 'development', AUTH_ALLOW_DEV_TOKENS: 'false' })).toBe(false);
+    expect(allowSyntheticFallback({ NODE_ENV: 'production', AUTH_ALLOW_DEV_TOKENS: 'true' })).toBe(false);
+    expect(allowSyntheticFallback({ NODE_ENV: 'development', RENDO_BETA_MODE: 'true', AUTH_ALLOW_DEV_TOKENS: 'true' })).toBe(false);
+    expect(allowSyntheticFallback({ NODE_ENV: 'test' })).toBe(true);
+    expect(allowSyntheticFallback({ NODE_ENV: 'development', AUTH_ALLOW_DEV_TOKENS: 'true' })).toBe(true);
   });
 
   it('keeps local development origins bounded', () => {
