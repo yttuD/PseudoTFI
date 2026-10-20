@@ -93,6 +93,8 @@ export function UnidadForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Prevent two submit handlers from racing before React updates the disabled state.
   const submitInFlightRef = useRef(false);
+  // A stable request UUID per new tariff field survives network response loss and retries.
+  const newTariffRequestKeysRef = useRef<Map<string, string>>(new Map());
   const [saveError, setSaveError] = useState<string | null>(searchParams.get('save_error') ? 'La unidad quedó como borrador. Revisá las tarifas y guardá nuevamente.' : null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState('basicos');
@@ -168,7 +170,7 @@ export function UnidadForm({
       categoria: 'departamento',
       grupo_id: preselectedGrupoId,
       auto_traducir: true,
-      modalidades: [{ unidad_tiempo: 'día', cantidad_tiempo: 1, precio: 45000 }],
+      modalidades: [], // Never pre-fill a price that the property owner did not provide.
       fotos: []
     }
   });
@@ -512,7 +514,8 @@ export function UnidadForm({
       }
 
       if (id) {
-        for (const mod of modalidades) {
+        for (let index = 0; index < modalidades.length; index++) {
+          const mod = modalidades[index];
           if (mod.id) {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/unidades/${id}/modalidades/${mod.id}`, {
               method: 'PATCH',
@@ -521,12 +524,33 @@ export function UnidadForm({
             });
             if (!response.ok) throw new Error('No se pudo actualizar una tarifa. Revisá la unidad e intentá de nuevo.');
           } else {
+            // useFieldArray identity persists when an item is moved/removed.
+            // A new UUID is generated only for a genuinely new row, never per retry.
+            const fieldIdentity = fields[index]?.id;
+            if (!fieldIdentity) throw new Error('No se pudo identificar la tarifa nueva. Recargá la unidad.');
+            let operationKey = newTariffRequestKeysRef.current.get(fieldIdentity);
+            if (!operationKey) {
+              operationKey = crypto.randomUUID();
+              newTariffRequestKeysRef.current.set(fieldIdentity, operationKey);
+            }
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/unidades/${id}/modalidades`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                'Idempotency-Key': operationKey,
+              },
               body: JSON.stringify({ unidad_tiempo: mod.unidad_tiempo, cantidad_tiempo: mod.cantidad_tiempo, precio: mod.precio, precio_usd: mod.precio_usd ?? null, precio_brl: mod.precio_brl ?? null })
             });
-            if (!response.ok) throw new Error('No se pudo guardar una tarifa. Revisá la unidad e intentá de nuevo.');
+            if (!response.ok) throw new Error(
+              response.status === 409
+                ? 'Esta tarifa se modificó durante un reintento. Recargá la unidad antes de continuar.'
+                : 'No se pudo guardar una tarifa. Revisá la unidad e intentá de nuevo.'
+            );
+            const createdTariff = await response.json();
+            if (!createdTariff?.id) throw new Error('El servidor no confirmó el ID de la tarifa.');
+            // If a later step fails, retry uses PATCH on the confirmed row.
+            form.setValue(`modalidades.${index}.id`, createdTariff.id, { shouldDirty: false });
           }
         }
       }

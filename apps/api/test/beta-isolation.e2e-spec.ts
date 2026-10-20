@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { ConfigService } from '@nestjs/config';
 import { ForbiddenException, NotFoundException, ValidationPipe, type ExecutionContext, type INestApplication } from '@nestjs/common';
@@ -1015,6 +1015,48 @@ describe('B007a: Aislamiento API Real y Autorización Multi-Tenant (T005 / T001)
       expect(stored).toHaveLength(2);
       expect(stored?.find(x => x.id === firstId)).toMatchObject({ precio: 45000, deleted_at: null });
       expect(stored?.find(x => x.id === secondId)?.deleted_at).toBeTruthy();
+    });
+
+    it('N03 POST repetido o concurrente con misma clave crea exactamente una tarifa', async () => {
+      const server = httpApp.getHttpServer();
+      const url = `/unidades/${unitA2Id}/modalidades`;
+      const key = randomUUID();
+      const payload = { unidad_tiempo: 'hora', cantidad_tiempo: 2, precio: 54000 };
+      const auth = `Bearer ${tokenGestorA}`;
+      const submit = (body = payload, requestKey = key) =>
+        httpRequest(server).post(url).set('Authorization', auth)
+          .set('Idempotency-Key', requestKey).send(body);
+
+      // The initial 201 may be committed while its HTTP response is lost.
+      const first = await submit().expect(201);
+      const tarifaId: string = first.body.id;
+      expect(tarifaId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-8[0-9a-f]{3}-a[0-9a-f]{3}-[0-9a-f]{12}$/i);
+      createdModalidadIds.push(tarifaId);
+
+      const repeated = await submit().expect(201);
+      expect(repeated.body.id).toBe(tarifaId);
+
+      const [parallelOne, parallelTwo] = await Promise.all([
+        submit().expect(201), submit().expect(201),
+      ]);
+      expect(parallelOne.body.id).toBe(tarifaId);
+      expect(parallelTwo.body.id).toBe(tarifaId);
+
+      const { data: databaseRows, error } = await adminClient.from('modalidades_precio')
+        .select('id,precio,unidad_id,deleted_at').eq('id', tarifaId);
+      expect(error).toBeNull();
+      expect(databaseRows).toHaveLength(1);
+      expect(databaseRows?.[0]).toMatchObject({
+        unidad_id: unitA2Id, precio: 54000, deleted_at: null,
+      });
+
+      // A different price under the same operation key must fail, not mutate.
+      await submit({ ...payload, precio: 55000 }).expect(409);
+      await submit(payload, 'not-a-uuid').expect(400);
+      const { data: stillPresent, error: verifiedError } = await adminClient
+        .from('modalidades_precio').select('precio').eq('id', tarifaId).single();
+      expect(verifiedError).toBeNull();
+      expect(stillPresent?.precio).toBe(54000);
     });
 
     it('N02/N03 impide mutaciones de categoría y tarifas entre gestores, sin alterar la base', async () => {
