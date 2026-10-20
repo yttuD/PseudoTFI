@@ -1,0 +1,44 @@
+name: Marketplace public fallback data regressions
+
+on:
+  pull_request:
+    branches:
+      - codex/github-handoff-2026-10-19
+    paths:
+      - 'apps/api/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/rendo-marketplace-fallback-unit.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rendo-api-rendo-marketplace-fallback-unit.yml-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Activate pinned pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.0.0 --activate
+      - name: Install API dependencies from lockfile
+        run: pnpm install --frozen-lockfile --filter api...
+      - name: Compile internal shared types
+        run: pnpm --filter @tfi/types build
+      - name: Targeted regressions
+        working-directory: apps/api
+        run: node node_modules/vitest/vitest.mjs run src/marketplace/marketplace.service.spec.ts --reporter=dot
+      - name: API production typecheck
+        working-directory: apps/api
+        run: node node_modules/typescript/bin/tsc --noEmit -p tsconfig.build.json
