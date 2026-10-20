@@ -113,7 +113,7 @@ test.describe('B007b — Inventario y Aislamiento Real Navegador', () => {
 
       await page.getByRole('button', { name: 'Menú de perfil' }).click();
       await page.getByRole('button', { name: 'Cerrar Sesión' }).click();
-      await page.waitForURL(/\\/es\\/?(?:\\?.*)?$/, { timeout: 20_000 });
+      await page.waitForURL((url) => url.pathname === '/es' || url.pathname === '/es/', { timeout: 20_000 });
       await page.goto(`/es/unidades/${unitA1Id}`);
       await expect(page.getByTestId('approximate-location-note')).toBeVisible();
       await expect(page.getByTestId('exact-address')).toHaveCount(0);
