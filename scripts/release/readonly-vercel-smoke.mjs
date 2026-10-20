@@ -1,3 +1,5 @@
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 // Strictly read-only HTTP smoke for an already staged Vercel Web/API pair.
 // This program does NOT deploy, use credentials, mutate databases or assert SHA.
 const TARGET_PATHS = {
@@ -39,7 +41,7 @@ export async function runReadOnlySmoke(webOrigin, apiOrigin, client = fetch) {
   return results;
 }
 
-if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const argv = process.argv.slice(2);
   const getFlag = (name) => argv[argv.indexOf(name) + 1];
   if (argv.length !== 4 || !argv.includes('--web') || !argv.includes('--api')) {
