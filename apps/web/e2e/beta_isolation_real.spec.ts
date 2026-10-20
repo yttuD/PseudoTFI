@@ -120,8 +120,8 @@ test.describe('B007b — Inventario y Aislamiento Real Navegador', () => {
       const capTableA = `${testInfo.project.name}_gestorA_tabla.png`;
       await pageA.screenshot({ path: path.join(CAPTURES_DIR, capTableA) });
 
-      // Direct HTTP Negatives: Gestor A intenta mutar recurso de Gestor B por API directa (3201)
-      const directApiUrl = 'http://127.0.0.1:3201';
+      // Direct HTTP Negatives: Gestor A intenta mutar recurso de Gestor B por API directa (configurada por API_URL o proxy local 3201)
+      const directApiUrl = process.env.API_URL || 'http://127.0.0.1:3201';
       const patchRes = await fetch(`${directApiUrl}/unidades/${unitB1Id}`, {
         method: 'PATCH',
         headers: {
@@ -361,7 +361,7 @@ test.describe('B007b — Inventario y Aislamiento Real Navegador', () => {
       viewport: testInfo.project.use.viewport,
       colorScheme: testInfo.project.use.colorScheme,
     };
-    const directApiUrl = 'http://127.0.0.1:3201';
+    const directApiUrl = process.env.API_URL || 'http://127.0.0.1:3201';
 
     // 2.1 Delegado gestionar/cuenta: puede crear unidad y grupo
     const delGestionarCuenta = await fixtures.createDelegado(gestorA, 'GestCuenta', {
