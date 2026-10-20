@@ -225,6 +225,7 @@
     "publishUnit": "Publish a Unit"
   },
   "UnitDetail": {
+    "translationPendingNotice": "Translation pending: some information is shown in the original Spanish.",
     "tabDescription": "Description & Amenities",
     "tabPricing": "Pricing Models",
     "tabRules": "Rules & Conditions",
