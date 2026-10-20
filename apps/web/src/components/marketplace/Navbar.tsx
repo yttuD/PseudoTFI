@@ -30,6 +30,8 @@ export function Navbar({ locale }: { locale: string }) {
   const [user, setUser] = useState<ClientAuthUser | null>(null);
   const [mounted, setMounted] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -200,16 +202,28 @@ export function Navbar({ locale }: { locale: string }) {
                   <div className="pt-1 border-t border-border/60">
                     <button
                       type="button"
+                      disabled={signingOut}
                       onClick={async () => {
-                        setDropdownOpen(false);
-                        await signOutClient();
-                        window.location.href = `/${locale}`;
+                        if (signingOut) return;
+                        setSigningOut(true);
+                        setLogoutError(null);
+                        try {
+                          await signOutClient();
+                          window.location.replace(`/${locale}`);
+                        } catch {
+                          // Never redirect or imply a closed session on network failure.
+                          setLogoutError('No pudimos cerrar tu sesión. Intentá nuevamente.');
+                          setDropdownOpen(true);
+                        } finally {
+                          setSigningOut(false);
+                        }
                       }}
                       className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-destructive hover:bg-destructive/10 rounded-xl transition-colors cursor-pointer text-left"
                     >
                       <LogOut className="h-4 w-4" />
-                      <span>{tNav('logout')}</span>
+                      <span>{signingOut ? 'Cerrando sesión...' : tNav('logout')}</span>
                     </button>
+                    {logoutError && <p role="alert" className="px-3 py-2 text-xs text-destructive">{logoutError}</p>}
                   </div>
                 </div>
               )}
