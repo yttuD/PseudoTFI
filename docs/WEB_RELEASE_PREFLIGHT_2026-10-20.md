@@ -16,7 +16,7 @@
 
 ## Bloqueantes antes de promoción
 
-- **Seguridad de base:** [PR #34](https://github.com/yttuD/PseudoTFI/pull/34) validó localmente revocación de EXECUTE en RPC privilegiadas y fijación de `search_path` (51/51 PASS). Se debe **generar una migración versionada con la CLI Supabase**, revisar y aceptar su impacto en roles/RLS antes de aplicarla. [Auditoría #36](https://github.com/yttuD/PseudoTFI/issues/36) incluye advertencias restantes, entre ellas leaked-password protection.
+- **Seguridad de base:** [PR #34](https://github.com/yttuD/PseudoTFI/pull/34) ya incluye migración versionada `20261020222326_harden_rendo_rpc_permissions.sql` (creada con CLI Supabase); **51/51 Auth/RLS y 8/8 navegador real PASS** en base local. Antes de aplicar a Supabase alojado se requiere revisar su impacto, aprobar explícitamente la migración y asegurar rollback. [Auditoría #36](https://github.com/yttuD/PseudoTFI/issues/36) incluye advertencias restantes, entre ellas leaked-password protection.
 - **Datos monetarios:** [issue #27](https://github.com/yttuD/PseudoTFI/issues/27): dos grupos de tarifas activas aparentemente idénticas, 3 filas excedentes si se conservara solo una por grupo. No archivar sin validar que sean duplicados accidentales y conservar referencias históricas.
 - **Datos de idiomas:** [issue #32](https://github.com/yttuD/PseudoTFI/issues/32): 3 unidades publicadas; hay 2 títulos EN, 2 PT y 1 descripción EN/PT vacíos. El planner de PR #35 permite inventario sólo lectura; no ejecutar `--apply` ni traducir a ciegas sin aprobación del contenido comercial.
 - **Operación y aceptación:** revisar diff de alto riesgo, autenticar gestor/delegado/buscador real en preview aislada, comprobar pagos/reportes si forman parte del release, y corroborar secretos y permisos sin imprimirlos.
@@ -26,7 +26,13 @@
 
 1. Congelar el **SHA de commit exacto** aprobado en GitHub y verificar estado terminal verde para API unit, Auth/RLS local, browser Auth real, UI desktop/mobile y build. Cualquier merge posterior invalida esa evidencia hasta reejecutar los gates afectados.
 2. Auditar configuración efectiva de Vercel **sin imprimir valores de entorno**: Git repository/branch, `NODE_ENV`, modo beta, URLs de API/Supabase, orígenes permitidos, Auth y disponibilidad DeepL. Nunca habilitar tokens de desarrollo en preview o release pública.
-3. Crear **preview/staged** de web y API desde el mismo SHA y verificar en metadata Vercel el **deployment ID de ambos**, `gitSource` y estado READY. **No asignar alias de producción**.
+3. Crear **preview/staged** de web y API desde el mismo SHA. **No asignar alias de producción**. Leer metadatos de ambos deployment IDs con el conector Vercel (no asumir que compilar o crear un deploy confirma identidad). Guardar solo los dos objetos JSON de metadata en archivos temporales locales, nunca en Git, y ejecutar:
+
+   ```bash
+   node scripts/release/verify-vercel-pair.mjs --web-file /tmp/rendo-web.json --api-file /tmp/rendo-api.json --sha <SHA_APROBADO_COMPLETO_40> --target preview
+   ```
+
+   Este control exige los IDs correctos de los proyectos Rendo, origen GitHub `yttuD/PseudoTFI`, **SHA completo idéntico en web/API**, ambos `READY`, hosts Vercel válidos y ausencia de alias públicos de producción en preview. Cualquier discrepancia **detiene** publicación. Tras una promoción autorizada, repetir con `--target production` para exigir alias exactos; no equivale a smoke HTTP.
 4. Ejecutar smoke GET-only contra URLs stage exactas (sin headers Auth ni datos reales):
 
    ```bash

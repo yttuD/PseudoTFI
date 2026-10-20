@@ -24,4 +24,4 @@ jobs:
         with:
           node-version: '22'
       - name: Test allowlisted GET-only Vercel smoke without network
-        run: node --test scripts/release/tests/readonly-vercel-smoke.test.mjs
+        run: node --test scripts/release/tests/readonly-vercel-smoke.test.mjs scripts/release/tests/verify-vercel-pair.test.mjs
