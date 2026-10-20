@@ -7,7 +7,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { ConfigService } from '@nestjs/config';
 import { ForbiddenException, NotFoundException, ValidationPipe, type ExecutionContext, type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import request from 'supertest';
+import httpRequest from 'supertest';
 import { SupabaseService } from '../src/supabase/supabase.service.js';
 import { AuthorizationService } from '../src/authorization/authorization.service.js';
 import { ActionLogService } from '../src/authorization/action-log.service.js';
@@ -861,9 +861,9 @@ describe('B007a: Aislamiento API Real y Autorización Multi-Tenant (T005 / T001)
 
   describe('1b. N01 HTTP sobre Nest y Supabase local: inventario operativo (no marketplace)', () => {
     it('sin sesión, los endpoints operativos rechazan GET con 401', async () => {
-      await request(httpApp.getHttpServer()).get('/unidades').expect(401);
-      await request(httpApp.getHttpServer()).get('/grupos').expect(401);
-      await request(httpApp.getHttpServer()).get(`/unidades/${unitA1Id}`).expect(401);
+      await httpRequest(httpApp.getHttpServer()).get('/unidades').expect(401);
+      await httpRequest(httpApp.getHttpServer()).get('/grupos').expect(401);
+      await httpRequest(httpApp.getHttpServer()).get(`/unidades/${unitA1Id}`).expect(401);
     });
 
     it('GET listado/paginación y grupos separa Gestor A y B aunque sus unidades estén publicadas', async () => {
@@ -871,9 +871,9 @@ describe('B007a: Aislamiento API Real y Autorización Multi-Tenant (T005 / T001)
       const authB = `Bearer ${tokenGestorB}`;
       const server = httpApp.getHttpServer();
 
-      const pageA1 = await request(server).get('/unidades?page=1&limit=2').set('Authorization', authA).expect(200);
-      const pageA2 = await request(server).get('/unidades?page=2&limit=2').set('Authorization', authA).expect(200);
-      const pageB = await request(server).get('/unidades?page=1&limit=2').set('Authorization', authB).expect(200);
+      const pageA1 = await httpRequest(server).get('/unidades?page=1&limit=2').set('Authorization', authA).expect(200);
+      const pageA2 = await httpRequest(server).get('/unidades?page=2&limit=2').set('Authorization', authA).expect(200);
+      const pageB = await httpRequest(server).get('/unidades?page=1&limit=2').set('Authorization', authB).expect(200);
 
       const a1 = pageA1.body as { data: UnidadRow[]; count: number };
       const a2 = pageA2.body as { data: UnidadRow[]; count: number };
@@ -889,8 +889,8 @@ describe('B007a: Aislamiento API Real y Autorización Multi-Tenant (T005 / T001)
       expect(b1.count).toBe(1);
       expect(b1.data.map((u) => u.id)).toEqual([unitB1Id]);
 
-      const groupsA = await request(server).get('/grupos').set('Authorization', authA).expect(200);
-      const groupsB = await request(server).get('/grupos').set('Authorization', authB).expect(200);
+      const groupsA = await httpRequest(server).get('/grupos').set('Authorization', authA).expect(200);
+      const groupsB = await httpRequest(server).get('/grupos').set('Authorization', authB).expect(200);
       expect((groupsA.body as GrupoRow[]).map((g) => g.id)).toEqual(expect.arrayContaining([grupoAId, grupoVacioId]));
       expect((groupsA.body as GrupoRow[]).map((g) => g.id)).not.toContain(grupoBId);
       expect((groupsB.body as GrupoRow[]).map((g) => g.id)).toEqual([grupoBId]);
@@ -901,22 +901,22 @@ describe('B007a: Aislamiento API Real y Autorización Multi-Tenant (T005 / T001)
       const authA = `Bearer ${tokenGestorA}`;
       const authB = `Bearer ${tokenGestorB}`;
 
-      const own = await request(server).get(`/unidades/${unitA1Id}`).set('Authorization', authA).expect(200);
+      const own = await httpRequest(server).get(`/unidades/${unitA1Id}`).set('Authorization', authA).expect(200);
       expect((own.body as UnidadRow).id).toBe(unitA1Id);
-      await request(server).get(`/unidades/${unitA1Id}`).set('Authorization', authB).expect(404);
-      await request(server).get(`/unidades/${unitB1Id}`).set('Authorization', authA).expect(404);
-      await request(server).get(`/unidades/${unitA1Id}/alquileres`).set('Authorization', authB).expect(404);
+      await httpRequest(server).get(`/unidades/${unitA1Id}`).set('Authorization', authB).expect(404);
+      await httpRequest(server).get(`/unidades/${unitB1Id}`).set('Authorization', authA).expect(404);
+      await httpRequest(server).get(`/unidades/${unitA1Id}/alquileres`).set('Authorization', authB).expect(404);
     });
 
     it('Delegado aceptado pero sin configuración recibe inventario y grupos vacíos', async () => {
       const auth = `Bearer ${tokenDelegado}`;
       const server = httpApp.getHttpServer();
-      const list = await request(server).get('/unidades?page=1&limit=10').set('Authorization', auth).expect(200);
-      const groups = await request(server).get('/grupos').set('Authorization', auth).expect(200);
+      const list = await httpRequest(server).get('/unidades?page=1&limit=10').set('Authorization', auth).expect(200);
+      const groups = await httpRequest(server).get('/grupos').set('Authorization', auth).expect(200);
       expect((list.body as { data: UnidadRow[]; count: number }).data).toEqual([]);
       expect((list.body as { count: number }).count).toBe(0);
       expect(groups.body).toEqual([]);
-      await request(server).get(`/unidades/${unitA1Id}`).set('Authorization', auth).expect(404);
+      await httpRequest(server).get(`/unidades/${unitA1Id}`).set('Authorization', auth).expect(404);
     });
   });
 
@@ -967,15 +967,15 @@ describe('B007a: Aislamiento API Real y Autorización Multi-Tenant (T005 / T001)
       // Mismo alcance validado por HTTP y guard real, además de la llamada directa.
       const auth = `Bearer ${tokenDelegado}`;
       const server = httpApp.getHttpServer();
-      const httpPage = await request(server).get('/unidades?page=1&limit=1').set('Authorization', auth).expect(200);
+      const httpPage = await httpRequest(server).get('/unidades?page=1&limit=1').set('Authorization', auth).expect(200);
       const scoped = httpPage.body as { data: UnidadRow[]; count: number };
       expect(scoped.count).toBe(2);
       expect(scoped.data).toHaveLength(1);
       expect([unitA1Id, unitA2Id]).toContain(scoped.data[0].id);
-      await request(server).get(`/unidades/${unitA1Id}`).set('Authorization', auth).expect(200);
-      await request(server).get(`/unidades/${unitA3Id}`).set('Authorization', auth).expect(404);
-      await request(server).get(`/unidades/${unitB1Id}`).set('Authorization', auth).expect(404);
-      const httpGroups = await request(server).get('/grupos').set('Authorization', auth).expect(200);
+      await httpRequest(server).get(`/unidades/${unitA1Id}`).set('Authorization', auth).expect(200);
+      await httpRequest(server).get(`/unidades/${unitA3Id}`).set('Authorization', auth).expect(404);
+      await httpRequest(server).get(`/unidades/${unitB1Id}`).set('Authorization', auth).expect(404);
+      const httpGroups = await httpRequest(server).get('/grupos').set('Authorization', auth).expect(200);
       expect((httpGroups.body as GrupoRow[]).map((g) => g.id)).toEqual([grupoAId]);
     });
 
@@ -1735,12 +1735,12 @@ describe('B007a: Aislamiento API Real y Autorización Multi-Tenant (T005 / T001)
       // El JWT sigue vigente: la revocación debe hacerse efectiva al consultar de nuevo.
       const auth = `Bearer ${tokenDelegado}`;
       const server = httpApp.getHttpServer();
-      const httpList = await request(server).get('/unidades').set('Authorization', auth).expect(200);
+      const httpList = await httpRequest(server).get('/unidades').set('Authorization', auth).expect(200);
       expect((httpList.body as { data: UnidadRow[]; count: number }).data).toEqual([]);
       expect((httpList.body as { count: number }).count).toBe(0);
-      const httpGroups = await request(server).get('/grupos').set('Authorization', auth).expect(200);
+      const httpGroups = await httpRequest(server).get('/grupos').set('Authorization', auth).expect(200);
       expect(httpGroups.body).toEqual([]);
-      await request(server).get(`/unidades/${unitA1Id}`).set('Authorization', auth).expect(404);
+      await httpRequest(server).get(`/unidades/${unitA1Id}`).set('Authorization', auth).expect(404);
     });
   });
 });
