@@ -1713,6 +1713,25 @@ describe('B007a: Aislamiento API Real y Autorización Multi-Tenant (T005 / T001)
   });
 
   describe('N01/N02. Cambio seguro de pertenencia a grupos por HTTP', () => {
+    it('Gestor A no puede crear una unidad asociada a un grupo perteneciente a Gestor B', async () => {
+      const invalidTitle = `Intento cross-tenant ${fixtureMarker}`;
+      const server = httpApp.getHttpServer();
+      await httpRequest(server).post('/unidades')
+        .set('Authorization', `Bearer ${tokenGestorA}`)
+        .send({
+          categoria: 'departamento',
+          grupo_id: grupoBId,
+          titulo_es: invalidTitle,
+          auto_traducir: false,
+        })
+        .expect(404);
+
+      const { data: leaked, error } = await adminClient.from('unidades')
+        .select('id,grupo_id').eq('titulo_es', invalidTitle);
+      expect(error).toBeNull();
+      expect(leaked).toEqual([]);
+    });
+
     it('Gestor A no puede asignar su unidad a Grupo B, pero puede desagrupar y reagrupar la propia', async () => {
       const server = httpApp.getHttpServer();
       const auth = `Bearer ${tokenGestorA}`;
