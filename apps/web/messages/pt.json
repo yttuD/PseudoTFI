@@ -429,5 +429,28 @@
     "grupoSinSena": "Sem sinal padrão",
     "grupoSenaNoDisponible": "Configuração de sinal indisponível",
     "grupoSenaNoCobro": "Esta é uma configuração para locações futuras, não um pagamento recebido."
+  },
+  "Profile": {
+    "account": "Sua conta",
+    "title": "Meu perfil",
+    "intro": "Consulte e atualize seus dados de contato.",
+    "loading": "Carregando perfil...",
+    "loginRequired": "Entre para visualizar sua conta.",
+    "loadError": "Não foi possível carregar seu perfil. Atualize a página.",
+    "logIn": "Entrar",
+    "accountType": "Tipo de conta:",
+    "searcher": "Buscador",
+    "manager": "Gestor",
+    "delegate": "Delegado",
+    "betaQuota": "Limite beta: {count} unidades sem custo.",
+    "fullName": "Nome completo",
+    "email": "E-mail",
+    "emailReadOnly": "O e-mail não pode ser alterado por este formulário.",
+    "phone": "Telefone",
+    "nameRequired": "Digite um nome completo válido.",
+    "saveError": "Não foi possível confirmar as alterações. Tente novamente.",
+    "saved": "Dados salvos.",
+    "saving": "Salvando...",
+    "save": "Salvar alterações"
   }
 }
