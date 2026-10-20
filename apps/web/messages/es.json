@@ -429,5 +429,28 @@
     "grupoSinSena": "Sin seña predeterminada",
     "grupoSenaNoDisponible": "Configuración de seña no disponible",
     "grupoSenaNoCobro": "Es una configuración para futuros alquileres, no un cobro realizado."
+  },
+  "Profile": {
+    "account": "Tu cuenta",
+    "title": "Mi perfil",
+    "intro": "Consultá y actualizá tus datos de contacto.",
+    "loading": "Cargando perfil...",
+    "loginRequired": "Iniciá sesión para ver tu cuenta.",
+    "loadError": "No pudimos cargar tu perfil. Intentá actualizar la página.",
+    "logIn": "Iniciar sesión",
+    "accountType": "Tipo de cuenta:",
+    "searcher": "Buscador",
+    "manager": "Gestor",
+    "delegate": "Delegado",
+    "betaQuota": "Cupo beta: {count} unidades sin costo.",
+    "fullName": "Nombre completo",
+    "email": "Correo electrónico",
+    "emailReadOnly": "El correo no se cambia desde este formulario.",
+    "phone": "Teléfono",
+    "nameRequired": "Ingresá un nombre completo válido.",
+    "saveError": "No pudimos confirmar el guardado de tus datos. Intentá nuevamente.",
+    "saved": "Datos guardados.",
+    "saving": "Guardando...",
+    "save": "Guardar cambios"
   }
 }
