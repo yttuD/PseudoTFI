@@ -70,7 +70,10 @@ test.describe('B007b — Inventario y Aislamiento Real Navegador', () => {
     const context = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
     try {
       const page = await context.newPage();
-      await fixtures.loginViaUI(page, gestorA);
+      // Logout revokes this user's session; never reuse a shared actor from
+      // the other authorization suites, even if a JWT has not yet expired.
+      const logoutOnlyGestor = await fixtures.createGestor('LogoutOnly');
+      await fixtures.loginViaUI(page, logoutOnlyGestor);
       await page.goto('/es/unidades');
       const profileMenu = page.getByRole('button', { name: 'Menú de perfil' });
       await expect(profileMenu).toBeVisible();
