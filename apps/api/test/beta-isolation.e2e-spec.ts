@@ -1712,6 +1712,67 @@ describe('B007a: Aislamiento API Real y Autorización Multi-Tenant (T005 / T001)
     });
   });
 
+  describe('N01/N02. Cambio seguro de pertenencia a grupos por HTTP', () => {
+    it('Gestor A no puede asignar su unidad a Grupo B, pero puede desagrupar y reagrupar la propia', async () => {
+      const server = httpApp.getHttpServer();
+      const auth = `Bearer ${tokenGestorA}`;
+
+      await httpRequest(server).patch(`/unidades/${unitA2Id}`)
+        .set('Authorization', auth)
+        .send({ grupo_id: grupoBId, auto_traducir: false })
+        .expect(404);
+      const { data: untouched, error: initialError } = await adminClient.from('unidades')
+        .select('grupo_id').eq('id', unitA2Id).single();
+      expect(initialError).toBeNull();
+      expect(untouched?.grupo_id).toBe(grupoAId);
+
+      const detached = await httpRequest(server).patch(`/unidades/${unitA2Id}`)
+        .set('Authorization', auth)
+        .send({ grupo_id: null, auto_traducir: false })
+        .expect(200);
+      expect(detached.body.grupo_id).toBeNull();
+      const afterDetach = await httpRequest(server).get(`/unidades/${unitA2Id}`)
+        .set('Authorization', auth).expect(200);
+      expect(afterDetach.body.grupo_id).toBeNull();
+
+      const restored = await httpRequest(server).patch(`/unidades/${unitA2Id}`)
+        .set('Authorization', auth)
+        .send({ grupo_id: grupoAId, auto_traducir: false })
+        .expect(200);
+      expect(restored.body.grupo_id).toBe(grupoAId);
+      const { data: verified, error: verifyError } = await adminClient.from('unidades')
+        .select('grupo_id').eq('id', unitA2Id).single();
+      expect(verifyError).toBeNull();
+      expect(verified?.grupo_id).toBe(grupoAId);
+    });
+
+    it('Delegado gestionar limitado a Grupo A no puede retirar una unidad de su grupo', async () => {
+      const configured = await clientGestorA.rpc('configure_delegacion', {
+        p_delegacion_id: delegacionId,
+        p_permiso: 'gestionar',
+        p_alcance_tipo: 'grupo',
+        p_grupo_id: grupoAId,
+        p_unidad_ids: [],
+      });
+      expect(configured.error).toBeNull();
+
+      const server = httpApp.getHttpServer();
+      await httpRequest(server).patch(`/unidades/${unitA1Id}`)
+        .set('Authorization', `Bearer ${tokenDelegado}`)
+        .send({ grupo_id: null, auto_traducir: false })
+        .expect(404);
+      await httpRequest(server).patch(`/unidades/${unitA1Id}`)
+        .set('Authorization', `Bearer ${tokenDelegado}`)
+        .send({ grupo_id: grupoBId, auto_traducir: false })
+        .expect(404);
+
+      const { data: unit, error } = await adminClient.from('unidades')
+        .select('grupo_id').eq('id', unitA1Id).single();
+      expect(error).toBeNull();
+      expect(unit?.grupo_id).toBe(grupoAId);
+    });
+  });
+
   describe('9. Revocación de Delegado mediante RPC y efecto inmediato al final de la suite', () => {
     it('Delegado revocado mediante revoke_delegacion pierde acceso total de listado, detalle y grupos', async () => {
       const revRes = await clientGestorA.rpc('revoke_delegacion', {
