@@ -3,6 +3,7 @@ name: Rendo N01 isolated Auth and RLS integration
 on:
   pull_request:
     branches:
+      - codex/ui-playwright-matrix-2026-10-20
       - codex/github-handoff-2026-10-19
       - codex/n01b-http-local-read-2026-10-20
     paths:
