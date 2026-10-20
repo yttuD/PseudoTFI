@@ -420,6 +420,14 @@
     "reintentar": "Reintentar",
     "vacioTitulo": "Inventario Vacío",
     "vacioDescripcion": "No hay unidades registradas en tu workspace accesible.",
-    "registrarUnidad": "Registrar Unidad"
+    "registrarUnidad": "Registrar Unidad",
+    "verDetalleGrupo": "Ver detalles",
+    "detalleGrupoDescripcion": "Información del grupo y su configuración opcional.",
+    "grupoDescripcion": "Descripción",
+    "grupoSinDescripcion": "Sin descripción",
+    "grupoSenaPredeterminada": "Seña predeterminada",
+    "grupoSinSena": "Sin seña predeterminada",
+    "grupoSenaNoDisponible": "Configuración de seña no disponible",
+    "grupoSenaNoCobro": "Es una configuración para futuros alquileres, no un cobro realizado."
   }
 }
