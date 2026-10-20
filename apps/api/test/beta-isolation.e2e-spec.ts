@@ -1999,6 +1999,69 @@ describe('B007a: Aislamiento API Real y Autorización Multi-Tenant (T005 / T001)
     });
   });
 
+  describe('N06. Perfil propio y aislamiento RLS real', () => {
+    it('Gestor A guarda su perfil y vuelve a leer exactamente la fila confirmada', async () => {
+      const { data: initial, error: initialError } = await adminClient
+        .from('users').select('id,full_name,phone').eq('id', gestorAId).single();
+      expect(initialError).toBeNull();
+      expect(initial?.id).toBe(gestorAId);
+
+      const nextName = `Gestor validado ${fixtureMarker}`;
+      const nextPhone = '3777000000';
+      const { data: saved, error: saveError } = await clientGestorA
+        .from('users')
+        .update({ full_name: nextName, phone: nextPhone })
+        .eq('id', gestorAId)
+        .select('id,full_name,phone')
+        .single();
+      expect(saveError).toBeNull();
+      expect(saved).toMatchObject({ id: gestorAId, full_name: nextName, phone: nextPhone });
+
+      // Independent read from a fresh Supabase client with the same genuine JWT.
+      const reader = createClient(config.apiUrl, config.anonKey, {
+        global: { headers: { Authorization: `Bearer ${tokenGestorA}` } },
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { data: reloaded, error: reloadError } = await reader
+        .from('users').select('id,full_name,phone').eq('id', gestorAId).single();
+      expect(reloadError).toBeNull();
+      expect(reloaded).toMatchObject(saved);
+
+      const { error: restoreError } = await adminClient.from('users')
+        .update({ full_name: initial?.full_name, phone: initial?.phone })
+        .eq('id', gestorAId);
+      expect(restoreError).toBeNull();
+    });
+
+    it('Gestor B no puede editar el perfil de Gestor A ni ver su fila privada', async () => {
+      const other = createClient(config.apiUrl, config.anonKey, {
+        global: { headers: { Authorization: `Bearer ${tokenGestorB}` } },
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { data: original, error: originalError } = await adminClient
+        .from('users').select('id,full_name,phone').eq('id', gestorAId).single();
+      expect(originalError).toBeNull();
+
+      const { data: forbiddenRows, error: writeError } = await other
+        .from('users')
+        .update({ full_name: 'NO AUTORIZADO' })
+        .eq('id', gestorAId)
+        .select('id');
+      // An RLS-denied write can be represented as zero rows or explicit error.
+      expect(writeError === null ? forbiddenRows : []).toEqual([]);
+
+      const { data: hidden, error: readError } = await other
+        .from('users').select('id,full_name,phone').eq('id', gestorAId);
+      expect(readError).toBeNull();
+      expect(hidden).toEqual([]);
+
+      const { data: after, error: afterError } = await adminClient
+        .from('users').select('id,full_name,phone').eq('id', gestorAId).single();
+      expect(afterError).toBeNull();
+      expect(after).toEqual(original);
+    });
+  });
+
   describe('9. Revocación de Delegado mediante RPC y efecto inmediato al final de la suite', () => {
     it('Delegado revocado mediante revoke_delegacion pierde acceso total de listado, detalle y grupos', async () => {
       const revRes = await clientGestorA.rpc('revoke_delegacion', {
