@@ -80,6 +80,53 @@ describe('release catalog failure behavior', () => {
     });
   });
 
+  it('reports untranslated EN detail as pending until title and description exist', async () => {
+    vi.stubEnv('RENDO_BETA_MODE', 'true');
+    const row = {
+      id: 'unit-pending', estado: 'publicada',
+      titulo_es: 'Casa real', descripcion_es: 'Descripción real',
+      titulo_en: null as string | null, descripcion_en: null as string | null,
+      categoria: 'casa', modalidades_precio: [],
+    };
+    const query = { eq: () => query, is: () => query, single: async () => ({ data: row, error: null }) };
+    const db = {
+      isOnline: vi.fn().mockResolvedValue(true),
+      getAdminClient: () => ({ from: () => ({ select: () => query }) }),
+    };
+    const service = new MarketplaceService(db as unknown as SupabaseService);
+
+    const pending = await service.findOne('unit-pending', false, 'en');
+    expect(pending).toMatchObject({
+      titulo: 'Casa real', descripcion: 'Descripción real', traduccion_pendiente: true,
+      whatsapp: null, ubicacion_exacta: null, direccion_texto: null,
+    });
+    row.titulo_en = 'Real house';
+    row.descripcion_en = 'Real description';
+    const translated = await service.findOne('unit-pending', false, 'en');
+    expect(translated).toMatchObject({
+      titulo: 'Real house', descripcion: 'Real description', traduccion_pendiente: false,
+    });
+    const original = await service.findOne('unit-pending', false, 'es');
+    expect(original.traduccion_pendiente).toBe(false);
+  });
+
+  it('flags catalog item title as pending instead of inventing English copy', async () => {
+    vi.stubEnv('RENDO_BETA_MODE', 'true');
+    const row = { id: 'unit-1', titulo_es: 'Casa', titulo_en: null, categoria: 'casa', fotos: [], modalidades_precio: [] };
+    const query = {
+      eq: () => query, is: () => query, range: () => query,
+      order: async () => ({ data: [row], error: null, count: 1 }),
+    };
+    const db = {
+      isOnline: vi.fn().mockResolvedValue(true),
+      getAdminClient: () => ({ from: () => ({ select: () => query }) }),
+    };
+    const service = new MarketplaceService(db as unknown as SupabaseService);
+    const result = await service.findAll({ locale: 'en' });
+    expect(result.data[0]).toMatchObject({ id: 'unit-1', titulo: 'Casa', traduccion_pendiente: true });
+    expect(result.data[0]).not.toHaveProperty('whatsapp');
+  });
+
   it.each(['offline', 'db-error'])(
     'fallback local %s nunca arrastra campos privados a respuestas anónimas',
     async (mode) => {
