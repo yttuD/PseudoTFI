@@ -12,6 +12,10 @@ export class GruposService {
     const val = valor !== undefined ? Number(valor) : 0;
     const t = tipo || 'porcentaje';
 
+    if (!Number.isFinite(val)) {
+      throw new BadRequestException('El valor de la seña debe ser un número finito');
+    }
+
     if (val < 0) {
       throw new BadRequestException('El valor de la seña no puede ser negativo');
     }

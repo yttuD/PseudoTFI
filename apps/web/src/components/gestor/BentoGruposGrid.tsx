@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { GrupoFormModal } from '@/components/gestor/GrupoFormModal';
+import { GrupoDetailsDialog } from '@/components/gestor/GrupoDetailsDialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useTranslations } from 'next-intl';
 
@@ -35,7 +36,10 @@ export interface UnidadItem {
 export interface GrupoItem {
   id: string;
   nombre: string;
-  descripcion?: string;
+  descripcion?: string | null;
+  sena_default_activa?: boolean | null;
+  sena_default_tipo?: 'porcentaje' | 'monto_fijo' | null;
+  sena_default_valor?: number | string | null;
   creado_en?: string;
   created_at?: string;
 }
@@ -189,6 +193,9 @@ export function BentoGruposGrid({
                   <Badge variant="outline" className="font-mono text-xs shrink-0 bg-background/80">
                     {grupo.unidades.length} {grupo.unidades.length === 1 ? 'Unidad' : 'Unidades'}
                   </Badge>
+                </div>
+                <div className="mt-3">
+                  <GrupoDetailsDialog grupo={grupo} />
                 </div>
               </CardHeader>
 

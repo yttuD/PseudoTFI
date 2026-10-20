@@ -51,6 +51,10 @@ export class GruposController {
     @Body() createGrupoDto: CreateGrupoDto,
     @Request() req: AuthenticatedRequest,
   ) {
+    // Defensa en profundidad: no delegar la restricción de roles solo al guard o a RLS.
+    if (req.user.rol !== 'gestor' && req.user.rol !== 'delegado') {
+      throw new ForbiddenException('Solo un Gestor o Delegado autorizado puede crear grupos');
+    }
     if (req.user.rol === 'delegado') {
       const ctx = await this.authzService.resolveAccessContext(req.user);
       if (

@@ -420,6 +420,14 @@
     "reintentar": "Tentar novamente",
     "vacioTitulo": "Inventário vazio",
     "vacioDescripcion": "Não há unidades cadastradas no seu espaço de trabalho acessível.",
-    "registrarUnidad": "Cadastrar unidade"
+    "registrarUnidad": "Cadastrar unidade",
+    "verDetalleGrupo": "Ver detalhes",
+    "detalleGrupoDescripcion": "Informações do grupo e configurações opcionais.",
+    "grupoDescripcion": "Descrição",
+    "grupoSinDescripcion": "Sem descrição",
+    "grupoSenaPredeterminada": "Sinal padrão",
+    "grupoSinSena": "Sem sinal padrão",
+    "grupoSenaNoDisponible": "Configuração de sinal indisponível",
+    "grupoSenaNoCobro": "Esta é uma configuração para locações futuras, não um pagamento recebido."
   }
 }

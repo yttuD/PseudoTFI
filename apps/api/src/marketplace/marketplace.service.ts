@@ -244,17 +244,7 @@ export class MarketplaceService {
       if (isReleaseRuntime()) throw databaseUnavailable();
       const fallback = resilientStore.getUnidadById(id);
       if (fallback && fallback.estado === 'publicada') {
-        const titulo = (fallback as any)[`titulo_${locale}`] || fallback.titulo_es;
-        const descripcion = (fallback as any)[`descripcion_${locale}`] || fallback.descripcion_es;
-        return {
-          ...fallback,
-          titulo: titulo || null,
-          descripcion: descripcion || null,
-          ubicacion_exacta: isAuthenticated ? fallback.ubicacion_exacta : null,
-          direccion_texto: isAuthenticated ? (fallback.direccion_texto || null) : null,
-          whatsapp: isAuthenticated ? fallback.whatsapp : null,
-          telefono: isAuthenticated ? (fallback as any).telefono || null : null,
-        };
+        return this.projectDetail(fallback, isAuthenticated, locale);
       }
       throw new NotFoundException('Unidad no encontrada o no publicada');
     }
@@ -285,21 +275,20 @@ export class MarketplaceService {
       }
       const fallback = resilientStore.getUnidadById(id);
       if (fallback && fallback.estado === 'publicada') {
-        const titulo = (fallback as any)[`titulo_${locale}`] || fallback.titulo_es;
-        const descripcion = (fallback as any)[`descripcion_${locale}`] || fallback.descripcion_es;
-        return {
-          ...fallback,
-          titulo: titulo || null,
-          descripcion: descripcion || null,
-          ubicacion_exacta: isAuthenticated ? fallback.ubicacion_exacta : null,
-          direccion_texto: isAuthenticated ? (fallback.direccion_texto || null) : null,
-          whatsapp: isAuthenticated ? fallback.whatsapp : null,
-          telefono: isAuthenticated ? (fallback as any).telefono || null : null,
-        };
+        return this.projectDetail(fallback, isAuthenticated, locale);
       }
       throw new NotFoundException('Unidad no encontrada o no publicada');
     }
 
+    return this.projectDetail(data, isAuthenticated, locale);
+  }
+
+  /**
+   * Proyectar exclusivamente campos del contrato de detalle público.
+   * Compartido por el catálogo en Supabase y el fallback local: nunca expandir
+   * con ...data, ya que los registros privilegiados pueden incluir columnas privadas.
+   */
+  private projectDetail(data: any, isAuthenticated: boolean, locale: string) {
     const titulo = data[`titulo_${locale}`] || data.titulo_es;
     const descripcion = data[`descripcion_${locale}`] || data.descripcion_es;
     return {
@@ -312,13 +301,21 @@ export class MarketplaceService {
       fotos: data.fotos || [],
       ubicacion_aprox: data.ubicacion_aprox || null,
       ubicacion_exacta: isAuthenticated ? data.ubicacion_exacta || null : null,
-      direccion_texto: isAuthenticated ? (data.direccion_texto || null) : null,
+      direccion_texto: isAuthenticated ? data.direccion_texto || null : null,
       whatsapp: isAuthenticated ? data.whatsapp || null : null,
       caracteristicas: data.atributos || {},
       modalidades_precio: (data.modalidades_precio || [])
         .filter((m: any) => !m.deleted_at)
-        .map((m: any) => ({ id: m.id, unidad_tiempo: m.unidad_tiempo, cantidad_tiempo: m.cantidad_tiempo, precio: m.precio, precio_usd: m.precio_usd ?? null, precio_brl: m.precio_brl ?? null })),
+        .map((m: any) => ({
+          id: m.id,
+          unidad_tiempo: m.unidad_tiempo ?? m.modalidad,
+          cantidad_tiempo: m.cantidad_tiempo ?? 1,
+          precio: m.precio,
+          precio_usd: m.precio_usd ?? null,
+          precio_brl: m.precio_brl ?? null,
+        })),
     };
+
   }
 
   async getZonas() {
