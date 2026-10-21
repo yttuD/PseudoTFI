@@ -362,7 +362,7 @@ export function startMockApiServer(port = 3001): Promise<http.Server> {
           res.end(JSON.stringify({ statusCode: 403, message: 'Solo Gestor titular.' }));
           return;
         }
-        if (token.includes('service-error') || (req.method === 'DELETE' && token.includes('cancel-error'))) {
+        if (token.includes('delegados-error') || token.includes('service-error') || (req.method === 'DELETE' && token.includes('cancel-error'))) {
           res.writeHead(500, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ statusCode: 500, message: 'No se pudo consultar/cancelar la invitación.' }));
           return;
@@ -373,6 +373,11 @@ export function startMockApiServer(port = 3001): Promise<http.Server> {
           return;
         }
         if (req.method === 'GET' && (url === '/delegados' || url.startsWith('/delegados?'))) {
+          if (token.includes('invalid-delegados')) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ data: [] }));
+            return;
+          }
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify(token.includes('empty-delegados')
             ? { invitaciones: [], delegaciones: [] }
