@@ -7,6 +7,13 @@ const activeSockets = new Set<Socket>();
 const previewGroups: Record<string, any>[] = [];
 const previewUnits: Record<string, any>[] = [];
 
+// Test-only switch: lets browser regressions verify a successful 200 + []
+// on the unfiltered catalog route, where the former synthetic fallback lived.
+let forceEmptyMarketplaceCatalog = false;
+export function setMockMarketplaceCatalogEmpty(value: boolean): void {
+  forceEmptyMarketplaceCatalog = value;
+}
+
 async function readPreviewBody(req: http.IncomingMessage): Promise<Record<string, any>> {
   let body = '';
   for await (const chunk of req) body += chunk.toString();
@@ -203,7 +210,7 @@ export function startMockApiServer(port = 3001): Promise<http.Server> {
         }
 
         // Empty catalog queries
-        if (url.includes('q=no-results') || url.includes('empty=true') || url.includes('categoria=lote')) {
+        if (forceEmptyMarketplaceCatalog || url.includes('q=no-results') || url.includes('empty=true') || url.includes('categoria=lote')) {
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ data: [], total: 0 }));
           return;
