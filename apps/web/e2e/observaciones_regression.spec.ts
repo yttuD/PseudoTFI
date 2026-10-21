@@ -1,12 +1,13 @@
 import { test, expect } from '@playwright/test';
+import { startMockApiServer, stopMockApiServer } from './fixtures/mock-api-server';
 
-function gestorCookie() {
+function gestorCookie(signature = 'test') {
   const userId = '11111111-1111-1111-1111-111111111111';
   const payload = {
     sub: userId,
     accessContext: { actor: 'gestor', ownerOnly: true, capabilities: ['*'] },
   };
-  const token = `${Buffer.from('{}').toString('base64url')}.${Buffer.from(JSON.stringify(payload)).toString('base64url')}.test`;
+  const token = `${Buffer.from('{}').toString('base64url')}.${Buffer.from(JSON.stringify(payload)).toString('base64url')}.${signature}`;
   const value = `base64-${Buffer.from(JSON.stringify({
     access_token: token,
     user: { id: userId, email: 'qa@example.invalid', user_metadata: { role: 'gestor' } },
@@ -150,4 +151,49 @@ test('N04 y N05: detalle público proyecta dirección solo para autenticado y lo
   expect(ptHref).toContain('Ol%C3%A1%2C%20tenho%20interesse%20na%20unidade');
 
   await page.screenshot({ path: testInfo.outputPath('detalle-autenticado-pt.png'), fullPage: true });
+});
+
+test.describe('UX-001: estados SSR de alquileres con API sintética de loopback', () => {
+  test.beforeAll(async () => {
+    await startMockApiServer(3001);
+  });
+  test.afterAll(async () => {
+    await stopMockApiServer();
+  });
+
+  test('UX-001: alquileres distingue error, vacío real y recuperación sin perder datos', async ({ page, context }) => {
+  // These cookie signatures are synthetic and accepted ONLY by the local test adapter.
+  await context.clearCookies();
+  await context.addCookies([gestorCookie('service-error')]);
+  await page.goto('/es/alquileres');
+  await expect(page.getByTestId('alquileres-load-error')).toBeVisible();
+  await expect(page.getByText('No pudimos cargar los alquileres')).toBeVisible();
+  await expect(page.getByText('No hay alquileres registrados.')).toHaveCount(0);
+  await expect(page.getByTestId('btn-nuevo-alquiler')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Reintentar' })).toBeVisible();
+
+  await context.clearCookies();
+  await context.addCookies([gestorCookie()]);
+  await page.reload();
+  await expect(page.getByTestId('alquileres-load-error')).toHaveCount(0);
+  await expect(page.getByText('Departamento 2 Ambientes Frente al Río').filter({ visible: true }).first()).toBeVisible();
+  await expect(page.getByTestId('btn-nuevo-alquiler')).toBeVisible();
+
+  await context.clearCookies();
+  await context.addCookies([gestorCookie('empty-rentals')]);
+  await page.reload();
+  await expect(page.getByText('No hay alquileres registrados.')).toBeVisible();
+  await expect(page.getByTestId('alquileres-load-error')).toHaveCount(0);
+});
+
+test('UX-001: si falta el catálogo auxiliar, conserva contratos y bloquea el alta', async ({ page, context }) => {
+  await context.clearCookies();
+  await context.addCookies([gestorCookie('units-only-failure')]);
+  await page.goto('/es/alquileres');
+  await expect(page.getByTestId('alquileres-creation-data-error')).toBeVisible();
+  await expect(page.getByText('Los alquileres se cargaron, pero faltan datos para registrar uno nuevo')).toBeVisible();
+  await expect(page.getByText('Departamento 2 Ambientes Frente al Río').filter({ visible: true }).first()).toBeVisible();
+  await expect(page.getByTestId('alquileres-load-error')).toHaveCount(0);
+  await expect(page.getByTestId('btn-nuevo-alquiler')).toHaveCount(0);
+});
 });

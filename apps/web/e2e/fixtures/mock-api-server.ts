@@ -887,7 +887,7 @@ export function startMockApiServer(port = 3001): Promise<http.Server> {
       }
 
       if (url.startsWith('/unidades')) {
-        if (url.includes('simulate-error') || token.includes('service-error')) {
+        if (url.includes('simulate-error') || token.includes('service-error') || token.includes('units-only-failure')) {
           res.writeHead(500, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ statusCode: 500, message: 'Error en servicio de unidades.' }));
           return;
