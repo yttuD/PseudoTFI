@@ -199,9 +199,15 @@ test('UX-001: si falta el catálogo auxiliar, conserva contratos y bloquea el al
 });
 
 test('UX-001: catálogo sin coincidencias no inventa propiedades ni precios', async ({ page }) => {
-  await page.goto('/es/unidades?q=no-results');
-  await expect(page.getByText('No encontramos resultados')).toBeVisible();
-  await expect(page.getByText('0 unidades encontradas')).toBeVisible();
-  await expect(page.getByText('Departamento 2 Ambientes Frente al Río')).toHaveCount(0);
-  await expect(page.locator('a[href*="/unidades/a0000000-0000-0000-0000-000000000001"]')).toHaveCount(0);
+  // Exercise a real 200 + [] response from the isolated local mock API.
+  await startMockApiServer(3001);
+  try {
+    await page.goto('/es/unidades?q=no-results');
+    await expect(page.getByText('No encontramos resultados')).toBeVisible();
+    await expect(page.getByText('0 unidades encontradas')).toBeVisible();
+    await expect(page.getByText('Departamento 2 Ambientes Frente al Río')).toHaveCount(0);
+    await expect(page.locator('a[href*="/unidades/a0000000-0000-0000-0000-000000000001"]')).toHaveCount(0);
+  } finally {
+    await stopMockApiServer();
+  }
 });
