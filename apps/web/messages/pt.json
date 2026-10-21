@@ -462,5 +462,15 @@
     "saved": "Dados salvos.",
     "saving": "Salvando...",
     "save": "Salvar alterações"
-  }
+  },
+    "Catalogo": {
+      "titulo": "Catálogo de Unidades Disponíveis",
+      "servicioNoDisponible": "Serviço indisponível",
+      "unidadEncontrada": "unidade encontrada",
+      "unidadesEncontradas": "unidades encontradas",
+      "errorTitulo": "O catálogo está temporariamente indisponível",
+      "errorDescripcion": "Seus filtros serão preservados ao tentar novamente.",
+      "reintentar": "Tentar novamente",
+      "sinResultadosDescripcion": "Não encontramos unidades que correspondam aos critérios selecionados. Tente ajustar ou limpar os filtros."
+    }
 }
