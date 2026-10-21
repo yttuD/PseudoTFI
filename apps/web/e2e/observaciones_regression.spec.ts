@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { startMockApiServer, stopMockApiServer } from './fixtures/mock-api-server';
+import { startMockApiServer, stopMockApiServer, setMockMarketplaceCatalogEmpty } from './fixtures/mock-api-server';
 
 function gestorCookie(signature = 'test') {
   const userId = '11111111-1111-1111-1111-111111111111';
@@ -198,16 +198,25 @@ test('UX-001: si falta el catálogo auxiliar, conserva contratos y bloquea el al
 });
 });
 
-test('UX-001: catálogo sin coincidencias no inventa propiedades ni precios', async ({ page }) => {
-  // Exercise a real 200 + [] response from the isolated local mock API.
+test('UX-001: catálogo sin filtros ni coincidencias no inventa propiedades ni precios', async ({ page }) => {
   await startMockApiServer(3001);
   try {
-    await page.goto('/es/unidades?q=no-results');
+    // Regression-critical case: the removed fallback only ran for an unfiltered
+    // successful empty response. A filtered q=no-results request missed it.
+    setMockMarketplaceCatalogEmpty(true);
+    await page.goto('/es/unidades');
     await expect(page.getByText('No encontramos resultados')).toBeVisible();
     await expect(page.getByText('0 unidades encontradas')).toBeVisible();
     await expect(page.getByText('Departamento 2 Ambientes Frente al Río')).toHaveCount(0);
     await expect(page.locator('a[href*="/unidades/a0000000-0000-0000-0000-000000000001"]')).toHaveCount(0);
+
+    // Keep the filtered empty path covered too.
+    setMockMarketplaceCatalogEmpty(false);
+    await page.goto('/es/unidades?q=no-results');
+    await expect(page.getByText('No encontramos resultados')).toBeVisible();
+    await expect(page.getByText('0 unidades encontradas')).toBeVisible();
   } finally {
+    setMockMarketplaceCatalogEmpty(false);
     await stopMockApiServer();
   }
 });
