@@ -51,7 +51,7 @@ jobs:
         run: node node_modules/@playwright/test/cli.js install --with-deps chromium
       - name: Run responsive regressions with only synthetic test fixtures
         working-directory: apps/web
-        run: node node_modules/@playwright/test/cli.js test -c playwright.rendo-ci.config.ts e2e/observaciones_regression.spec.ts --reporter=list
+        run: node node_modules/@playwright/test/cli.js test -c playwright.rendo-ci.config.ts e2e/observaciones_regression.spec.ts e2e/gestor_sidebar_qol.spec.ts e2e/gestor_inquilinos_states.spec.ts e2e/gestor_delegados_states.spec.ts e2e/gestor_alquiler_importes_qol.spec.ts e2e/catalogo_i18n_regression.spec.ts --reporter=list
       - name: Preserve diagnostics and screenshot captures
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

@@ -222,7 +222,16 @@
     "login": "Iniciar Sesión",
     "logout": "Cerrar Sesión",
     "goToDashboard": "Ir a mi Panel de Gestor",
-    "publishUnit": "Publicar una Unidad"
+    "publishUnit": "Publicar una Unidad",
+    "metrics": "Métricas",
+    "taxBilling": "Facturación AFIP",
+    "myProfile": "Mi perfil",
+    "roleView": "Ver",
+    "roleManage": "Gestionar",
+    "rolePending": "Pendiente",
+    "themeLight": "Modo claro",
+    "themeDark": "Modo oscuro",
+    "themeToggle": "Cambiar tema"
   },
   "UnitDetail": {
     "translationPendingNotice": "Esta ficha todavía no tiene la traducción completa. Se muestra parte del texto original en español.",
@@ -453,5 +462,15 @@
     "saved": "Datos guardados.",
     "saving": "Guardando...",
     "save": "Guardar cambios"
-  }
+  },
+    "Catalogo": {
+      "titulo": "Catálogo de Unidades Disponibles",
+      "servicioNoDisponible": "Servicio no disponible",
+      "unidadEncontrada": "unidad encontrada",
+      "unidadesEncontradas": "unidades encontradas",
+      "errorTitulo": "El catálogo no está disponible temporalmente",
+      "errorDescripcion": "Tus filtros se conservarán al reintentar.",
+      "reintentar": "Reintentar",
+      "sinResultadosDescripcion": "No encontramos unidades que coincidan con los criterios de búsqueda seleccionados. Prueba ajustar o limpiar los filtros."
+    }
 }

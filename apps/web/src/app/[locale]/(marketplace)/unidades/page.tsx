@@ -13,6 +13,7 @@ export default async function UnidadesPage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const tComun = await getTranslations('comun');
+  const tCatalogo = await getTranslations('Catalogo');
 
   // Construir query string para la API con todos los filtros combinables
   const query = new URLSearchParams();
@@ -113,30 +114,9 @@ export default async function UnidadesPage({
     }
   }
 
-  // Fallback si no hay unidades y no hay ningún filtro aplicado
-  const hayFiltros = !!(
-    searchParams.categoria ||
-    searchParams.zona_id ||
-    searchParams.precio_min ||
-    searchParams.precio_max ||
-    searchParams.q
-  );
-
-  if (!releaseMode && !catalogError && unidades.length === 0 && !hayFiltros) {
-    unidades = [
-      {
-        id: 'a0000000-0000-0000-0000-000000000001',
-        titulo: 'Departamento 2 Ambientes Frente al Río',
-        titulo_es: 'Departamento 2 Ambientes Frente al Río',
-        categoria: 'departamento',
-        fotos: [
-          'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80',
-        ],
-        modalidades_precio: [{ id: 'm1', precio: 45000, tipo_periodo: 'mensual' }],
-        whatsapp: '+5493777123456',
-      },
-    ];
-  }
+  // An empty successful API response is a genuine empty catalog even in dev.
+  // Test fixtures belong exclusively to the isolated mock API; never inject
+  // synthetic listings, prices or contact details into the product UI.
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -150,24 +130,24 @@ export default async function UnidadesPage({
         <div className="flex-1 space-y-4">
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold tracking-tight text-foreground">
-              Catálogo de Unidades Disponibles
+              {tCatalogo('titulo')}
             </h1>
             <span className="text-xs font-mono text-muted-foreground bg-muted px-2.5 py-1 rounded-full border border-border/40">
-              {catalogError ? 'Servicio no disponible' : `${unidades.length} ${unidades.length === 1 ? 'unidad encontrada' : 'unidades encontradas'}`}
+              {catalogError ? tCatalogo('servicioNoDisponible') : `${unidades.length} ${unidades.length === 1 ? tCatalogo('unidadEncontrada') : tCatalogo('unidadesEncontradas')}`}
             </span>
           </div>
 
           {catalogError ? (
             <div role="alert" className="flex flex-col items-center justify-center py-8 sm:py-20 text-center px-4 bg-card rounded-2xl border border-border/60">
-              <p className="text-base font-semibold text-foreground">El catálogo no está disponible temporalmente</p>
-              <p className="text-sm text-muted-foreground mt-2">Tus filtros se conservarán al reintentar.</p>
-              <a href={`/${locale}/unidades?${query.toString()}`} className="mt-5 inline-flex min-h-11 items-center rounded-lg bg-primary px-5 text-primary-foreground">Reintentar</a>
+              <p className="text-base font-semibold text-foreground">{tCatalogo('errorTitulo')}</p>
+              <p className="text-sm text-muted-foreground mt-2">{tCatalogo('errorDescripcion')}</p>
+              <a href={`/${locale}/unidades?${query.toString()}`} className="mt-5 inline-flex min-h-11 items-center rounded-lg bg-primary px-5 text-primary-foreground">{tCatalogo('reintentar')}</a>
             </div>
           ) : unidades.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-card rounded-2xl border border-border/60 shadow-sm text-center px-4">
               <p className="text-base font-semibold text-foreground">{tComun('sinResultados')}</p>
               <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                No encontramos unidades que coincidan con los criterios de búsqueda seleccionados. Prueba ajustar o limpiar los filtros.
+                {tCatalogo('sinResultadosDescripcion')}
               </p>
             </div>
           ) : (

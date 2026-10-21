@@ -222,7 +222,16 @@
     "login": "Sign In",
     "logout": "Sign Out",
     "goToDashboard": "Go to Manager Dashboard",
-    "publishUnit": "Publish a Unit"
+    "publishUnit": "Publish a Unit",
+    "metrics": "Analytics",
+    "taxBilling": "AFIP invoicing",
+    "myProfile": "My profile",
+    "roleView": "View",
+    "roleManage": "Manage",
+    "rolePending": "Pending",
+    "themeLight": "Light mode",
+    "themeDark": "Dark mode",
+    "themeToggle": "Change theme"
   },
   "UnitDetail": {
     "translationPendingNotice": "Translation pending: some information is shown in the original Spanish.",
@@ -453,5 +462,15 @@
     "saved": "Changes saved.",
     "saving": "Saving...",
     "save": "Save changes"
-  }
+  },
+    "Catalogo": {
+      "titulo": "Available Units Catalog",
+      "servicioNoDisponible": "Service unavailable",
+      "unidadEncontrada": "unit found",
+      "unidadesEncontradas": "units found",
+      "errorTitulo": "The catalog is temporarily unavailable",
+      "errorDescripcion": "Your filters will be preserved when you retry.",
+      "reintentar": "Try again",
+      "sinResultadosDescripcion": "No units match the selected search criteria. Try adjusting or clearing your filters."
+    }
 }

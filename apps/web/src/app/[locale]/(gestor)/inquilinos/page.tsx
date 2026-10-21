@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 import { InquilinoFormModal } from '@/components/gestor/InquilinoFormModal';
 import { Badge } from '@/components/ui/badge';
 import { Eye } from 'lucide-react';
+import { InventoryLoadError } from '@/components/gestor/InventoryLoadError';
 import {
   Table,
   TableBody,
@@ -36,17 +37,25 @@ export default async function InquilinosPage() {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let inquilinos: any[] = [];
+  let tenantsLoadError = !token;
   if (token) {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/inquilinos?limit=1000`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      cache: 'no-store',
-    });
-    
-    if (res.ok) {
-      const json = await res.json();
-      inquilinos = Array.isArray(json) ? json : (json.data || []);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/inquilinos?limit=1000`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store',
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!res.ok) throw new Error('No se pudo cargar el listado de inquilinos');
+      const payload: unknown = await res.json();
+      const records = Array.isArray(payload)
+        ? payload
+        : payload && typeof payload === 'object'
+          ? (payload as { data?: unknown }).data
+          : null;
+      if (!Array.isArray(records)) throw new Error('Respuesta de inquilinos inválida');
+      inquilinos = records;
+    } catch {
+      tenantsLoadError = true;
     }
   }
 
@@ -67,11 +76,21 @@ export default async function InquilinosPage() {
             Gestioná los datos de tus inquilinos para asociarlos a los contratos.
           </p>
         </div>
-        {token && !isReadOnly && <InquilinoFormModal token={token} />}
+        {token && !isReadOnly && !tenantsLoadError && <InquilinoFormModal token={token} />}
       </div>
 
-      <div className="rounded-md border bg-card overflow-hidden">
-        {inquilinos.length === 0 ? (
+      {tenantsLoadError ? (
+        <div data-testid="inquilinos-load-error">
+          <InventoryLoadError
+            title={token ? 'No pudimos cargar los inquilinos' : 'No se pudo verificar tu sesión'}
+            message={token
+              ? 'Los registros existentes no se eliminaron. No pudimos consultar el servicio; reintentá cuando vuelva la conexión.'
+              : 'Iniciá sesión nuevamente para consultar los datos de tus inquilinos.'}
+          />
+        </div>
+      ) : (
+        <div className="rounded-md border bg-card overflow-hidden">
+          {inquilinos.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground font-mono text-sm">
             No hay inquilinos registrados.
           </div>
@@ -115,8 +134,9 @@ export default async function InquilinosPage() {
               ))}
             </div>
           </>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -7,6 +7,13 @@ const activeSockets = new Set<Socket>();
 const previewGroups: Record<string, any>[] = [];
 const previewUnits: Record<string, any>[] = [];
 
+// Test-only switch: lets browser regressions verify a successful 200 + []
+// on the unfiltered catalog route, where the former synthetic fallback lived.
+let forceEmptyMarketplaceCatalog = false;
+export function setMockMarketplaceCatalogEmpty(value: boolean): void {
+  forceEmptyMarketplaceCatalog = value;
+}
+
 async function readPreviewBody(req: http.IncomingMessage): Promise<Record<string, any>> {
   let body = '';
   for await (const chunk of req) body += chunk.toString();
@@ -203,7 +210,7 @@ export function startMockApiServer(port = 3001): Promise<http.Server> {
         }
 
         // Empty catalog queries
-        if (url.includes('q=no-results') || url.includes('empty=true') || url.includes('categoria=lote')) {
+        if (forceEmptyMarketplaceCatalog || url.includes('q=no-results') || url.includes('empty=true') || url.includes('categoria=lote')) {
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ data: [], total: 0 }));
           return;
@@ -352,6 +359,47 @@ export function startMockApiServer(port = 3001): Promise<http.Server> {
           })
         );
         return;
+      }
+
+      // Synthetic Delegados lifecycle for local browser UX regressions only.
+      // Never reflects real users or persists invitations in hosted Supabase.
+      if (url.startsWith('/delegados') && !url.startsWith('/delegados/contexto')) {
+        if (activeAccessContext?.actor !== 'gestor' && activeAccessContext?.actor !== 'admin') {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ statusCode: 403, message: 'Solo Gestor titular.' }));
+          return;
+        }
+        if (token.includes('delegados-error') || token.includes('service-error') || (req.method === 'DELETE' && token.includes('cancel-error'))) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ statusCode: 500, message: 'No se pudo consultar/cancelar la invitación.' }));
+          return;
+        }
+        if (req.method === 'DELETE' && /^\/delegados\/invitaciones\/[^/?]+/.test(url)) {
+          res.writeHead(204);
+          res.end();
+          return;
+        }
+        if (req.method === 'GET' && (url === '/delegados' || url.startsWith('/delegados?'))) {
+          if (token.includes('invalid-delegados')) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ data: [] }));
+            return;
+          }
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(token.includes('empty-delegados')
+            ? { invitaciones: [], delegaciones: [] }
+            : {
+              invitaciones: [{
+                id: 'inv-test-only-001',
+                estado: 'pendiente',
+                target: { displayName: 'Colaborador de pruebas', maskedEmail: 'col***@example.invalid' },
+                channels: { email: 'col***@example.invalid' },
+                expiresAt: '2026-11-30T15:00:00Z',
+              }],
+              delegaciones: [],
+            }));
+          return;
+        }
       }
 
       if (url.startsWith('/grupos')) {
@@ -887,7 +935,7 @@ export function startMockApiServer(port = 3001): Promise<http.Server> {
       }
 
       if (url.startsWith('/unidades')) {
-        if (url.includes('simulate-error') || token.includes('service-error')) {
+        if (url.includes('simulate-error') || token.includes('service-error') || token.includes('units-only-failure')) {
           res.writeHead(500, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ statusCode: 500, message: 'Error en servicio de unidades.' }));
           return;

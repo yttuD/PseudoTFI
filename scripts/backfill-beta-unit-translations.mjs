@@ -1,12 +1,26 @@
 import { createClient } from '@supabase/supabase-js';
+import { planMissingTranslations, summarizeTranslationPlan } from './translation-backfill-plan.mjs';
 
 const betaUrl = 'https://maeiuaketocznpogmtic.supabase.co';
 const apply = process.argv.includes('--apply');
 const env = process.env;
 
+// Even a dry run requires a read-only catalog query via service role, but
+// never requires a paid translator API key or enables database mutation.
 if (env.SUPABASE_URL !== betaUrl || env.RENDO_BETA_MODE !== 'true' ||
-    !env.SUPABASE_SERVICE_ROLE_KEY || !env.DEEPL_AUTH_KEY?.endsWith(':fx')) {
-  throw new Error('Backfill permitido solo para Supabase beta Rendo con DeepL API Free.');
+    !env.SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error('Inventario permitido exclusivamente para Supabase beta Rendo.');
+}
+if (apply && (
+  !env.DEEPL_AUTH_KEY?.endsWith(':fx') ||
+  env.RENDO_TRANSLATION_BACKFILL_APPROVED !== 'true' ||
+  !process.argv.includes('--confirm-published-data-write')
+)) {
+  throw new Error('Aplicar exige DeepL Free, aprobación explícita y confirmación de escritura publicada.');
+}
+if (process.argv.some(arg => arg.startsWith('--') &&
+    !['--apply','--confirm-published-data-write'].includes(arg))) {
+  throw new Error('Argumento no reconocido: no se ha ejecutado ninguna operación.');
 }
 
 const db = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
@@ -19,19 +33,10 @@ const { data: units, error } = await db.from('unidades')
 if (error) throw new Error(`No se pudo consultar el catálogo beta: ${error.code || 'unknown'}`);
 if (!units || units.length > 25) throw new Error('Volumen inesperado; revisar manualmente antes del backfill.');
 
-const needsTranslation = (value, lang) => value == null || value.trim() === '' || value.startsWith(`[${lang}] `);
-const candidates = [];
-for (const unit of units) {
-  for (const lang of ['en', 'pt']) {
-    const fields = [
-      ['titulo', unit.titulo_es, unit[`titulo_${lang}`]],
-      ['descripcion', unit.descripcion_es, unit[`descripcion_${lang}`]],
-    ].filter(([, source, current]) => typeof source === 'string' && source.trim() && needsTranslation(current, lang));
-    if (fields.length) candidates.push({ unit, lang, fields });
-  }
-}
-
-console.log(`Catálogo beta: ${units.length} unidades; ${candidates.length} pares unidad/idioma pendientes; ${candidates.reduce((sum, c) => sum + c.fields.length, 0)} campos. Modo: ${apply ? 'APLICAR' : 'SIMULACRO'}.`);
+const candidates = planMissingTranslations(units);
+const summary = summarizeTranslationPlan(units, candidates);
+console.log(`Catálogo beta: ${summary.unidadesPublicadas} unidades; ${summary.paresPendientes} pares unidad/idioma pendientes; ${summary.camposPendientes} campos. Modo: ${apply ? 'APLICAR' : 'SIMULACRO SOLO LECTURA'}.`);
+// Do not log unit IDs, source text, content or user information in shared CI.
 if (!apply) process.exit(0);
 
 let updated = 0;
