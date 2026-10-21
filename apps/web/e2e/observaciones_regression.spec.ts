@@ -176,7 +176,7 @@ test.describe('UX-001: estados SSR de alquileres con API sintética de loopback'
   await context.addCookies([gestorCookie()]);
   await page.reload();
   await expect(page.getByTestId('alquileres-load-error')).toHaveCount(0);
-  await expect(page.getByText('Departamento 2 Ambientes Frente al Río').first()).toBeVisible();
+  await expect(page.getByText('Departamento 2 Ambientes Frente al Río').filter({ visible: true }).first()).toBeVisible();
   await expect(page.getByTestId('btn-nuevo-alquiler')).toBeVisible();
 
   await context.clearCookies();
@@ -192,7 +192,7 @@ test('UX-001: si falta el catálogo auxiliar, conserva contratos y bloquea el al
   await page.goto('/es/alquileres');
   await expect(page.getByTestId('alquileres-creation-data-error')).toBeVisible();
   await expect(page.getByText('Los alquileres se cargaron, pero faltan datos para registrar uno nuevo')).toBeVisible();
-  await expect(page.getByText('Departamento 2 Ambientes Frente al Río').first()).toBeVisible();
+  await expect(page.getByText('Departamento 2 Ambientes Frente al Río').filter({ visible: true }).first()).toBeVisible();
   await expect(page.getByTestId('alquileres-load-error')).toHaveCount(0);
   await expect(page.getByTestId('btn-nuevo-alquiler')).toHaveCount(0);
 });
