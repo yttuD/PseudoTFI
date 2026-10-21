@@ -1,7 +1,6 @@
--- Generated filename by pinned Supabase CLI 2.121.0, run #39507661384.
+-- Version reconciled with hosted Rendo migration history (20261021003219).
 -- Reviewed N01–N08 hardening: local Auth/RLS 51/51 PASS.
--- Versioned migration only; must NOT be pushed to hosted Supabase until
--- Codex + the project owner have approved a release/rollback plan.
+-- Versioned migration only; Already applied on hosted Rendo with the same REVOKE/ALTER semantics;\n-- this source file prevents duplicate migrations in future releases.
 BEGIN;
 
 -- Trigger functions cannot be called as ordinary RPCs. Their existing
