@@ -222,7 +222,16 @@
     "login": "Sign In",
     "logout": "Sign Out",
     "goToDashboard": "Go to Manager Dashboard",
-    "publishUnit": "Publish a Unit"
+    "publishUnit": "Publish a Unit",
+    "metrics": "Analytics",
+    "taxBilling": "AFIP invoicing",
+    "myProfile": "My profile",
+    "roleView": "View",
+    "roleManage": "Manage",
+    "rolePending": "Pending",
+    "themeLight": "Light mode",
+    "themeDark": "Dark mode",
+    "themeToggle": "Change theme"
   },
   "UnitDetail": {
     "translationPendingNotice": "Translation pending: some information is shown in the original Spanish.",
