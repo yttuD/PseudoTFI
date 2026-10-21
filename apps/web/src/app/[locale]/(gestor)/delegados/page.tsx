@@ -7,6 +7,7 @@ import { DelegationList } from '@/components/delegados/DelegationList';
 import { getServerAccessContext } from '@/lib/access-context';
 import { ShieldAlert } from 'lucide-react';
 import { InventoryLoadError } from '@/components/gestor/InventoryLoadError';
+import type { DelegadoInvitation, DelegationSummary } from '@tfi/types';
 
 interface DelegadosPageProps {
   searchParams?: {
@@ -82,8 +83,8 @@ export default async function DelegadosPage({ searchParams }: DelegadosPageProps
 
   // Fetch delegados lifecycle and configuration from API
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3005';
-  let invitaciones = [];
-  let delegaciones = [];
+  let invitaciones: DelegadoInvitation[] = [];
+  let delegaciones: DelegationSummary[] = [];
   let loadFailed = false;
 
   if (searchParams?.state !== 'empty') {
@@ -102,7 +103,7 @@ export default async function DelegadosPage({ searchParams }: DelegadosPageProps
       ) {
         throw new Error('Respuesta de delegados inválida');
       }
-      const data = payload as { invitaciones: typeof invitaciones; delegaciones: typeof delegaciones };
+      const data = payload as { invitaciones: DelegadoInvitation[]; delegaciones: DelegationSummary[] };
       invitaciones = data.invitaciones;
       delegaciones = data.delegaciones;
     } catch {
