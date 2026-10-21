@@ -222,7 +222,16 @@
     "login": "Entrar",
     "logout": "Sair",
     "goToDashboard": "Ir para o Painel do Gestor",
-    "publishUnit": "Publicar uma Unidade"
+    "publishUnit": "Publicar uma Unidade",
+    "metrics": "Métricas",
+    "taxBilling": "Faturamento AFIP",
+    "myProfile": "Meu perfil",
+    "roleView": "Ver",
+    "roleManage": "Gerenciar",
+    "rolePending": "Pendente",
+    "themeLight": "Modo claro",
+    "themeDark": "Modo escuro",
+    "themeToggle": "Alternar tema"
   },
   "UnitDetail": {
     "translationPendingNotice": "Tradução pendente: parte das informações aparece no original em espanhol.",
