@@ -159,6 +159,8 @@ export function AlquilerFormModal({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const continueEditingRef = useRef<HTMLButtonElement>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [apiErrorMessage, setApiErrorMessage] = useState<string | null>(null);
 
@@ -191,6 +193,13 @@ export function AlquilerFormModal({
       observaciones: '',
     },
   });
+
+  // Capture the actual baseline when the dialog opens (not at mount), so
+  // every form change, including setValue/select changes, is accounted for.
+  const openSnapshotRef = useRef('');
+  useEffect(() => {
+    if (confirmDiscard) continueEditingRef.current?.focus();
+  }, [confirmDiscard]);
 
   const watchedModalidad = form.watch('modalidad');
   const watchedUnidadId = form.watch('unidad_id');
@@ -318,12 +327,32 @@ export function AlquilerFormModal({
     }
   }, [inquilinos, token, form]);
 
+  const resetAndClose = () => {
+    form.reset();
+    setContratoFile(null);
+    setContratoError(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    setConfirmDiscard(false);
+    setSuccessMessage(null);
+    setApiErrorMessage(null);
+    setOpen(false);
+  };
+
   const handleOpenChange = (nextOpen: boolean) => {
-    setOpen(nextOpen);
-    if (!nextOpen) {
-      setSuccessMessage(null);
-      setApiErrorMessage(null);
+    if (nextOpen) {
+      openSnapshotRef.current = JSON.stringify(form.getValues());
+      setConfirmDiscard(false);
+      setOpen(true);
+      return;
     }
+    // Do not dismiss while the network request is saving the contract.
+    if (isSubmitting) return;
+    if (!successMessage && (contratoFile !== null ||
+      JSON.stringify(form.getValues()) !== openSnapshotRef.current)) {
+      setConfirmDiscard(true);
+      return;
+    }
+    resetAndClose();
   };
 
   // Cambio de modalidad con ajuste dinámico de fechas/tiempos
@@ -507,14 +536,14 @@ export function AlquilerFormModal({
   const hasUnidades = unidadesList.length > 0;
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setSuccessMessage(null); setApiErrorMessage(null); } }}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger
-        onClick={() => setOpen(true)}
+        onClick={() => handleOpenChange(true)}
         render={
           <Button
             data-testid="btn-nuevo-alquiler"
             className="min-h-[44px] min-w-[44px]"
-            onClick={() => setOpen(true)}
+            onClick={() => handleOpenChange(true)}
           >
             <Plus className="mr-2 h-4 w-4" /> Nuevo Alquiler
           </Button>
@@ -527,6 +556,38 @@ export function AlquilerFormModal({
             Registrá un nuevo contrato locativo con modalidad explícita e intervalos precisos.
           </DialogDescription>
         </DialogHeader>
+
+        {confirmDiscard && !successMessage && (
+          <div
+            data-testid="alquiler-unsaved-confirm"
+            role="alert"
+            className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 space-y-3 text-sm"
+          >
+            <p className="font-semibold text-foreground">Hay cambios sin guardar</p>
+            <p className="text-muted-foreground">
+              Si cerrás, se perderán los datos ingresados y el PDF seleccionado.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                ref={continueEditingRef}
+                onClick={() => setConfirmDiscard(false)}
+                data-testid="alquiler-seguir-editando"
+              >
+                Seguir editando
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={resetAndClose}
+                data-testid="alquiler-descartar-cambios"
+              >
+                Descartar cambios
+              </Button>
+            </div>
+          </div>
+        )}
 
         {apiErrorMessage && (
           <div
