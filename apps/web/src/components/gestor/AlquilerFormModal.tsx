@@ -423,14 +423,19 @@ export function AlquilerFormModal({
           const supabase = createClient();
           const cleanName = contratoFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
           const filePath = `${Date.now()}_${cleanName}`;
-          const { data: uploadData } = await supabase.storage
+          const { data: uploadData, error: uploadError } = await supabase.storage
             .from('contratos')
             .upload(filePath, contratoFile, { cacheControl: '3600', upsert: false });
-          if (uploadData?.path) {
-            const { data: pubData } = supabase.storage.from('contratos').getPublicUrl(uploadData.path);
-            contratoUrl = pubData?.publicUrl || uploadData.path;
+          if (uploadError || !uploadData?.path) {
+            throw new Error('El almacenamiento no confirmó la subida del contrato.');
           }
-        } catch {}
+          const { data: pubData } = supabase.storage.from('contratos').getPublicUrl(uploadData.path);
+          contratoUrl = pubData?.publicUrl || uploadData.path;
+        } catch {
+          // An explicitly selected document is part of the user's intended
+          // contract. Never silently persist a different, document-less one.
+          throw new Error('No se pudo adjuntar el PDF. El alquiler no fue guardado; reintentá la subida.');
+        }
       }
 
       // 2. Construcción de intervalos según modalidad
