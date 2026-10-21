@@ -113,30 +113,9 @@ export default async function UnidadesPage({
     }
   }
 
-  // Fallback si no hay unidades y no hay ningún filtro aplicado
-  const hayFiltros = !!(
-    searchParams.categoria ||
-    searchParams.zona_id ||
-    searchParams.precio_min ||
-    searchParams.precio_max ||
-    searchParams.q
-  );
-
-  if (!releaseMode && !catalogError && unidades.length === 0 && !hayFiltros) {
-    unidades = [
-      {
-        id: 'a0000000-0000-0000-0000-000000000001',
-        titulo: 'Departamento 2 Ambientes Frente al Río',
-        titulo_es: 'Departamento 2 Ambientes Frente al Río',
-        categoria: 'departamento',
-        fotos: [
-          'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80',
-        ],
-        modalidades_precio: [{ id: 'm1', precio: 45000, tipo_periodo: 'mensual' }],
-        whatsapp: '+5493777123456',
-      },
-    ];
-  }
+  // An empty successful API response is a genuine empty catalog even in dev.
+  // Test fixtures belong exclusively to the isolated mock API; never inject
+  // synthetic listings, prices or contact details into the product UI.
 
   return (
     <div className="container mx-auto px-4 py-8">
