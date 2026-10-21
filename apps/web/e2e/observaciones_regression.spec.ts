@@ -196,4 +196,29 @@ test('UX-001: si falta el catálogo auxiliar, conserva contratos y bloquea el al
   await expect(page.getByTestId('alquileres-load-error')).toHaveCount(0);
   await expect(page.getByTestId('btn-nuevo-alquiler')).toHaveCount(0);
 });
+
+test('UX-001: alquiler nuevo protege cambios ante Cancelar y Escape', async ({ page, context }) => {
+  await context.clearCookies();
+  await context.addCookies([gestorCookie()]);
+  await page.goto('/es/alquileres');
+  await expect(page.getByTestId('btn-nuevo-alquiler')).toBeVisible();
+  await page.getByTestId('btn-nuevo-alquiler').click();
+  await expect(page.getByRole('heading', { name: 'Nuevo Alquiler' })).toBeVisible();
+
+  const monto = page.locator('#monto_total');
+  await monto.fill('1234');
+  await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
+  await expect(page.getByTestId('alquiler-unsaved-confirm')).toBeVisible();
+  await expect(monto).toHaveValue('1234');
+
+  await page.getByTestId('alquiler-seguir-editando').click();
+  await expect(page.getByTestId('alquiler-unsaved-confirm')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('alquiler-unsaved-confirm')).toBeVisible();
+
+  await page.getByTestId('alquiler-descartar-cambios').click();
+  await expect(page.getByRole('heading', { name: 'Nuevo Alquiler' })).toHaveCount(0);
+  await page.getByTestId('btn-nuevo-alquiler').click();
+  await expect(page.locator('#monto_total')).toHaveValue('0');
+});
 });
