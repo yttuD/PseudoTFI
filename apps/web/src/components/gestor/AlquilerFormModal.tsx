@@ -181,7 +181,7 @@ export function AlquilerFormModal({
       fecha_fin: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       hora_inicio: '10:00',
       hora_fin: '14:00',
-      monto_total: 100000,
+      monto_total: 0, // Neutral initial value: the Gestor must enter the real contract amount.
       sena_eleccion: 'sin_sena',
       sena_tipo: 'monto_fijo',
       sena_valor: 0,
@@ -772,6 +772,7 @@ export function AlquilerFormModal({
               {form.formState.errors.monto_total && (
                 <span className="text-xs text-destructive">{form.formState.errors.monto_total.message}</span>
               )}
+              <p data-testid="alquiler-monto-ayuda" className="text-xs text-muted-foreground">Ingresá el monto real acordado. No se precarga ningún importe de ejemplo.</p>
             </div>
 
             {/* Sección de Seña Opcional y Reutilizable */}
@@ -868,9 +869,10 @@ export function AlquilerFormModal({
                     if (!form.getValues('sena_tipo')) {
                       form.setValue('sena_tipo', 'monto_fijo');
                     }
-                    if (form.getValues('sena_valor') === undefined || form.getValues('sena_valor') === 0) {
-                      form.setValue('sena_valor', 50000);
-                      form.setValue('monto_sena', 50000);
+                    if (!form.getValues('sena_valor')) {
+                      // An explicit user choice must never silently fill a fictional deposit.
+                      form.setValue('sena_valor', undefined);
+                      form.setValue('monto_sena', 0);
                     }
                   }}
                   className={`p-2 rounded-lg border text-xs font-medium transition-colors ${
@@ -921,9 +923,9 @@ export function AlquilerFormModal({
                       data-testid="sena-tipo-monto-fijo"
                       onClick={() => {
                         form.setValue('sena_tipo', 'monto_fijo');
-                        const val = form.getValues('sena_valor') || 50000;
+                        const val = watchedSenaTipo === 'monto_fijo' ? form.getValues('sena_valor') : undefined;
                         form.setValue('sena_valor', val, { shouldValidate: true });
-                        form.setValue('monto_sena', val, { shouldValidate: true });
+                        form.setValue('monto_sena', Number(val) || 0, { shouldValidate: true });
                       }}
                       className={`p-1.5 rounded-md border text-xs font-medium transition-colors ${
                         watchedSenaTipo === 'monto_fijo'
@@ -938,10 +940,9 @@ export function AlquilerFormModal({
                       data-testid="sena-tipo-porcentaje"
                       onClick={() => {
                         form.setValue('sena_tipo', 'porcentaje');
-                        const raw = form.getValues('sena_valor') || 20;
-                        const pct = raw > 100 ? 20 : raw <= 0 ? 10 : raw;
+                        const pct = watchedSenaTipo === 'porcentaje' ? form.getValues('sena_valor') : undefined;
                         form.setValue('sena_valor', pct, { shouldValidate: true });
-                        form.setValue('monto_sena', Math.round((watchedTotal * pct) / 100), { shouldValidate: true });
+                        form.setValue('monto_sena', pct === undefined ? 0 : Math.round((watchedTotal * pct) / 100), { shouldValidate: true });
                       }}
                       className={`p-1.5 rounded-md border text-xs font-medium transition-colors ${
                         watchedSenaTipo === 'porcentaje'
