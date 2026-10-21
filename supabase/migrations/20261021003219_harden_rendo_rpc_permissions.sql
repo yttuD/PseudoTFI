@@ -1,6 +1,7 @@
 -- Version reconciled with hosted Rendo migration history (20261021003219).
 -- Reviewed N01–N08 hardening: local Auth/RLS 51/51 PASS.
--- Versioned migration only; Already applied on hosted Rendo with the same REVOKE/ALTER semantics;\n-- this source file prevents duplicate migrations in future releases.
+-- Versioned migration: the hosted Rendo project already applied these semantics.
+-- Keep its real version in Git so future releases do not replay the DDL.
 BEGIN;
 
 -- Trigger functions cannot be called as ordinary RPCs. Their existing
