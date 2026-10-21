@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { startMockApiServer, stopMockApiServer } from './fixtures/mock-api-server';
 
 function gestorCookie(signature = 'test') {
   const userId = '11111111-1111-1111-1111-111111111111';
@@ -152,7 +153,15 @@ test('N04 y N05: detalle público proyecta dirección solo para autenticado y lo
   await page.screenshot({ path: testInfo.outputPath('detalle-autenticado-pt.png'), fullPage: true });
 });
 
-test('UX-001: alquileres distingue error, vacío real y recuperación sin perder datos', async ({ page, context }) => {
+test.describe('UX-001: estados SSR de alquileres con API sintética de loopback', () => {
+  test.beforeAll(async () => {
+    await startMockApiServer(3001);
+  });
+  test.afterAll(async () => {
+    await stopMockApiServer();
+  });
+
+  test('UX-001: alquileres distingue error, vacío real y recuperación sin perder datos', async ({ page, context }) => {
   // These cookie signatures are synthetic and accepted ONLY by the local test adapter.
   await context.clearCookies();
   await context.addCookies([gestorCookie('service-error')]);
@@ -186,4 +195,5 @@ test('UX-001: si falta el catálogo auxiliar, conserva contratos y bloquea el al
   await expect(page.getByText('Departamento 2 Ambientes Frente al Río').first()).toBeVisible();
   await expect(page.getByTestId('alquileres-load-error')).toHaveCount(0);
   await expect(page.getByTestId('btn-nuevo-alquiler')).toHaveCount(0);
+});
 });
