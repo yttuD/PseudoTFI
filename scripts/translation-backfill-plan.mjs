@@ -15,10 +15,15 @@ export function planMissingTranslations(units) {
     throw new Error('Volumen de unidades inesperado: revisión manual requerida.');
   }
   const candidates = [];
+  const seenIds = new Set();
   for (const unit of units) {
-    if (typeof unit?.id !== 'string') {
+    if (typeof unit?.id !== 'string' || !unit.id.trim()) {
       throw new Error('El catálogo tiene una unidad sin identificador válido');
     }
+    if (seenIds.has(unit.id)) {
+      throw new Error('El catálogo contiene identificadores de unidad duplicados');
+    }
+    seenIds.add(unit.id);
     for (const locale of SUPPORTED_LOCALES) {
       const fields = [];
       for (const base of ['titulo', 'descripcion']) {

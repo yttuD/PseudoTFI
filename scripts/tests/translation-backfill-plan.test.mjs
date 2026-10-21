@@ -44,3 +44,8 @@ test('N05: cap inventory to 25 units and require IDs', () => {
   assert.throws(() => planMissingTranslations([{ titulo_es: 'Sin ID' }]), /identificador/);
   assert.throws(() => planMissingTranslations(null), /Volumen/);
 });
+
+test('N05: duplicate and blank IDs fail closed before any translation request', () => {
+  assert.throws(() => planMissingTranslations([{ id: 'u1' }, { id: 'u1' }]), /duplicados/);
+  assert.throws(() => planMissingTranslations([{ id: '  ' }]), /identificador/);
+});
