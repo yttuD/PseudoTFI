@@ -19,5 +19,5 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     actionTimeout: 20_000,
   },
-  projects: [{ name: 'real-auth-local-chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [{ name: 'real-auth-local-chromium', use: { ...devices['Desktop Chrome'], channel: 'chromium' } }],
 });
