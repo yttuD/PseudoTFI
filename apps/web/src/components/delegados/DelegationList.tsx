@@ -36,6 +36,9 @@ export function DelegationList({
   const [selectedDelegation, setSelectedDelegation] =
     useState<DelegationSummary | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [refreshError, setRefreshError] = useState(false);
+  const [cancelError, setCancelError] = useState(false);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [revokeModalOpen, setRevokeModalOpen] = useState(
     initialState === 'FORM-013' ||
       initialState === 'FORM-013-api-error' ||
@@ -64,30 +67,55 @@ export function DelegationList({
   const refreshData = async () => {
     try {
       const token = getClientSessionToken();
+      if (!token) throw new Error('Falta sesión');
       const res = await fetch('/api/delegados', {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store',
+        signal: AbortSignal.timeout(10000),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setInvitaciones(data.invitaciones || []);
-        setDelegaciones(data.delegaciones || []);
+      if (!res.ok) throw new Error('No se pudo actualizar el equipo');
+      const data: unknown = await res.json();
+      if (
+        !data || typeof data !== 'object' ||
+        !Array.isArray((data as { invitaciones?: unknown }).invitaciones) ||
+        !Array.isArray((data as { delegaciones?: unknown }).delegaciones)
+      ) {
+        throw new Error('Respuesta de delegados inválida');
       }
-    } catch {}
+      const valid = data as { invitaciones: DelegadoInvitation[]; delegaciones: DelegationSummary[] };
+      setInvitaciones(valid.invitaciones);
+      setDelegaciones(valid.delegaciones);
+      setRefreshError(false);
+    } catch {
+      // Keep the last verified SSR/client rows; never replace them with [].
+      setRefreshError(true);
+    }
   };
 
   React.useEffect(() => {
-    refreshData();
+    void refreshData();
   }, []);
 
   const handleCancelInvitation = async (id: string) => {
+    if (cancellingId) return;
+    setCancellingId(id);
+    setCancelError(false);
     try {
       const token = getClientSessionToken();
-      setInvitaciones((prev) => prev.filter((i) => i.id !== id));
-      await fetch(`/api/delegados/invitaciones/${id}`, {
+      if (!token) throw new Error('Falta sesión');
+      const res = await fetch(`/api/delegados/invitaciones/${encodeURIComponent(id)}`, {
         method: 'DELETE',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        headers: { Authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(10000),
       });
-    } catch {}
+      if (!res.ok) throw new Error('La cancelación no fue confirmada');
+      // Confirm success before hiding the invitation; 204 responses have no JSON body.
+      setInvitaciones((prev) => prev.filter((i) => i.id !== id));
+    } catch {
+      setCancelError(true);
+    } finally {
+      setCancellingId(null);
+    }
   };
 
   const openRevokeModal = (d: DelegationSummary) => {
@@ -149,12 +177,22 @@ export function DelegationList({
 
   const hasData = invitaciones.length > 0 || delegaciones.length > 0;
 
+  const notices = (refreshError || cancelError) && (
+    <div role="alert" data-testid="delegados-action-error" className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-foreground space-y-2">
+      {refreshError && <p>No pudimos actualizar el equipo. Se mantienen los últimos datos cargados.</p>}
+      {cancelError && <p>No se pudo cancelar la invitación. Sigue visible porque el servidor no confirmó el cambio.</p>}
+      <Button type="button" variant="outline" onClick={() => void refreshData()} className="min-h-[44px]">Reintentar carga</Button>
+    </div>
+  );
+
   if (!hasData) {
     return (
-      <div
-        data-testid="empty-delegados"
-        className="text-center py-16 px-4 rounded-xl border border-dashed border-[#D9D5CC] dark:border-[#293956] bg-white/50 dark:bg-[#182747]/40"
-      >
+      <div className="space-y-4">
+        {notices}
+        <div
+          data-testid="empty-delegados"
+          className="text-center py-16 px-4 rounded-xl border border-dashed border-[#D9D5CC] dark:border-[#293956] bg-white/50 dark:bg-[#182747]/40"
+        >
 
         <Users className="w-12 h-12 mx-auto text-[#B8BFCC] mb-3" />
         <h3 className="text-base font-semibold text-[#131F3C] dark:text-[#F5F3EE]">
@@ -163,12 +201,14 @@ export function DelegationList({
         <p className="text-xs text-[#667085] dark:text-[#AEB7C7] mt-1 max-w-sm mx-auto">
           Invita a una cuenta registrada y verificada para delegar tareas operativas de lectura o gestión sobre tus unidades.
         </p>
+        </div>
       </div>
     );
   }
 
   return (
     <div data-testid="delegation-list-container" className="space-y-6">
+      {notices}
       {/* Active & Pending Delegations */}
       {delegaciones.length > 0 && (
         <div data-testid="delegaciones-activas-list" className="space-y-3">
@@ -298,7 +338,9 @@ export function DelegationList({
                         type="button"
                         variant="outline"
                         data-testid="cancel-invitation-btn"
-                        onClick={() => handleCancelInvitation(inv.id)}
+                        onClick={() => void handleCancelInvitation(inv.id)}
+                        disabled={cancellingId !== null}
+                        aria-busy={cancellingId === inv.id}
                         className="min-h-[44px] min-w-[44px] px-3 py-2 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20"
                         render={<button />}
                       >
