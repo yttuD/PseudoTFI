@@ -42,20 +42,22 @@ test.describe('UX-001: Delegados SSR and client operations with local API only',
   test('invitation survives failed cancellation; is hidden only after 204 success', async ({ page, context }) => {
     await context.clearCookies();
     await context.addCookies([cookie('cancel-error')]);
+    const initialRefresh = page.waitForResponse(r => r.url().includes('/api/delegados') && r.request().method() === 'GET');
     await page.goto('/es/delegados');
     const invite = page.getByTestId('invitacion-row-inv-test-only-001');
     await expect(invite).toBeVisible();
-    // Allow the initial browser session refresh to settle before exercising actions.
-    await page.waitForResponse(r => r.url().includes('/api/delegados') && r.request().method() === 'GET');
+    // Initial client refresh must finish before mutating the in-memory list.
+    await initialRefresh;
     await page.getByTestId('cancel-invitation-btn').click();
     await expect(page.getByTestId('delegados-action-error')).toContainText('No se pudo cancelar la invitación');
     await expect(invite).toBeVisible();
 
     await context.clearCookies();
     await context.addCookies([cookie('test')]);
+    const secondRefresh = page.waitForResponse(r => r.url().includes('/api/delegados') && r.request().method() === 'GET');
     await page.reload();
     await expect(invite).toBeVisible();
-    await page.waitForResponse(r => r.url().includes('/api/delegados') && r.request().method() === 'GET');
+    await secondRefresh;
     await page.getByTestId('cancel-invitation-btn').click();
     await expect(invite).toHaveCount(0);
     await expect(page.getByTestId('delegados-action-error')).toHaveCount(0);
