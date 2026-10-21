@@ -169,6 +169,11 @@ export function startMockApiServer(port = 3001): Promise<http.Server> {
       }
 
       if (url.includes('/marketplace/unidades')) {
+        if (url.includes('q=invalid-payload')) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ data: { broken: true } }));
+          return;
+        }
         if (url.includes('simulate-error') || url.includes('trigger-error')) {
           res.writeHead(500, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ statusCode: 500, message: 'Error interno en catálogo de unidades.' }));
