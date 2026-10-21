@@ -222,7 +222,16 @@
     "login": "Iniciar Sesión",
     "logout": "Cerrar Sesión",
     "goToDashboard": "Ir a mi Panel de Gestor",
-    "publishUnit": "Publicar una Unidad"
+    "publishUnit": "Publicar una Unidad",
+    "metrics": "Métricas",
+    "taxBilling": "Facturación AFIP",
+    "myProfile": "Mi perfil",
+    "roleView": "Ver",
+    "roleManage": "Gestionar",
+    "rolePending": "Pendiente",
+    "themeLight": "Modo claro",
+    "themeDark": "Modo oscuro",
+    "themeToggle": "Cambiar tema"
   },
   "UnitDetail": {
     "translationPendingNotice": "Esta ficha todavía no tiene la traducción completa. Se muestra parte del texto original en español.",
