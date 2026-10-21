@@ -6,6 +6,7 @@ import DelegadoFormModal from './DelegadoFormModal';
 import { DelegationList } from '@/components/delegados/DelegationList';
 import { getServerAccessContext } from '@/lib/access-context';
 import { ShieldAlert } from 'lucide-react';
+import { InventoryLoadError } from '@/components/gestor/InventoryLoadError';
 
 interface DelegadosPageProps {
   searchParams?: {
@@ -83,20 +84,41 @@ export default async function DelegadosPage({ searchParams }: DelegadosPageProps
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3005';
   let invitaciones = [];
   let delegaciones = [];
+  let loadFailed = false;
 
   if (searchParams?.state !== 'empty') {
     try {
       const res = await fetch(`${apiUrl}/delegados`, {
         headers: { Authorization: `Bearer ${accessToken || ''}` },
         cache: 'no-store',
-        signal: AbortSignal.timeout(1500),
+        signal: AbortSignal.timeout(10000),
       });
-      if (res.ok) {
-        const data = await res.json();
-        invitaciones = data.invitaciones || [];
-        delegaciones = data.delegaciones || [];
+      if (!res.ok) throw new Error('No se pudieron cargar los delegados');
+      const payload: unknown = await res.json();
+      if (
+        !payload || typeof payload !== 'object' ||
+        !Array.isArray((payload as { invitaciones?: unknown }).invitaciones) ||
+        !Array.isArray((payload as { delegaciones?: unknown }).delegaciones)
+      ) {
+        throw new Error('Respuesta de delegados inválida');
       }
-    } catch {}
+      const data = payload as { invitaciones: typeof invitaciones; delegaciones: typeof delegaciones };
+      invitaciones = data.invitaciones;
+      delegaciones = data.delegaciones;
+    } catch {
+      loadFailed = true;
+    }
+  }
+
+  if (loadFailed) {
+    return (
+      <div data-testid="delegados-load-error" className="p-6 md:p-8 max-w-5xl mx-auto">
+        <InventoryLoadError
+          title="No pudimos cargar tu equipo de delegados"
+          message="Tus delegaciones e invitaciones no se eliminaron. No pudimos comprobar sus datos; reintentá cuando vuelva la conexión."
+        />
+      </div>
+    );
   }
 
   return (
