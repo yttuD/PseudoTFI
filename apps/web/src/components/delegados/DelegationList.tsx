@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { DelegationAccessEditor } from './DelegationAccessEditor';
 import { getClientSessionToken } from '@/lib/supabase/client-auth';
+import { createClient } from '@/lib/supabase/client';
 
 import { RevokeDelegacionModal } from './RevokeDelegacionModal';
 
@@ -64,9 +65,22 @@ export function DelegationList({
     };
   });
 
+  const resolveAccessToken = async (): Promise<string | null> => {
+    // Synthetic tokens exist only in the explicit local test adapter.
+    const synthetic = getClientSessionToken();
+    if (synthetic) return synthetic;
+    // Real browser sessions are managed by Supabase, never guessed from a cookie.
+    try {
+      const { data, error } = await createClient().auth.getSession();
+      return error ? null : data.session?.access_token || null;
+    } catch {
+      return null;
+    }
+  };
+
   const refreshData = async () => {
     try {
-      const token = getClientSessionToken();
+      const token = await resolveAccessToken();
       if (!token) throw new Error('Falta sesión');
       const res = await fetch('/api/delegados', {
         headers: { Authorization: `Bearer ${token}` },
@@ -101,7 +115,7 @@ export function DelegationList({
     setCancellingId(id);
     setCancelError(false);
     try {
-      const token = getClientSessionToken();
+      const token = await resolveAccessToken();
       if (!token) throw new Error('Falta sesión');
       const res = await fetch(`/api/delegados/invitaciones/${encodeURIComponent(id)}`, {
         method: 'DELETE',
