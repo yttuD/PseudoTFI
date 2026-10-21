@@ -89,7 +89,14 @@ export const DesktopSidebar = ({
       }}
       transition={terminalSpring}
       onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
+      onMouseLeave={(event) => {
+        // Keep labels visible while keyboard focus is still inside the sidebar.
+        if (!event.currentTarget.contains(document.activeElement)) setOpen(false);
+      }}
+      onFocusCapture={() => setOpen(true)}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(false);
+      }}
       {...props}
     >
       {children}
@@ -169,10 +176,16 @@ export interface SidebarLinkProps {
 }
 
 export const SidebarLink = ({ link, className, active }: SidebarLinkProps) => {
-  const { open, animate } = useSidebar();
+  const { open, animate, setOpen } = useSidebar();
   return (
     <Link
       href={link.href}
+      aria-label={link.label}
+      title={link.label}
+      onClick={() => {
+        // A mobile route transition should never leave the navigation dialog covering its destination.
+        if (window.matchMedia('(max-width: 767px)').matches) setOpen(false);
+      }}
       className={cn(
         "flex items-center gap-3 group/sidebar min-h-[44px] min-w-[44px] py-2.5 px-2.5 rounded-xl transition-colors duration-150",
         active
