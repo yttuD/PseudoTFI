@@ -331,7 +331,7 @@ export default async function UnidadDetailPage({
           <div className="lg:col-span-2 space-y-8 bg-surface/95 backdrop-blur-xl p-6 md:p-8 rounded-3xl shadow-glass border border-border/70">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <Badge className="bg-secondary/15 text-secondary border border-secondary/30 gap-1.5 py-1 px-3 shadow-sm">
+                <Badge data-testid="unit-detail-published-badge" className="bg-card text-card-foreground border border-border gap-1.5 py-1 px-3 shadow-sm">
                   <FileCheck className="w-3.5 h-3.5" /> {tDetail('publishedUnit')}
                 </Badge>
                 <ReporteModal
