@@ -22,4 +22,23 @@ test.describe('UX-001: catálogo público traducido en ES, EN y PT', () => {
       await expect(page.getByRole('link', { name: retry, exact: true })).toBeVisible();
     });
   }
+
+  for (const { locale, area, category, status, photo } of [
+    { locale: 'es', area: 'Fuera de zonas predefinidas', category: 'Departamento', status: 'Unidad publicada', photo: 'Foto de la unidad' },
+    { locale: 'en', area: 'Outside predefined areas', category: 'Apartment', status: 'Published unit', photo: 'Unit photo' },
+    { locale: 'pt', area: 'Fora das áreas predefinidas', category: 'Apartamento', status: 'Unidade publicada', photo: 'Foto da unidade' },
+  ]) {
+    test(`${locale}: card and detail categories follow the language without changing API IDs`, async ({ page, context }) => {
+      await context.clearCookies();
+      await page.goto(`/${locale}/unidades`);
+      const first = page.getByTestId('unit-card').first();
+      await expect(first).toBeVisible();
+      await expect(first).toContainText(area);
+      await expect(first).toContainText(category);
+      await expect(first.getByTestId('unit-card-published')).toContainText(status);
+      await first.getByTestId('unit-card-detail-link').click();
+      await expect(page).toHaveURL(new RegExp(`/${locale}/unidades/a0000000-`));
+      await expect(page.locator('body')).toContainText(category);
+    });
+  }
 });

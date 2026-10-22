@@ -512,7 +512,11 @@
     "errorTitulo": "The catalog is temporarily unavailable",
     "errorDescripcion": "Your filters will be preserved when you retry.",
     "reintentar": "Try again",
-    "sinResultadosDescripcion": "No units match the selected search criteria. Try adjusting or clearing your filters."
+    "sinResultadosDescripcion": "No units match the selected search criteria. Try adjusting or clearing your filters.",
+    "outsideZone": "Outside predefined areas",
+    "estimated": "approx.",
+    "photoAlt": "Unit photo",
+    "unnamedUnit": "Unit"
   },
   "CatalogoFiltros": {
     "titulo": "Catalog filters",

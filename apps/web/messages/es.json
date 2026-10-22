@@ -512,7 +512,11 @@
     "errorTitulo": "El catálogo no está disponible temporalmente",
     "errorDescripcion": "Tus filtros se conservarán al reintentar.",
     "reintentar": "Reintentar",
-    "sinResultadosDescripcion": "No encontramos unidades que coincidan con los criterios de búsqueda seleccionados. Prueba ajustar o limpiar los filtros."
+    "sinResultadosDescripcion": "No encontramos unidades que coincidan con los criterios de búsqueda seleccionados. Prueba ajustar o limpiar los filtros.",
+    "outsideZone": "Fuera de zonas predefinidas",
+    "estimated": "aprox.",
+    "photoAlt": "Foto de la unidad",
+    "unnamedUnit": "Unidad"
   },
   "CatalogoFiltros": {
     "titulo": "Filtros del Catálogo",

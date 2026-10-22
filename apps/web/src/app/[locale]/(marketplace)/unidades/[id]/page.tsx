@@ -309,7 +309,7 @@ export default async function UnidadDetailPage({
         <div className="absolute top-6 w-full">
           <div className="container mx-auto px-4 flex justify-between items-center">
             <Badge className="bg-background/90 text-foreground backdrop-blur-md px-4 py-1.5 shadow-glass border-none font-mono tracking-wide text-xs">
-              {unidad.zonas?.nombre ? `${unidad.zonas.nombre} • ` : ''}{categoriaLabel(unidad.categoria)}
+              {unidad.zonas?.nombre ? `${unidad.zonas.nombre} • ` : ''}{categoriaLabel(unidad.categoria, locale)}
             </Badge>
             <div className="flex gap-2">
               <FavoritoButton
