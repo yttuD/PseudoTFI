@@ -125,7 +125,7 @@ export default async function UnidadesPage({
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Sidebar Filtros Desktop interactivo */}
         <div className="w-full lg:w-72 flex-shrink-0">
-          <MarketplaceFiltrosSidebar collapsedOnMobile={catalogError} />
+          <MarketplaceFiltrosSidebar collapsedOnMobile />
         </div>
 
         {/* Grid Resultados */}

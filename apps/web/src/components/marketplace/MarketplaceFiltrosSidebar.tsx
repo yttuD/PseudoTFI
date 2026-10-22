@@ -37,6 +37,7 @@ export function MarketplaceFiltrosSidebar({ collapsedOnMobile = false }: { colla
     precioMax: searchParams.get('precio_max') || '',
   };
   const hayFiltrosAplicados = Object.values(applied).some(Boolean);
+  const totalFiltrosAplicados = Object.values(applied).filter(Boolean).length;
   const hayCambiosSinAplicar = q.trim() !== applied.q || categoria !== applied.categoria
     || zonaId !== applied.zonaId || precioMin !== applied.precioMin || precioMax !== applied.precioMax;
   const hayFiltrosActivos = hayFiltrosAplicados || !!(q || categoria || zonaId || precioMin || precioMax);
@@ -113,7 +114,14 @@ export function MarketplaceFiltrosSidebar({ collapsedOnMobile = false }: { colla
               <button type="button" aria-expanded={mobileOpen} aria-controls="catalog-filters"
                 onClick={() => setMobileOpen((open) => !open)}
                 className="lg:hidden min-h-11 flex items-center gap-2 text-sm font-bold text-foreground">
-                {t('titulo')} <ChevronDown className={`h-4 w-4 transition-transform ${mobileOpen ? 'rotate-180' : ''}`} />
+                {t('titulo')}
+                {totalFiltrosAplicados > 0 && (
+                  <span data-testid="catalog-active-filter-count" aria-hidden="true"
+                    className="inline-flex min-w-5 justify-center rounded-full bg-muted px-1.5 py-0.5 text-xs font-semibold text-foreground/80">
+                    {totalFiltrosAplicados}
+                  </span>
+                )}
+                <ChevronDown aria-hidden="true" className={`h-4 w-4 transition-transform ${mobileOpen ? 'rotate-180' : ''}`} />
               </button>
               <h3 className="hidden lg:block font-bold text-sm text-foreground">{t('titulo')}</h3>
             </>
