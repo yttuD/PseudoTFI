@@ -13,6 +13,7 @@ import { ReporteModal } from '@/components/marketplace/ReporteModal';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { publicPrice, type ExchangeRates } from '@/lib/public-price';
+import { uniquePublicTariffs, minimumPeriodKey, minimumDuration } from '@/lib/public-tariffs';
 import { categoriaLabel } from '@/lib/categorias';
 import { AnimatedTabs, TabItem } from '@/components/ui/tabs';
 import {
@@ -165,6 +166,10 @@ export default async function UnidadDetailPage({
     }
   }
 
+  // The public API may still contain historical identical active rows. Keep each
+  // distinct commercial offer, without mutating database records or rental history.
+  const visibleTariffs = uniquePublicTariffs(unidad.modalidades_precio || []);
+
   const location = unidad.ubicacion_exacta || unidad.ubicacion_aprox || { lat: -29.1445, lng: -59.2645 };
 
   const caracteristicas = unidad.caracteristicas && typeof unidad.caracteristicas === 'object'
@@ -212,9 +217,9 @@ export default async function UnidadDetailPage({
       value: "modalidades",
       content: (
         <div className="space-y-4 pt-2">
-          {unidad.modalidades_precio?.length > 0 ? (
+          {visibleTariffs.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {unidad.modalidades_precio.map((m: { id: string; unidad_tiempo: string; precio: number; precio_usd?: number | null; precio_brl?: number | null }) => {
+              {visibleTariffs.map((m) => {
                 const price = publicPrice(m, locale, exchangeRates);
                 return (
                 <div
@@ -230,6 +235,9 @@ export default async function UnidadDetailPage({
                   <div className="font-black text-2xl md:text-3xl font-mono text-foreground">
                     {price ? price.text : tDetail('priceUnavailable')}
                   </div>
+                  <p className="text-xs font-medium text-muted-foreground" data-testid="public-tariff-minimum">
+                    {tDetail(minimumPeriodKey(m.unidad_tiempo), { count: minimumDuration(m.cantidad_tiempo) })}
+                  </p>
                   {price?.approximate && <p className="text-[11px] text-muted-foreground">{tDetail('estimatedConversion')} · BCRA {price.asOf}</p>}
                   <p className="text-[11px] text-muted-foreground">
                     {tDetail('directPaymentNote')}
@@ -421,9 +429,9 @@ export default async function UnidadDetailPage({
                 <h2 className="text-lg font-bold text-foreground">{tDetail('pricingValuesTitle')}</h2>
               </div>
 
-              {unidad.modalidades_precio?.length > 0 ? (
+              {visibleTariffs.length > 0 ? (
                 <ul className="space-y-4 mb-8">
-                  {unidad.modalidades_precio.map((m: { id: string; unidad_tiempo: string; precio: number; precio_usd?: number | null; precio_brl?: number | null }) => {
+                  {visibleTariffs.map((m) => {
                     const price = publicPrice(m, locale, exchangeRates);
                     return (
                     <li key={m.id} className="flex flex-col gap-1 pb-4 border-b border-border/50 last:border-0 last:pb-0">
@@ -432,6 +440,9 @@ export default async function UnidadDetailPage({
                       </span>
                       <span className="font-black text-2xl md:text-3xl font-mono text-foreground">
                         {price ? price.text : tDetail('priceUnavailable')}
+                      </span>
+                      <span className="text-xs font-medium text-muted-foreground" data-testid="public-tariff-minimum">
+                        {tDetail(minimumPeriodKey(m.unidad_tiempo), { count: minimumDuration(m.cantidad_tiempo) })}
                       </span>
                       {price?.approximate && <span className="text-[11px] text-muted-foreground">{tDetail('estimatedConversion')} · BCRA {price.asOf}</span>}
                     </li>
