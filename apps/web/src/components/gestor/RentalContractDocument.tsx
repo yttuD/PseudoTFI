@@ -16,6 +16,7 @@ export function RentalContractDocument({ rentalId, storedPath, token, canManage 
   const router = useRouter();
   const [path, setPath] = useState(storedPath || '');
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [pendingPath, setPendingPath] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -39,6 +40,34 @@ export function RentalContractDocument({ rentalId, storedPath, token, canManage 
     }
   };
 
+  const linkContract = async (filePath: string) => {
+    setBusy(true);
+    setError(null);
+    try {
+      const client = createClient();
+      const session = await client.auth.getSession();
+      const authToken = session.data.session?.access_token || getClientAuthToken(token);
+      if (!authToken) throw new Error('Sesión caducada');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/alquileres/${rentalId}/contrato`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: filePath }),
+      });
+      if (!response.ok) throw new Error('Vinculación no confirmada');
+      setPath(filePath);
+      setPendingPath(null);
+      setSuccess('PDF adjuntado al alquiler correctamente.');
+      router.refresh();
+    } catch {
+      // Retain this precise storage path; it may already be linked if the
+      // server committed but the response was lost. Retrying is idempotent.
+      setPendingPath(filePath);
+      setError('El PDF se subió, pero no pudimos confirmar su vínculo. Reintentá vincularlo; no vuelvas a subirlo.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const uploadContract = async (file: File | undefined) => {
     if (!file || !canManage || busy) return;
     setError(null);
@@ -52,44 +81,24 @@ export function RentalContractDocument({ rentalId, storedPath, token, canManage 
       setError('El PDF debe tener entre 1 byte y 10 MB.');
       return;
     }
-    if (privatePath || hasLegacyUrl) {
+    if (privatePath || hasLegacyUrl || pendingPath) {
       setError('Ya existe una referencia contractual. No se permite sobrescribirla desde este control.');
       return;
     }
 
     setBusy(true);
     const client = createClient();
-    const filename = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const newPath = `${rentalId}/${crypto.randomUUID()}_${filename}`;
-    let uploaded = false;
+    const stem = file.name.slice(0, -4).replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 75) || 'contrato';
+    const newPath = `${rentalId}/${crypto.randomUUID()}_${stem}.pdf`;
     try {
       const { error: uploadError, data } = await client.storage.from('contratos')
         .upload(newPath, file, { upsert: false, cacheControl: '3600' });
       if (uploadError || data?.path !== newPath) {
         throw new Error('No se pudo subir el documento privado.');
       }
-      uploaded = true;
-
-      const session = await client.auth.getSession();
-      const authToken = session.data.session?.access_token || getClientAuthToken(token);
-      if (!authToken) throw new Error('La sesión no está disponible.');
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/alquileres/${rentalId}`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${authToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contrato_url: newPath }),
-      });
-      if (!response.ok) throw new Error('No se pudo vincular el documento con el alquiler.');
-
-      setPath(newPath);
-      setSuccess('PDF adjuntado al alquiler correctamente.');
-      router.refresh();
+      await linkContract(newPath);
     } catch {
-      if (uploaded) {
-        // Best effort: prevent leaving an orphan when the protected API update fails.
-        await client.storage.from('contratos').remove([newPath]).catch(() => undefined);
-      }
-      setError('No se pudo adjuntar el PDF. El alquiler original se conserva; reintentá desde esta lista.');
+      setError('No pudimos subir el PDF privado. El alquiler registrado se conserva.');
     } finally {
       setBusy(false);
     }
@@ -106,6 +115,11 @@ export function RentalContractDocument({ rentalId, storedPath, token, canManage 
         </>
       ) : hasLegacyUrl ? (
         <span className="text-amber-700 dark:text-amber-300">Documento anterior: requiere revisión de acceso privado.</span>
+      ) : canManage && pendingPath ? (
+        <button type="button" disabled={busy} className="text-left underline underline-offset-2 disabled:opacity-50"
+          data-testid="alquiler-retry-vincular-pdf" onClick={() => void linkContract(pendingPath)}>
+          Reintentar vinculación del PDF ya subido
+        </button>
       ) : canManage ? (
         <label className="flex flex-col gap-1">
           <span>Adjuntar contrato PDF (máx. 10 MB)</span>
