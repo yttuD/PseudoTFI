@@ -502,5 +502,15 @@
     "localComercial": "Espaço comercial",
     "oficina": "Escritório",
     "lote": "Lote / Terreno"
+  },
+  "Favoritos": {
+    "title": "Meus Favoritos",
+    "description": "Imóveis salvos para comparar ou consultar mais tarde.",
+    "emptyTitle": "Você ainda não tem favoritos",
+    "emptyDescription": "Explore os imóveis e salve os que interessam para consultar depois.",
+    "explore": "Explorar imóveis",
+    "loadErrorTitle": "Não foi possível carregar seus favoritos",
+    "loadErrorDescription": "Seus favoritos não foram excluídos. Tente novamente quando o serviço estiver disponível.",
+    "retry": "Tentar novamente"
   }
 }
