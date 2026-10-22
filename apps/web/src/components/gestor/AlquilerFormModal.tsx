@@ -618,7 +618,8 @@ export function AlquilerFormModal({
                   variant={watchedModalidad === 'mensual' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => handleModalityChange('mensual')}
-                  className="h-7 text-[11px] px-2.5 font-medium"
+                  aria-pressed={watchedModalidad === 'mensual'}
+                  className="min-h-11 px-3 text-xs font-medium focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <Calendar className="h-3 w-3 mr-1" /> Mensual
                 </Button>
@@ -627,7 +628,8 @@ export function AlquilerFormModal({
                   variant={watchedModalidad === 'diaria' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => handleModalityChange('diaria')}
-                  className="h-7 text-[11px] px-2.5 font-medium"
+                  aria-pressed={watchedModalidad === 'diaria'}
+                  className="min-h-11 px-3 text-xs font-medium focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <Calendar className="h-3 w-3 mr-1" /> Diaria
                 </Button>
@@ -636,7 +638,8 @@ export function AlquilerFormModal({
                   variant={watchedModalidad === 'por_hora' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => handleModalityChange('por_hora')}
-                  className="h-7 text-[11px] px-2.5 font-medium"
+                  aria-pressed={watchedModalidad === 'por_hora'}
+                  className="min-h-11 px-3 text-xs font-medium focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <Clock className="h-3 w-3 mr-1" /> Por Hora
                 </Button>
