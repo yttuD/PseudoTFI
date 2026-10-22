@@ -727,7 +727,7 @@ export function UnidadForm({
             <CardContent className="p-0 grid gap-6 md:grid-cols-3">
               {/* Categoría */}
               <div className="grid gap-2">
-                <Label className="text-sm font-medium text-foreground/90">Categoría *</Label>
+                <Label htmlFor="categoria-select" className="text-sm font-medium text-foreground/90">Categoría *</Label>
                 <Select value={form.watch('categoria')} onValueChange={(val) => { userEditedRef.current = true; form.setValue('categoria', val as string, { shouldDirty: true, shouldValidate: true }); }}>
                   <SelectTrigger id="categoria-select" className="h-12 rounded-xl"><span className="truncate">{categoriaLabel(form.watch('categoria'))}</span></SelectTrigger>
                   <SelectContent className="rounded-xl">
@@ -740,12 +740,12 @@ export function UnidadForm({
 
               {/* Grupo Organizativo */}
               <div className="grid gap-2">
-                <Label className="text-sm font-medium text-foreground/90">Grupo / Edificio</Label>
+                <Label htmlFor="grupo-select" className="text-sm font-medium text-foreground/90">Grupo / Edificio</Label>
                 <Select 
                   value={form.watch('grupo_id') || 'sin-grupo'}
                   onValueChange={(val) => { userEditedRef.current = true; form.setValue('grupo_id', val === 'sin-grupo' || !val ? undefined : val, { shouldDirty: true }); }}
                 >
-                  <SelectTrigger className="h-12 rounded-xl"><span className="truncate">{gruposList.find((grupo) => grupo.id === form.watch('grupo_id'))?.nombre || 'Sin grupo / unidad individual'}</span></SelectTrigger>
+                  <SelectTrigger id="grupo-select" className="h-12 rounded-xl"><span className="truncate">{gruposList.find((grupo) => grupo.id === form.watch('grupo_id'))?.nombre || 'Sin grupo / unidad individual'}</span></SelectTrigger>
                   <SelectContent className="rounded-xl">
                     <SelectItem value="sin-grupo">Sin grupo / unidad individual</SelectItem>
                     {gruposList.map((g) => (
@@ -760,9 +760,9 @@ export function UnidadForm({
 
               {/* Zona Operativa */}
               <div className="grid gap-2">
-                <Label className="text-sm font-medium text-foreground/90">Zona Operativa</Label>
+                <Label htmlFor="zona-select" className="text-sm font-medium text-foreground/90">Zona Operativa</Label>
                 <Select value={form.watch('zona_id')?.toString() || 'sin-zona'} onValueChange={(val) => { userEditedRef.current = true; form.setValue('zona_id', val === 'sin-zona' ? undefined : Number(val), { shouldDirty: true }); }}>
-                  <SelectTrigger className="h-12 rounded-xl"><span className="truncate">{zonasDisponibles.find((zona) => zona.id === form.watch('zona_id'))?.nombre || 'Sin zona predefinida'}</span></SelectTrigger>
+                  <SelectTrigger id="zona-select" className="h-12 rounded-xl"><span className="truncate">{zonasDisponibles.find((zona) => zona.id === form.watch('zona_id'))?.nombre || 'Sin zona predefinida'}</span></SelectTrigger>
                   <SelectContent className="rounded-xl">
                     <SelectItem value="sin-zona">Sin zona predefinida</SelectItem>
                     {zonasDisponibles.map((zona) => <SelectItem key={zona.id} value={zona.id.toString()}>{zona.nombre}</SelectItem>)}
@@ -794,9 +794,12 @@ export function UnidadForm({
                   <Sparkles className="w-4 h-4 text-primary" />
                   <div className="flex flex-col">
                     <span className="text-xs font-semibold text-foreground">Traducción automática</span>
-                    <span className="text-[10px] text-muted-foreground font-mono">Disponible en inglés y portugués</span>
+                    <span id="unidad-auto-traducir-hint" className="text-[10px] text-muted-foreground font-mono">Disponible en inglés y portugués</span>
                   </div>
                   <Switch 
+                    id="unidad-auto-traducir"
+                    aria-label="Traducción automática"
+                    aria-describedby="unidad-auto-traducir-hint"
                     checked={autoTraducir} 
                     onCheckedChange={(checked) => {
                       userEditedRef.current = true;
@@ -814,6 +817,7 @@ export function UnidadForm({
                 <button
                   type="button"
                   onClick={() => setActiveLangTab('es')}
+                  aria-pressed={activeLangTab === 'es'}
                   className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
                     activeLangTab === 'es'
                       ? 'bg-background text-foreground shadow-sm'
@@ -826,6 +830,7 @@ export function UnidadForm({
                 <button
                   type="button"
                   onClick={() => setActiveLangTab('en')}
+                  aria-pressed={activeLangTab === 'en'}
                   className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
                     activeLangTab === 'en'
                       ? 'bg-background text-foreground shadow-sm'
@@ -838,6 +843,7 @@ export function UnidadForm({
                 <button
                   type="button"
                   onClick={() => setActiveLangTab('pt')}
+                  aria-pressed={activeLangTab === 'pt'}
                   className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
                     activeLangTab === 'pt'
                       ? 'bg-background text-foreground shadow-sm'
@@ -853,17 +859,17 @@ export function UnidadForm({
               {activeLangTab === 'es' && (
                 <div className="space-y-4">
                   <div className="grid gap-2">
-                    <Label className="text-sm font-medium text-foreground/90">Título de la Publicación (Español) *</Label>
+                    <Label htmlFor="titulo_es" className="text-sm font-medium text-foreground/90">Título de la Publicación (Español) *</Label>
                     <Input 
-                      {...form.register('titulo_es')} 
+                      id="titulo_es" {...form.register('titulo_es')} 
                       placeholder="Ej. Cabaña Premium frente al río con pileta y quincho" 
                       className="h-12 text-base font-medium rounded-xl" 
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label className="text-sm font-medium text-foreground/90">Descripción Completa (Español) *</Label>
+                    <Label htmlFor="descripcion_es" className="text-sm font-medium text-foreground/90">Descripción Completa (Español) *</Label>
                     <Textarea 
-                      {...form.register('descripcion_es')} 
+                      id="descripcion_es" {...form.register('descripcion_es')} 
                       placeholder="Describe los ambientes, equipamiento, vistas, cercanías y servicios incluidos..." 
                       rows={5} 
                       className="resize-none rounded-xl text-sm" 
@@ -884,17 +890,17 @@ export function UnidadForm({
                     </div>
                   )}
                   <div className="grid gap-2">
-                    <Label className="text-sm font-medium text-foreground/90">Título en Inglés (Listing Title)</Label>
+                    <Label htmlFor="titulo_en" className="text-sm font-medium text-foreground/90">Título en Inglés (Listing Title)</Label>
                     <Input 
-                      {...form.register('titulo_en')} 
+                      id="titulo_en" {...form.register('titulo_en')} 
                       placeholder="e.g. Premium Riverfront Cabin with Private Pool" 
                       className="h-12 text-base font-medium rounded-xl" 
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label className="text-sm font-medium text-foreground/90">Descripción en Inglés (Full Description)</Label>
+                    <Label htmlFor="descripcion_en" className="text-sm font-medium text-foreground/90">Descripción en Inglés (Full Description)</Label>
                     <Textarea 
-                      {...form.register('descripcion_en')} 
+                      id="descripcion_en" {...form.register('descripcion_en')} 
                       placeholder="Property details, amenities and nearby highlights..." 
                       rows={5} 
                       className="resize-none rounded-xl text-sm" 
@@ -915,17 +921,17 @@ export function UnidadForm({
                     </div>
                   )}
                   <div className="grid gap-2">
-                    <Label className="text-sm font-medium text-foreground/90">Título em Português</Label>
+                    <Label htmlFor="titulo_pt" className="text-sm font-medium text-foreground/90">Título em Português</Label>
                     <Input 
-                      {...form.register('titulo_pt')} 
+                      id="titulo_pt" {...form.register('titulo_pt')} 
                       placeholder="ex. Chalé Premium à beira do rio com piscina" 
                       className="h-12 text-base font-medium rounded-xl" 
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label className="text-sm font-medium text-foreground/90">Descrição em Português</Label>
+                    <Label htmlFor="descripcion_pt" className="text-sm font-medium text-foreground/90">Descrição em Português</Label>
                     <Textarea 
-                      {...form.register('descripcion_pt')} 
+                      id="descripcion_pt" {...form.register('descripcion_pt')} 
                       placeholder="Detalhes do imóvel, comodidades e localização..." 
                       rows={5} 
                       className="resize-none rounded-xl text-sm" 
@@ -937,13 +943,13 @@ export function UnidadForm({
               {/* Redes de Contacto */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
                 <div className="grid gap-2">
-                  <Label className="text-sm font-medium text-foreground/90">WhatsApp de Contacto Directo</Label>
-                  <Input {...form.register('whatsapp')} placeholder="+54 9 3777 123456" className="h-12 font-mono rounded-xl" />
+                  <Label htmlFor="whatsapp" className="text-sm font-medium text-foreground/90">WhatsApp de Contacto Directo</Label>
+                  <Input id="whatsapp" {...form.register('whatsapp')} placeholder="+54 9 3777 123456" className="h-12 font-mono rounded-xl" />
                   <p className="text-xs leading-relaxed text-muted-foreground font-mono">Visible solo para inquilinos autenticados en el marketplace.</p>
                 </div>
                 <div className="grid gap-2">
-                  <Label className="text-sm font-medium text-foreground/90">Instagram (Opcional)</Label>
-                  <Input {...form.register('instagram')} placeholder="@mi_propiedad" className="h-12 font-mono rounded-xl" />
+                  <Label htmlFor="instagram" className="text-sm font-medium text-foreground/90">Instagram (Opcional)</Label>
+                  <Input id="instagram" {...form.register('instagram')} placeholder="@mi_propiedad" className="h-12 font-mono rounded-xl" />
                 </div>
               </div>
             </CardContent>
@@ -1056,7 +1062,7 @@ export function UnidadForm({
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {/* Precio */}
                           <div className="grid gap-2">
-                            <Label className="text-sm font-medium text-foreground/90">
+                            <Label htmlFor={`precio_${index}`} className="text-sm font-medium text-foreground/90">
                               {isDia ? 'Precio por Día / Noche ($ ARS) *' : isMes ? 'Monto Mensual ($ ARS) *' : 'Precio por Hora ($ ARS) *'}
                             </Label>
                             <div className="relative">
@@ -1084,10 +1090,11 @@ export function UnidadForm({
 
                           {/* Estadía o Plazo Mínimo */}
                           <div className="grid gap-2">
-                            <Label className="text-sm font-medium text-foreground/90">
+                            <Label htmlFor={`plazo_${index}`} className="text-sm font-medium text-foreground/90">
                               {isDia ? 'Estadía Mínima Requerida (Días) *' : isMes ? 'Plazo Mínimo de Alquiler (Meses) *' : 'Reserva Mínima (Horas) *'}
                             </Label>
                             <Input
+                              id={`plazo_${index}`}
                               type="number"
                               min={1}
                               aria-invalid={!!form.formState.errors.modalidades?.[index]?.cantidad_tiempo}
@@ -1226,7 +1233,7 @@ export function UnidadForm({
               {/* Buscador de Direcciones con Autocompletado Nominatim */}
               <div ref={dropdownRef} className="p-4 rounded-2xl border border-primary/20 bg-card/85 backdrop-blur-md shadow-sm space-y-2 relative z-30">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium text-foreground/90 flex items-center gap-1.5">
+                  <Label htmlFor="unidad-direccion-busqueda" className="text-sm font-medium text-foreground/90 flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 text-primary" />
                     Dirección, Ciudad o Localidad (Autocompletado con Nominatim)
                   </Label>
@@ -1242,6 +1249,7 @@ export function UnidadForm({
                   <div className="relative flex-1">
                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                     <Input
+                      id="unidad-direccion-busqueda"
                       type="text"
                       value={searchAddress}
                       onChange={(e) => {
@@ -1290,7 +1298,7 @@ export function UnidadForm({
                             key={item.place_id}
                             type="button"
                             onClick={() => handleSelectSuggestion(item)}
-                            className="w-full text-left p-3 hover:bg-dorado-50 dark:hover:bg-azul-700 transition-colors flex items-start gap-2.5 group focus:outline-none cursor-pointer"
+                            className="w-full text-left p-3 hover:bg-dorado-50 dark:hover:bg-azul-700 transition-colors flex items-start gap-2.5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset cursor-pointer"
                           >
                             <MapPin className="w-4 h-4 text-dorado-600 dark:text-dorado-400 shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
                             <div className="min-w-0 flex-1">
