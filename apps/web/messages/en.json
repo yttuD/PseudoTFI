@@ -240,7 +240,8 @@
     "mobileNavigation": "Mobile main navigation",
     "mobileLocation": "Goya, Corrientes",
     "mobileSearch": "Search listings",
-    "mobileSearchHint": "Search apartments, houses..."
+    "mobileSearchHint": "Search apartments, houses...",
+    "skipToContent": "Skip to main content"
   },
   "UnitDetail": {
     "translationPendingNotice": "Translation pending: some information is shown in the original Spanish.",

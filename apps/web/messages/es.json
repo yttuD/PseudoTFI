@@ -240,7 +240,8 @@
     "mobileNavigation": "Navegación principal móvil",
     "mobileLocation": "Goya, Corrientes",
     "mobileSearch": "Buscar unidades",
-    "mobileSearchHint": "Buscar departamentos, casas..."
+    "mobileSearchHint": "Buscar departamentos, casas...",
+    "skipToContent": "Ir al contenido principal"
   },
   "UnitDetail": {
     "translationPendingNotice": "Esta ficha todavía no tiene la traducción completa. Se muestra parte del texto original en español.",
