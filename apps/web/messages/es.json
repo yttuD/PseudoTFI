@@ -565,5 +565,22 @@
     "prices": "Tarifas y precios",
     "photos": "Galería de fotos",
     "location": "Ubicación y GPS"
+  },
+  "Reportes": {
+    "trigger": "Reportar",
+    "title": "Reportar publicación",
+    "description": "¿Por qué querés reportar esta unidad? Seleccioná un motivo.",
+    "reasonLabel": "Motivo del reporte",
+    "reasonPlaceholder": "Seleccioná un motivo",
+    "reasonFraud": "Posible estafa o fraude",
+    "reasonFalse": "Datos falsos o incorrectos",
+    "reasonUnavailable": "La unidad ya no está disponible",
+    "reasonOffensive": "Contenido ofensivo o inapropiado",
+    "reasonOther": "Otro",
+    "cancel": "Cancelar",
+    "submit": "Enviar reporte",
+    "sending": "Enviando...",
+    "success": "Reporte enviado. Nuestro equipo lo revisará.",
+    "error": "No pudimos enviar el reporte. Intentá nuevamente."
   }
 }

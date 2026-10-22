@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Flag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,11 +30,22 @@ interface ReporteModalProps {
 }
 
 export function ReporteModal({ unidadId, isLoggedIn, token, className = '' }: ReporteModalProps) {
+  const t = useTranslations('Reportes');
   const [open, setOpen] = useState(false);
   const [motivo, setMotivo] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const [hasError, setHasError] = useState(false);
+  const [wasSent, setWasSent] = useState(false);
   const pathname = usePathname();
+  // @base-ui's default Value displays the raw string ID when only item values
+  // are supplied. Always present the selected option in the current locale.
+  const reasonLabels: Record<string, string> = {
+    fraude: t('reasonFraud'),
+    falso: t('reasonFalse'),
+    no_disponible: t('reasonUnavailable'),
+    ofensivo: t('reasonOffensive'),
+    otro: t('reasonOther'),
+  };
 
   const handleOpenClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -43,11 +55,22 @@ export function ReporteModal({ unidadId, isLoggedIn, token, className = '' }: Re
     window.location.href = `/${locale}/auth/login?portal=marketplace&next=${encodeURIComponent(currentPath)}`;
   };
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (isSubmitting) return;
+    if (nextOpen) {
+      setHasError(false);
+      setWasSent(false);
+    }
+    setOpen(nextOpen);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!motivo) return;
-    
+    if (!motivo || isSubmitting || !token) return;
     setIsSubmitting(true);
+    setHasError(false);
+    setWasSent(false);
+
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reportes`, {
         method: 'POST',
@@ -57,17 +80,14 @@ export function ReporteModal({ unidadId, isLoggedIn, token, className = '' }: Re
         },
         body: JSON.stringify({ unidad_id: unidadId, motivo }),
       });
-
-      if (!res.ok) {
-        throw new Error('Error al enviar el reporte');
-      }
+      if (!res.ok) throw new Error('report submission failed');
 
       setOpen(false);
       setMotivo('');
-      alert('Reporte enviado correctamente. Nuestro equipo lo revisará a la brevedad.');
-    } catch (error) {
-      console.error(error);
-      alert('Hubo un error al enviar el reporte.');
+      setWasSent(true);
+    } catch {
+      // Preserve the selected reason so users can retry after an API failure.
+      setHasError(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -80,70 +100,89 @@ export function ReporteModal({ unidadId, isLoggedIn, token, className = '' }: Re
         className={`min-h-[44px] min-w-[44px] text-muted-foreground hover:text-red-600 inline-flex items-center text-sm font-medium px-2 py-1 rounded-lg transition-colors ${className}`}
         onClick={handleOpenClick}
       >
-        <Flag className="h-4 w-4 mr-2" />
-        Reportar
+        <Flag className="h-4 w-4 mr-2" aria-hidden="true" />
+        {t('trigger')}
       </button>
     );
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger 
-        render={
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className={`min-h-[44px] min-w-[44px] text-muted-foreground hover:text-red-600 ${className}`}
-          >
-            <Flag className="h-4 w-4 mr-2" />
-            Reportar
-          </Button>
-        } 
-      />
-      
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Reportar publicación</DialogTitle>
-          <DialogDescription>
-            ¿Por qué querés reportar esta unidad? Seleccioná un motivo.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-          <div className="space-y-2">
-            <Label htmlFor="motivo">Motivo del reporte</Label>
-            <Select value={motivo} onValueChange={(val) => setMotivo(val || '')} required>
-              <SelectTrigger id="motivo" className="min-h-[44px] h-11 bg-background text-sm">
-                <SelectValue placeholder="Seleccioná un motivo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="fraude">Posible estafa o fraude</SelectItem>
-                <SelectItem value="falso">Datos falsos o incorrectos</SelectItem>
-                <SelectItem value="no_disponible">La unidad ya no está disponible</SelectItem>
-                <SelectItem value="ofensivo">Contenido ofensivo o inapropiado</SelectItem>
-                <SelectItem value="otro">Otro</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="flex justify-end gap-3 pt-4">
+    <div className="inline-flex flex-col items-start gap-1">
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogTrigger
+          render={
             <Button
-              type="button"
-              variant="outline"
-              className="min-h-[44px] h-11 px-4 text-sm"
-              onClick={() => setOpen(false)}
+              variant="ghost"
+              size="sm"
+              className={`min-h-[44px] min-w-[44px] text-muted-foreground hover:text-red-600 ${className}`}
             >
-              Cancelar
+              <Flag className="h-4 w-4 mr-2" aria-hidden="true" />
+              {t('trigger')}
             </Button>
-            <Button
-              type="submit"
-              className="min-h-[44px] h-11 px-4 text-sm"
-              disabled={!motivo || isSubmitting}
-            >
-              {isSubmitting ? 'Enviando...' : 'Enviar Reporte'}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+          }
+        />
+
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{t('title')}</DialogTitle>
+            <DialogDescription>{t('description')}</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label htmlFor="motivo">{t('reasonLabel')}</Label>
+              <Select
+                value={motivo}
+                onValueChange={(val) => {
+                  setMotivo(val || '');
+                  setHasError(false);
+                }}
+                required
+              >
+                <SelectTrigger id="motivo" className="min-h-[44px] h-11 bg-background text-sm">
+                  <SelectValue placeholder={t('reasonPlaceholder')}>{motivo ? reasonLabels[motivo] : undefined}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fraude">{t('reasonFraud')}</SelectItem>
+                  <SelectItem value="falso">{t('reasonFalse')}</SelectItem>
+                  <SelectItem value="no_disponible">{t('reasonUnavailable')}</SelectItem>
+                  <SelectItem value="ofensivo">{t('reasonOffensive')}</SelectItem>
+                  <SelectItem value="otro">{t('reasonOther')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {hasError && (
+              <p role="alert" data-testid="report-error" className="text-sm text-destructive">
+                {t('error')}
+              </p>
+            )}
+
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="min-h-[44px] h-11 px-4 text-sm"
+                onClick={() => setOpen(false)}
+                disabled={isSubmitting}
+              >
+                {t('cancel')}
+              </Button>
+              <Button
+                type="submit"
+                className="min-h-[44px] h-11 px-4 text-sm"
+                disabled={!motivo || isSubmitting}
+              >
+                {isSubmitting ? t('sending') : t('submit')}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+      {wasSent && (
+        <p role="status" data-testid="report-success" className="max-w-60 text-xs text-foreground">
+          {t('success')}
+        </p>
+      )}
+    </div>
   );
 }
