@@ -230,8 +230,9 @@ export function UnidadForm({
         }
       }
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    // Capturing also observes the scrollable <main> used by the Gestor shell.
+    window.addEventListener('scroll', handleScroll, true);
+    return () => window.removeEventListener('scroll', handleScroll, true);
   }, []);
 
   // Cerrar dropdown al hacer click fuera
@@ -639,13 +640,9 @@ export function UnidadForm({
         <label htmlFor="unidad-section-picker" className="block pb-1 text-xs font-semibold text-foreground">
           {tUx('jumpTo')}
         </label>
-        <select id="unidad-section-picker" defaultValue=""
-          onChange={(event) => {
-            if (event.currentTarget.value) scrollTo(event.currentTarget.value);
-            event.currentTarget.value = '';
-          }}
+        <select id="unidad-section-picker" value={activeSection}
+          onChange={(event) => scrollTo(event.currentTarget.value)}
           className="w-full min-h-11 rounded-lg border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-          <option value="" disabled>{tUx('choose')}</option>
           <option value="basicos">{tUx('basics')}</option>
           <option value="marketplace">{tUx('description')}</option>
           <option value="modalidades">{tUx('prices')}</option>
