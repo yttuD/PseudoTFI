@@ -572,7 +572,9 @@ export class AlquileresService {
     if (updateAlquilerDto.monto_deposito !== undefined) updatePayload.monto_deposito = Number(updateAlquilerDto.monto_deposito);
     if (updateAlquilerDto.estado !== undefined) updatePayload.estado = updateAlquilerDto.estado;
     if (updateAlquilerDto.observaciones !== undefined) updatePayload.observaciones = updateAlquilerDto.observaciones;
-    if (updateAlquilerDto.contrato_url !== undefined) updatePayload.contrato_url = updateAlquilerDto.contrato_url;
+    if (updateAlquilerDto.contrato_url !== undefined) {
+      throw new BadRequestException('El documento se adjunta desde la operación privada de contratos');
+    }
 
     const { data, error } = await client
       .from('alquileres')
@@ -586,6 +588,72 @@ export class AlquileresService {
       throw new UnprocessableEntityException(error.message);
     }
 
+    return data;
+  }
+
+  /**
+   * Attach an existing PDF to an already-created rental without rewriting dates,
+   * deposits or money. Supabase Storage RLS enforces the rental UUID folder.
+   * The protected controller separately checks the actor's manage permission.
+   */
+  async attachContract(id: string, path: string, token: string) {
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuid.test(id) || typeof path !== 'string' || !path.startsWith(`${id}/`)) {
+      throw new BadRequestException('Ruta privada de contrato inválida');
+    }
+    const filename = path.slice(id.length + 1);
+    if (!new RegExp('^[0-9a-f-]{36}_[a-zA-Z0-9._-]{1,100}\\.pdf
+    const client = this.supabaseService.getClient(token);
+
+    const { error } = await client
+      .from('alquileres')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id)
+      .is('deleted_at', null)
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        throw new NotFoundException('Alquiler no encontrado');
+      }
+      throw new UnprocessableEntityException(error.message);
+    }
+
+    return { message: 'Alquiler borrado lógicamente' };
+  }
+}
+, 'i').test(filename) ||
+        filename.includes('..')) {
+      throw new BadRequestException('El documento debe ser un PDF con ruta de alquiler válida');
+    }
+
+    const client = this.supabaseService.getClient(token);
+    const { data: rental, error: rentalError } = await client.from('alquileres')
+      .select('id, contrato_url').eq('id', id).is('deleted_at', null).single();
+    if (rentalError || !rental) throw new NotFoundException('Alquiler no encontrado');
+    if (rental.contrato_url === path) return { id, contrato_url: path };
+    if (rental.contrato_url) throw new ConflictException('El alquiler ya tiene un documento vinculado');
+
+    // The user's JWT (not service_role) must see this exact object through
+    // Storage SELECT/RLS; never trust a user-provided URL or unrelated object.
+    const { data: objects, error: storageError } = await client.storage
+      .from('contratos').list(id, { search: filename, limit: 100 });
+    if (storageError || !objects?.some((obj: any) => obj.id && obj.name === filename)) {
+      throw new BadRequestException('El PDF no existe o no es accesible para este alquiler');
+    }
+    const object = objects.find((obj: any) => obj.id && obj.name === filename);
+    const size = Number(object?.metadata?.size);
+    if (Number.isFinite(size) && size > 10 * 1024 * 1024) {
+      throw new BadRequestException('El contrato supera 10 MB');
+    }
+
+    // Optimistic no-overwrite guard against two concurrent attachments.
+    const { data, error } = await client.from('alquileres')
+      .update({ contrato_url: path }).eq('id', id).is('deleted_at', null)
+      .is('contrato_url', null).select('id, contrato_url').maybeSingle();
+    if (error) throw new UnprocessableEntityException('No se pudo vincular el PDF al alquiler');
+    if (!data) throw new ConflictException('El documento cambió durante la operación');
     return data;
   }
 
