@@ -463,14 +463,44 @@
     "saving": "Guardando...",
     "save": "Guardar cambios"
   },
-    "Catalogo": {
-      "titulo": "Catálogo de Unidades Disponibles",
-      "servicioNoDisponible": "Servicio no disponible",
-      "unidadEncontrada": "unidad encontrada",
-      "unidadesEncontradas": "unidades encontradas",
-      "errorTitulo": "El catálogo no está disponible temporalmente",
-      "errorDescripcion": "Tus filtros se conservarán al reintentar.",
-      "reintentar": "Reintentar",
-      "sinResultadosDescripcion": "No encontramos unidades que coincidan con los criterios de búsqueda seleccionados. Prueba ajustar o limpiar los filtros."
-    }
+  "Catalogo": {
+    "titulo": "Catálogo de Unidades Disponibles",
+    "servicioNoDisponible": "Servicio no disponible",
+    "unidadEncontrada": "unidad encontrada",
+    "unidadesEncontradas": "unidades encontradas",
+    "errorTitulo": "El catálogo no está disponible temporalmente",
+    "errorDescripcion": "Tus filtros se conservarán al reintentar.",
+    "reintentar": "Reintentar",
+    "sinResultadosDescripcion": "No encontramos unidades que coincidan con los criterios de búsqueda seleccionados. Prueba ajustar o limpiar los filtros."
+  },
+  "CatalogoFiltros": {
+    "titulo": "Filtros del Catálogo",
+    "limpiar": "Limpiar",
+    "palabrasClave": "Palabras clave",
+    "ejemplo": "Ej.: casa con jardín",
+    "ayudaPalabras": "Busca por título o descripción de la unidad.",
+    "tipo": "Tipo de Unidad",
+    "todasCategorias": "Todas las categorías",
+    "todas": "Todas",
+    "ubicacion": "Ubicación / Zona",
+    "todasZonas": "Todas las zonas",
+    "ayudaZonas": "“Todas” también incluye unidades fuera de las zonas listadas.",
+    "precio": "Rango de Precio",
+    "minimo": "Mínimo",
+    "maximo": "Máximo",
+    "notaConversion": "Los precios automáticos se convierten con la cotización BCRA; los importes fijados por el gestor se muestran tal cual.",
+    "rangoInvalido": "Ingresá un rango válido: valores desde cero y mínimo menor o igual al máximo.",
+    "aplicar": "Aplicar Filtros",
+    "activos": "Filtros Activos:",
+    "pendientes": "Tenés cambios sin aplicar.",
+    "zonaSeleccionada": "Zona seleccionada",
+    "departamento": "Departamento",
+    "cabana": "Cabaña",
+    "casa": "Casa",
+    "salon": "Salón de Eventos",
+    "cancha": "Cancha",
+    "localComercial": "Local Comercial",
+    "oficina": "Oficina",
+    "lote": "Lote / Terreno"
+  }
 }

@@ -463,14 +463,44 @@
     "saving": "Salvando...",
     "save": "Salvar alterações"
   },
-    "Catalogo": {
-      "titulo": "Catálogo de Unidades Disponíveis",
-      "servicioNoDisponible": "Serviço indisponível",
-      "unidadEncontrada": "unidade encontrada",
-      "unidadesEncontradas": "unidades encontradas",
-      "errorTitulo": "O catálogo está temporariamente indisponível",
-      "errorDescripcion": "Seus filtros serão preservados ao tentar novamente.",
-      "reintentar": "Tentar novamente",
-      "sinResultadosDescripcion": "Não encontramos unidades que correspondam aos critérios selecionados. Tente ajustar ou limpar os filtros."
-    }
+  "Catalogo": {
+    "titulo": "Catálogo de Unidades Disponíveis",
+    "servicioNoDisponible": "Serviço indisponível",
+    "unidadEncontrada": "unidade encontrada",
+    "unidadesEncontradas": "unidades encontradas",
+    "errorTitulo": "O catálogo está temporariamente indisponível",
+    "errorDescripcion": "Seus filtros serão preservados ao tentar novamente.",
+    "reintentar": "Tentar novamente",
+    "sinResultadosDescripcion": "Não encontramos unidades que correspondam aos critérios selecionados. Tente ajustar ou limpar os filtros."
+  },
+  "CatalogoFiltros": {
+    "titulo": "Filtros do catálogo",
+    "limpiar": "Limpar",
+    "palabrasClave": "Palavras-chave",
+    "ejemplo": "Ex.: casa com jardim",
+    "ayudaPalabras": "Busque pelo título ou pela descrição do imóvel.",
+    "tipo": "Tipo de imóvel",
+    "todasCategorias": "Todos os tipos",
+    "todas": "Todos",
+    "ubicacion": "Localização / Região",
+    "todasZonas": "Todas as regiões",
+    "ayudaZonas": "“Todas” também inclui imóveis fora das regiões listadas.",
+    "precio": "Faixa de preço",
+    "minimo": "Mínimo",
+    "maximo": "Máximo",
+    "notaConversion": "Os preços convertidos automaticamente usam a cotação do BCRA; valores definidos pelo proprietário permanecem inalterados.",
+    "rangoInvalido": "Informe uma faixa válida: valores a partir de zero e mínimo menor ou igual ao máximo.",
+    "aplicar": "Aplicar filtros",
+    "activos": "Filtros aplicados:",
+    "pendientes": "Há alterações ainda não aplicadas.",
+    "zonaSeleccionada": "Região selecionada",
+    "departamento": "Apartamento",
+    "cabana": "Cabana",
+    "casa": "Casa",
+    "salon": "Salão de eventos",
+    "cancha": "Quadra esportiva",
+    "localComercial": "Espaço comercial",
+    "oficina": "Escritório",
+    "lote": "Lote / Terreno"
+  }
 }
