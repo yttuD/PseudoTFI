@@ -36,8 +36,8 @@ jobs:
             fi
             rm -f "$body"
           }
-          probe "https://rendo-beta-api.vercel.app/health/liveness"
-          probe "https://rendo-beta-api.vercel.app/health/readiness"
+          probe "https://rendo-beta-api.vercel.app/health/live"
+          probe "https://rendo-beta-api.vercel.app/health/ready"
           probe "https://rendo-beta-web.vercel.app/es"
           probe "https://rendo-beta-web.vercel.app/en"
           probe "https://rendo-beta-web.vercel.app/pt"
