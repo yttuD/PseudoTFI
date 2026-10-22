@@ -129,9 +129,12 @@ export function LanguageSelector({
                   href={getLocaleHref(lang.code)}
                   role="option"
                   aria-selected={isSelected}
-                  onClick={() => {
+                  onClick={(event) => {
                     setIsOpen(false);
-                    onLocaleChange?.(lang.code);
+                    if (onLocaleChange) {
+                      event.preventDefault();
+                      onLocaleChange(lang.code);
+                    }
                   }}
                   className={cn(
                     'w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-colors',

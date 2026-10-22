@@ -26,6 +26,17 @@
     "mes": "month"
   },
   "auth": {
+    "loginGestorTitulo": "Sign in to Rendo Manager",
+    "loginBuscadorTitulo": "Welcome to Rendo",
+    "loginGestorBetaDescripcion": "Sign in to manage your trial properties and rentals. Payments and receipts are not available yet.",
+    "loginGestorDescripcion": "Manage properties, rentals and payments from your account.",
+    "loginBuscadorDescripcion": "Sign in to explore locations, contact managers and save favorites.",
+    "loginGestorConfianza": "Secure property management",
+    "loginBuscadorConfianza": "Find your next property with confidence",
+    "loginPreguntaBuscador": "Looking for a rental?",
+    "loginEnlaceBuscador": "Sign in to search",
+    "loginPreguntaGestor": "Manage rental properties?",
+    "loginEnlaceGestor": "Sign in as a manager",
     "registroGestorTitulo": "Create your manager account",
     "registroBuscadorTitulo": "Create your Rendo account",
     "registroGestorBetaDescripcion": "Try Rendo with up to 10 units at no cost. Payments and receipts are not available yet.",

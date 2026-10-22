@@ -1,15 +1,27 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Compass, Heart, PlusCircle, Terminal, UserRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
 
+
 export function NativeBottomNav({ locale }: { locale: string }) {
   const pathname = usePathname();
   const tNav = useTranslations('Nav');
+  const [managerAccess, setManagerAccess] = useState(false);
+  useEffect(() => {
+    // Navbar already validates the session; reuse its event instead of
+    // requesting Auth + profile again for a second mobile-only component.
+    const handleRole = (event: Event) => {
+      const role = (event as CustomEvent<{ role: string | null }>).detail?.role;
+      setManagerAccess(role === 'gestor' || role === 'delegado');
+    };
+    window.addEventListener('rendo:verified-nav-role', handleRole);
+    return () => window.removeEventListener('rendo:verified-nav-role', handleRole);
+  }, []);
 
   const navItems = [
     {
@@ -26,14 +38,14 @@ export function NativeBottomNav({ locale }: { locale: string }) {
     },
     {
       label: tNav('mobilePublish'),
-      href: `/${locale}/auth/registro?portal=gestor`,
+      href: managerAccess ? `/${locale}/mis-unidades/nueva` : `/${locale}/auth/registro?portal=gestor`,
       icon: PlusCircle,
       isActive: pathname.includes('/mis-unidades/nueva') || pathname.includes('/auth/registro'),
       highlight: true,
     },
     {
       label: tNav('mobileManagers'),
-      href: `/${locale}/auth/login?portal=gestor&next=/${locale}/dashboard`,
+      href: managerAccess ? `/${locale}/dashboard` : `/${locale}/auth/login?portal=gestor&next=/${locale}/dashboard`,
       icon: Terminal,
       isActive:
         pathname.includes('/dashboard') ||

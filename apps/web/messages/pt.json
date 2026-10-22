@@ -26,6 +26,17 @@
     "mes": "mês"
   },
   "auth": {
+    "loginGestorTitulo": "Entre no Rendo Gestor",
+    "loginBuscadorTitulo": "Bem-vindo ao Rendo",
+    "loginGestorBetaDescripcion": "Entre para gerenciar seus imóveis e aluguéis de teste. Pagamentos e recibos ainda não estão disponíveis.",
+    "loginGestorDescripcion": "Gerencie seus imóveis, aluguéis e pagamentos pela sua conta.",
+    "loginBuscadorDescripcion": "Entre para explorar localizações, falar com gestores e salvar favoritos.",
+    "loginGestorConfianza": "Gestão segura dos seus imóveis",
+    "loginBuscadorConfianza": "Encontre seu próximo imóvel com confiança",
+    "loginPreguntaBuscador": "Procurando um imóvel para alugar?",
+    "loginEnlaceBuscador": "Entre para buscar",
+    "loginPreguntaGestor": "Gerencia imóveis para aluguel?",
+    "loginEnlaceGestor": "Entre como gestor",
     "registroGestorTitulo": "Crie sua conta de gestor",
     "registroBuscadorTitulo": "Crie sua conta no Rendo",
     "registroGestorBetaDescripcion": "Teste o Rendo com até 10 unidades gratuitamente. Pagamentos e recibos ainda não estão disponíveis.",

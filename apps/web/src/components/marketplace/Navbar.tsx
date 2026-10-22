@@ -41,6 +41,11 @@ export function Navbar({ locale }: { locale: string }) {
       if (!active) return;
       setUser(resolvedUser);
       setMounted(true);
+      // Reuse the verified session role in NativeBottomNav without a second
+      // remote Auth/profile lookup. API routes still enforce authorization.
+      window.dispatchEvent(new CustomEvent('rendo:verified-nav-role', {
+        detail: { role: resolvedUser?.role ?? null },
+      }));
     });
     refreshProfile();
     window.addEventListener('rendo:profile-updated', refreshProfile);
@@ -65,7 +70,8 @@ export function Navbar({ locale }: { locale: string }) {
     } else {
       segments.splice(1, 0, newLocale);
     }
-    router.push(segments.join('/') || `/${newLocale}`);
+    const suffix = `${window.location.search}${window.location.hash}`;
+    router.push(`${segments.join('/') || `/${newLocale}`}${suffix}`);
   };
 
   const isGestorOrDelegado = user?.role === 'gestor' || user?.role === 'delegado';

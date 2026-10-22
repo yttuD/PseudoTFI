@@ -23,13 +23,13 @@ test.describe('UX-001: registration uses clear language for each audience and lo
     { locale:'pt', manager:'Crie sua conta de gestor', visitor:'Crie sua conta no Rendo', visitorLink:'Crie uma conta para buscar', managerLink:'Crie sua conta de gestor' },
   ]) {
     test(`${entry.locale} registration clearly identifies both roles`, async ({ page }) => {
-      await page.goto(`/${entry.locale}/auth/registro?portal=gestor`);
+      await page.goto(`/${entry.locale}/auth/registro?portal=gestor&next=/${entry.locale}/dashboard`);
       await expect(page.getByRole('heading', { level:1, name:entry.manager })).toBeVisible();
       const visitorLink = page.getByRole('link', { name:entry.visitorLink });
-      await expect(visitorLink).toHaveAttribute('href', /portal=marketplace/);
+      await expect(visitorLink).toHaveAttribute('href', `/${entry.locale}/auth/registro?portal=marketplace`);
       await visitorLink.click();
       await expect(page.getByRole('heading', { level:1, name:entry.visitor })).toBeVisible();
-      await expect(page.getByRole('link', { name:entry.managerLink })).toHaveAttribute('href', /portal=gestor/);
+      await expect(page.getByRole('link', { name:entry.managerLink })).toHaveAttribute('href', `/${entry.locale}/auth/registro?portal=gestor`);
     });
   }
 });
