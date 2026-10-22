@@ -20,7 +20,7 @@ export function uniquePublicTariffs<T extends PublicTariff>(tariffs: readonly T[
   const seen = new Set<string>();
   return tariffs.filter((tariff) => {
     const key = JSON.stringify([
-      tariff.unidad_tiempo.trim().toLowerCase(),
+      String(tariff.unidad_tiempo ?? 'día').trim().toLowerCase(),
       numericKey(tariff.cantidad_tiempo ?? 1),
       numericKey(tariff.precio),
       numericKey(tariff.precio_usd),
@@ -35,7 +35,7 @@ export function uniquePublicTariffs<T extends PublicTariff>(tariffs: readonly T[
 export type MinimumPeriod = 'minimumNights' | 'minimumMonths' | 'minimumHours';
 
 export function minimumPeriodKey(period: string): MinimumPeriod {
-  const normalized = period.trim().toLowerCase();
+  const normalized = String(period ?? 'día').trim().toLowerCase();
   if (normalized === 'mes' || normalized === 'mensual') return 'minimumMonths';
   if (normalized === 'hora') return 'minimumHours';
   return 'minimumNights';
