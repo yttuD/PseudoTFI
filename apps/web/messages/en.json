@@ -522,5 +522,15 @@
     "loadErrorTitle": "Your favorites couldn't be loaded",
     "loadErrorDescription": "Your favorites have not been deleted. Try again when the service is available.",
     "retry": "Try again"
+  },
+  "UnidadFormUX": {
+    "mobileSections": "Unit form sections",
+    "jumpTo": "Jump to a section",
+    "choose": "Choose a section",
+    "basics": "Basics and group",
+    "description": "Listing and languages",
+    "prices": "Rates and prices",
+    "photos": "Photo gallery",
+    "location": "Location and GPS"
   }
 }
