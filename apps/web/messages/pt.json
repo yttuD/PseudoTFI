@@ -231,7 +231,8 @@
     "rolePending": "Pendente",
     "themeLight": "Modo claro",
     "themeDark": "Modo escuro",
-    "themeToggle": "Alternar tema"
+    "themeToggle": "Alternar tema",
+    "skipToContent": "Ir para o conteúdo principal"
   },
   "UnitDetail": {
     "translationPendingNotice": "Tradução pendente: parte das informações aparece no original em espanhol.",
