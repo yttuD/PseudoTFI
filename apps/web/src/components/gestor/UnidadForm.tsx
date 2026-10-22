@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, type FieldErrors } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -100,6 +100,9 @@ export function UnidadForm({
   const [saveError, setSaveError] = useState<string | null>(searchParams.get('save_error') ? 'La unidad quedó como borrador. Revisá las tarifas y guardá nuevamente.' : null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState('basicos');
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const userEditedRef = useRef(false);
+  const continueEditingRef = useRef<HTMLButtonElement>(null);
   const [openMobileMap, setOpenMobileMap] = useState(false);
 
   // Estados de Idioma y Auto-traducción
@@ -177,6 +180,19 @@ export function UnidadForm({
     }
   });
 
+  useEffect(() => {
+    if (confirmDiscard) continueEditingRef.current?.focus();
+  }, [confirmDiscard]);
+
+  // Compare substantive form values with the actual initial values. RHF may report dirty
+  // after internal field-array initialization even when the person did not edit anything.
+  const initialValuesSnapshotRef = useRef(JSON.stringify(form.getValues()));
+  const hasUnsavedChanges = () => {
+    const originalAddress = typeof initialData?.direccion_texto === 'string' ? initialData.direccion_texto : '';
+    return userEditedRef.current && (JSON.stringify(form.getValues()) !== initialValuesSnapshotRef.current
+      || searchAddress !== originalAddress);
+  };
+
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: 'modalidades'
@@ -230,7 +246,7 @@ export function UnidadForm({
         }
       }
     };
-    // Capturing also observes the scrollable <main> used by the Gestor shell.
+    // Capture scroll within the manager's scrollable main, too.
     window.addEventListener('scroll', handleScroll, true);
     return () => window.removeEventListener('scroll', handleScroll, true);
   }, []);
@@ -323,6 +339,7 @@ export function UnidadForm({
     const lat = parseFloat(item.lat);
     const lng = parseFloat(item.lon);
 
+    userEditedRef.current = true;
     setSearchAddress(item.display_name);
     setAddressResultName(item.display_name);
     setShowDropdown(false);
@@ -330,13 +347,14 @@ export function UnidadForm({
     setAddressError(null);
 
     // Actualizar coordenadas en el formulario y disparar recentrado fluido en el mapa
-    form.setValue('ubicacion_exacta', { lat, lng });
-    form.setValue('ubicacion_aprox', { lat, lng });
+    form.setValue('ubicacion_exacta', { lat, lng }, { shouldDirty: true });
+    form.setValue('ubicacion_aprox', { lat, lng }, { shouldDirty: true });
   };
 
   const handleLocationSelect = (loc: { lat: number, lng: number }) => {
-    form.setValue('ubicacion_exacta', loc);
-    form.setValue('ubicacion_aprox', loc);
+    userEditedRef.current = true;
+    form.setValue('ubicacion_exacta', loc, { shouldDirty: true });
+    form.setValue('ubicacion_aprox', loc, { shouldDirty: true });
     setSearchAddress('');
     setAddressResultName(null);
   };
@@ -588,7 +606,7 @@ export function UnidadForm({
 
   const handleStatusChange = async (newStatus: 'pausada' | 'publicada') => {
     if (!unidadId) return;
-    if (form.formState.isDirty && !window.confirm('Tenés cambios sin guardar. ¿Querés continuar sin guardarlos?')) return;
+    if (hasUnsavedChanges() && !window.confirm('Tenés cambios sin guardar. ¿Querés continuar sin guardarlos?')) return;
     setSaveError(null);
     setIsSubmitting(true);
     try {
@@ -627,14 +645,45 @@ export function UnidadForm({
   const scrollTo = (id: string) => {
     const el = document.getElementById(id);
     if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      el.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
       setActiveSection(id);
     }
   };
 
+  const onInvalid = (errors: FieldErrors<FormData>) => {
+    setSaveError('Revisá los campos señalados. Tus datos siguen en el formulario.');
+    const section = errors.modalidades ? 'modalidades'
+      : errors.categoria ? 'basicos'
+        : errors.ubicacion_aprox || errors.ubicacion_exacta ? 'ubicacion'
+          : 'marketplace';
+    scrollTo(section);
+    requestAnimationFrame(() => {
+      if (Array.isArray(errors.modalidades)) {
+        const index = errors.modalidades.findIndex(Boolean);
+        if (index >= 0) {
+          const field = errors.modalidades[index]?.precio ? 'precio' : 'cantidad_tiempo';
+          document.querySelector<HTMLInputElement>(`[name="modalidades.${index}.${field}"]`)?.focus({ preventScroll: true });
+        }
+      } else if (errors.categoria) {
+        document.getElementById('categoria-select')?.focus({ preventScroll: true });
+      }
+    });
+  };
+
+  const handleCancel = () => {
+    if (isSubmitting) return;
+    if (hasUnsavedChanges()) {
+      setConfirmDiscard(true);
+      return;
+    }
+    router.push(`/${locale}/mis-unidades`);
+  };
+
   return (
-    <form onSubmit={form.handleSubmit((data) => onSubmit(data), () => setSaveError('Revisá los campos del formulario: una categoría, precio o plazo tiene un valor inválido.'))} className="w-full max-w-7xl mx-auto flex flex-col gap-8 relative">
-      {/* Navegación opcional: evita recorrer cinco secciones largas en móvil. */}
+    <form noValidate onChangeCapture={() => { userEditedRef.current = true; }}
+      onSubmit={form.handleSubmit((data) => onSubmit(data), onInvalid)} className="w-full max-w-7xl mx-auto flex flex-col gap-8 relative">
+      {/* Optional direct jump across the long form, without a mandatory wizard. */}
       <nav aria-label={tUx('mobileSections')} data-testid="unidad-mobile-section-nav"
         className="md:hidden sticky top-2 z-30 rounded-xl border border-border bg-card/95 p-3 shadow-sm">
         <label htmlFor="unidad-section-picker" className="block pb-1 text-xs font-semibold text-foreground">
@@ -679,7 +728,7 @@ export function UnidadForm({
               {/* Categoría */}
               <div className="grid gap-2">
                 <Label className="font-mono text-xs uppercase text-muted-foreground">Categoría *</Label>
-                <Select value={form.watch('categoria')} onValueChange={(val) => form.setValue('categoria', val as string, { shouldDirty: true, shouldValidate: true })}>
+                <Select value={form.watch('categoria')} onValueChange={(val) => { userEditedRef.current = true; form.setValue('categoria', val as string, { shouldDirty: true, shouldValidate: true }); }}>
                   <SelectTrigger id="categoria-select" className="h-12 rounded-xl"><span className="truncate">{categoriaLabel(form.watch('categoria'))}</span></SelectTrigger>
                   <SelectContent className="rounded-xl">
                     {CATEGORIAS_UNIDAD.map((categoria) => (
@@ -694,7 +743,7 @@ export function UnidadForm({
                 <Label className="font-mono text-xs uppercase text-muted-foreground">Grupo / Edificio</Label>
                 <Select 
                   value={form.watch('grupo_id') || 'sin-grupo'}
-                  onValueChange={(val) => form.setValue('grupo_id', val === 'sin-grupo' || !val ? undefined : val, { shouldDirty: true })}
+                  onValueChange={(val) => { userEditedRef.current = true; form.setValue('grupo_id', val === 'sin-grupo' || !val ? undefined : val, { shouldDirty: true }); }}
                 >
                   <SelectTrigger className="h-12 rounded-xl"><span className="truncate">{gruposList.find((grupo) => grupo.id === form.watch('grupo_id'))?.nombre || 'Sin grupo / unidad individual'}</span></SelectTrigger>
                   <SelectContent className="rounded-xl">
@@ -712,7 +761,7 @@ export function UnidadForm({
               {/* Zona Operativa */}
               <div className="grid gap-2">
                 <Label className="font-mono text-xs uppercase text-muted-foreground">Zona Operativa</Label>
-                <Select value={form.watch('zona_id')?.toString() || 'sin-zona'} onValueChange={(val) => form.setValue('zona_id', val === 'sin-zona' ? undefined : Number(val), { shouldDirty: true })}>
+                <Select value={form.watch('zona_id')?.toString() || 'sin-zona'} onValueChange={(val) => { userEditedRef.current = true; form.setValue('zona_id', val === 'sin-zona' ? undefined : Number(val), { shouldDirty: true }); }}>
                   <SelectTrigger className="h-12 rounded-xl"><span className="truncate">{zonasDisponibles.find((zona) => zona.id === form.watch('zona_id'))?.nombre || 'Sin zona predefinida'}</span></SelectTrigger>
                   <SelectContent className="rounded-xl">
                     <SelectItem value="sin-zona">Sin zona predefinida</SelectItem>
@@ -750,8 +799,9 @@ export function UnidadForm({
                   <Switch 
                     checked={autoTraducir} 
                     onCheckedChange={(checked) => {
+                      userEditedRef.current = true;
                       setAutoTraducir(checked);
-                      form.setValue('auto_traducir', checked);
+                      form.setValue('auto_traducir', checked, { shouldDirty: true });
                     }} 
                   />
                 </div>
@@ -920,7 +970,7 @@ export function UnidadForm({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <button
                   type="button"
-                  onClick={() => append({ unidad_tiempo: 'día', cantidad_tiempo: 1, precio: Number.NaN })}
+                  onClick={() => { userEditedRef.current = true; append({ unidad_tiempo: 'día', cantidad_tiempo: 1, precio: Number.NaN }); }}
                   className="min-h-[90px] p-4 flex items-center gap-3.5 rounded-2xl border border-border/80 bg-surface/80 hover:border-dorado-500/60 hover:bg-dorado-500/5 hover:shadow-md transition-all text-left group cursor-pointer"
                 >
                   <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 group-hover:scale-105 transition-transform shrink-0">
@@ -934,7 +984,7 @@ export function UnidadForm({
 
                 <button
                   type="button"
-                  onClick={() => append({ unidad_tiempo: 'mes', cantidad_tiempo: 1, precio: Number.NaN })}
+                  onClick={() => { userEditedRef.current = true; append({ unidad_tiempo: 'mes', cantidad_tiempo: 1, precio: Number.NaN }); }}
                   className="min-h-[90px] p-4 flex items-center gap-3.5 rounded-2xl border border-border/80 bg-surface/80 hover:border-dorado-500/60 hover:bg-dorado-500/5 hover:shadow-md transition-all text-left group cursor-pointer"
                 >
                   <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform shrink-0">
@@ -948,7 +998,7 @@ export function UnidadForm({
 
                 <button
                   type="button"
-                  onClick={() => append({ unidad_tiempo: 'hora', cantidad_tiempo: 1, precio: Number.NaN })}
+                  onClick={() => { userEditedRef.current = true; append({ unidad_tiempo: 'hora', cantidad_tiempo: 1, precio: Number.NaN }); }}
                   className="min-h-[90px] p-4 flex items-center gap-3.5 rounded-2xl border border-border/80 bg-surface/80 hover:border-dorado-500/60 hover:bg-dorado-500/5 hover:shadow-md transition-all text-left group cursor-pointer"
                 >
                   <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 group-hover:scale-105 transition-transform shrink-0">
@@ -996,7 +1046,7 @@ export function UnidadForm({
                             type="button"
                             variant="ghost"
                             size="sm"
-                            onClick={() => remove(index)}
+                            onClick={() => { userEditedRef.current = true; remove(index); }}
                             className="text-destructive hover:text-destructive hover:bg-destructive/10 text-xs font-mono min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
                           >
                             <Trash2 className="w-4 h-4 mr-1" /> Eliminar
@@ -1018,11 +1068,17 @@ export function UnidadForm({
                                 data-testid="input-precio"
                                 min={0}
                                 step="0.01"
-                                required
+                                aria-invalid={!!form.formState.errors.modalidades?.[index]?.precio}
+                                aria-describedby={form.formState.errors.modalidades?.[index]?.precio ? `precio_error_${index}` : undefined}
                                 className="h-12 pl-8 font-mono text-base rounded-xl font-semibold"
                                 {...form.register(`modalidades.${index}.precio`, { valueAsNumber: true })}
                               />
                             </div>
+                            {form.formState.errors.modalidades?.[index]?.precio && (
+                              <span id={`precio_error_${index}`} role="alert" className="text-xs text-destructive">
+                                Ingresá un precio válido en ARS (0 o más).
+                              </span>
+                            )}
                             <span className="text-[11px] text-muted-foreground">Tarifa final visible en la ficha de la unidad.</span>
                           </div>
 
@@ -1034,9 +1090,16 @@ export function UnidadForm({
                             <Input
                               type="number"
                               min={1}
+                              aria-invalid={!!form.formState.errors.modalidades?.[index]?.cantidad_tiempo}
+                              aria-describedby={form.formState.errors.modalidades?.[index]?.cantidad_tiempo ? `plazo_error_${index}` : undefined}
                               className="h-12 font-mono text-base rounded-xl font-semibold text-center"
                               {...form.register(`modalidades.${index}.cantidad_tiempo`, { valueAsNumber: true })}
                             />
+                            {form.formState.errors.modalidades?.[index]?.cantidad_tiempo && (
+                              <span id={`plazo_error_${index}`} role="alert" className="text-xs text-destructive">
+                                Indicá un plazo mínimo de al menos 1.
+                              </span>
+                            )}
                             <span className="text-[11px] text-muted-foreground">
                               {isDia ? 'Mínimo de noches que el huésped debe reservar.' : isMes ? 'Meses mínimos de vigencia del contrato.' : 'Cantidad mínima de horas por turno.'}
                             </span>
@@ -1356,6 +1419,22 @@ export function UnidadForm({
       {/* En móvil queda al final del formulario para no tapar los campos. */}
       <div className="relative lg:sticky lg:bottom-0 z-40 w-full bg-card/95 backdrop-blur-md border border-border p-4 shadow-2xl flex flex-col gap-3 rounded-2xl">
         {saveError && <p role="alert" className="w-full rounded-lg border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">{saveError}</p>}
+        {confirmDiscard && (
+          <div role="alert" data-testid="unidad-unsaved-confirm" className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 space-y-2">
+            <p className="text-sm font-semibold text-foreground">Hay cambios sin guardar</p>
+            <p className="text-xs text-muted-foreground">Si salís, se perderán los datos que todavía no guardaste.</p>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" ref={continueEditingRef}
+                data-testid="unidad-seguir-editando" onClick={() => setConfirmDiscard(false)}>
+                Seguir editando
+              </Button>
+              <Button type="button" variant="destructive" data-testid="unidad-descartar-cambios"
+                onClick={() => router.push(`/${locale}/mis-unidades`)}>
+                Descartar cambios
+              </Button>
+            </div>
+          </div>
+        )}
         <div className="flex flex-wrap items-center justify-between gap-3 w-full">
         <span className="text-sm font-mono text-muted-foreground hidden sm:inline-block">
           {isSubmitting ? 'Procesando...' : `Estado: ${estadoActual.replace(/_/g, ' ')}`}
@@ -1367,7 +1446,8 @@ export function UnidadForm({
           <Button 
             type="button" 
             variant="ghost" 
-            onClick={() => router.push(`/${locale}/mis-unidades`)}
+            onClick={handleCancel}
+            disabled={isSubmitting}
             className="font-mono uppercase text-xs tracking-wider rounded-xl hover:bg-muted min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
           >
             Cancelar
@@ -1386,7 +1466,7 @@ export function UnidadForm({
               unidadId ? 'Guardar cambios' : 'Guardar borrador'
             )}
           </Button>
-          {unidadId && estadoActual === 'borrador' && <Button type="button" disabled={isSubmitting} onClick={form.handleSubmit((data) => onSubmit(data, true), () => setSaveError('Revisá los campos del formulario antes de publicar.'))} className="min-h-11 bg-emerald-700 hover:bg-emerald-800 text-white">Guardar y publicar</Button>}
+          {unidadId && estadoActual === 'borrador' && <Button type="button" disabled={isSubmitting} onClick={form.handleSubmit((data) => onSubmit(data, true), onInvalid)} className="min-h-11 bg-emerald-700 hover:bg-emerald-800 text-white">Guardar y publicar</Button>}
         </div>
         </div>
       </div>
