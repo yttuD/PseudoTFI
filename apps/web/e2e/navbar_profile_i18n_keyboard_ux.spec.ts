@@ -20,10 +20,10 @@ test.describe('UX-001: profile navigation remains translated and operable with k
   test.beforeAll(async () => { await startMockApiServer(3001); });
   test.afterAll(async () => { await stopMockApiServer(); });
 
-  for (const { locale, menuName, profileName, dashboardName } of [
-    { locale:'es', menuName:'Menú de perfil', profileName:'Mi perfil', dashboardName:'Ir a mi Panel de Gestor' },
-    { locale:'en', menuName:'Profile menu', profileName:'My profile', dashboardName:'Go to Manager Dashboard' },
-    { locale:'pt', menuName:'Menu do perfil', profileName:'Meu perfil', dashboardName:'Ir para o Painel do Gestor' },
+  for (const { locale, menuName, profileName, dashboardName, accountName, managersName } of [
+    { locale:'es', menuName:'Menú de perfil', profileName:'Mi perfil', dashboardName:'Ir a mi Panel de Gestor', accountName:'Cuenta', managersName:'Gestores' },
+    { locale:'en', menuName:'Profile menu', profileName:'My profile', dashboardName:'Go to Manager Dashboard', accountName:'Account', managersName:'Managers' },
+    { locale:'pt', menuName:'Menu do perfil', profileName:'Meu perfil', dashboardName:'Ir para o Painel do Gestor', accountName:'Conta', managersName:'Gestores' },
   ]) {
     test(`${locale}: show menu, focus Escape, and keep localized destination links`, async ({ page, context }) => {
       await context.clearCookies();
@@ -34,9 +34,9 @@ test.describe('UX-001: profile navigation remains translated and operable with k
         // Verify the actual mobile affordances rather than searching for a hidden desktop menu.
         const navigation = page.locator('nav.fixed.bottom-0');
         await expect(navigation).toBeVisible();
-        const account = navigation.getByRole('link', { name: { es:'Cuenta', en:'Account', pt:'Conta' }[locale] });
+        const account = navigation.getByRole('link', { name: accountName });
         await expect(account).toHaveAttribute('href', `/${locale}/cuenta`);
-        const manager = navigation.getByRole('link', { name: { es:'Gestores', en:'Managers', pt:'Gestores' }[locale] });
+        const manager = navigation.getByRole('link', { name: managersName });
         await expect(manager).toHaveAttribute('href', `/${locale}/auth/login?portal=gestor&next=/${locale}/dashboard`);
         await account.focus();
         await expect(account).toBeFocused();
