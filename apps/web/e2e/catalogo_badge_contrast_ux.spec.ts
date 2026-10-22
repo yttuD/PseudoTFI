@@ -24,6 +24,10 @@ test.describe('UX-001: pricing and publishing badges remain readable above vivid
       await page.locator('html').evaluate((node, value) => {
         node.classList.toggle('dark', value === 'dark');
       }, mode);
+      // Theme tokens animate during light/dark changes. Contrast must be read
+      // after the visual transition, as in the established dual-theme axe gate;
+      // otherwise computed foreground/background can be sampled in different frames.
+      await page.waitForTimeout(400);
       const card = page.getByTestId('unit-card').first();
       for (const badge of [
         card.getByTestId('unit-card-published'),

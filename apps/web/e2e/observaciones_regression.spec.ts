@@ -126,9 +126,10 @@ test('N04 y N05: detalle público proyecta dirección solo para autenticado y lo
   await page.goto('/es/unidades/a0000000-0000-0000-0000-000000000001');
   await expect(page.locator('[data-testid="exact-address"]')).toBeVisible();
   await expect(page.locator('[data-testid="exact-address"]')).toContainText('Av. Caá Guazú 450, Goya, Corrientes');
-  const waEsBtn = page.getByRole('button', { name: 'Contactar por WhatsApp' });
+  const waEsBtn = page.getByRole('link', { name: 'Contactar por WhatsApp' });
   await expect(waEsBtn).toBeVisible();
   const waEsLink = page.locator('a[href*="wa.me"]');
+  await expect(waEsBtn.locator('button')).toHaveCount(0);
   const esHref = await waEsLink.getAttribute('href');
   expect(esHref).toContain('Hola%2C%20me%20interesa%20la%20unidad');
 
@@ -136,7 +137,7 @@ test('N04 y N05: detalle público proyecta dirección solo para autenticado y lo
 
   // 5. Usuario autenticado en inglés: botón WhatsApp localizado en inglés
   await page.goto('/en/unidades/a0000000-0000-0000-0000-000000000001');
-  const waEnBtn = page.getByRole('button', { name: 'Contact via WhatsApp' });
+  const waEnBtn = page.getByRole('link', { name: 'Contact via WhatsApp' });
   await expect(waEnBtn).toBeVisible();
   const waEnLink = page.locator('a[href*="wa.me"]');
   const enHref = await waEnLink.getAttribute('href');
@@ -144,7 +145,7 @@ test('N04 y N05: detalle público proyecta dirección solo para autenticado y lo
 
   // 6. Usuario autenticado en portugués: botón WhatsApp localizado en portugués
   await page.goto('/pt/unidades/a0000000-0000-0000-0000-000000000001');
-  const waPtBtn = page.getByRole('button', { name: 'Contatar via WhatsApp' });
+  const waPtBtn = page.getByRole('link', { name: 'Contatar via WhatsApp' });
   await expect(waPtBtn).toBeVisible();
   const waPtLink = page.locator('a[href*="wa.me"]');
   const ptHref = await waPtLink.getAttribute('href');

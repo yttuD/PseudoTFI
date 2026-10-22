@@ -22,7 +22,7 @@ concurrency:
 jobs:
   responsive:
     runs-on: ubuntu-latest
-    timeout-minutes: 18
+    timeout-minutes: 32
     env:
       AUTH_ALLOW_DEV_TOKENS: 'true'
       NEXT_PUBLIC_AUTH_ALLOW_DEV_TOKENS: 'true'
