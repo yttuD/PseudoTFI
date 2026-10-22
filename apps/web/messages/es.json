@@ -209,6 +209,10 @@
     }
   },
   "Nav": {
+    "profileMenu": "Menú de perfil",
+    "roleTenant": "Inquilino",
+    "signingOut": "Cerrando sesión...",
+    "logoutFailed": "No pudimos cerrar tu sesión. Intentá nuevamente.",
     "dashboard": "Panel Gestor",
     "units": "Unidades",
     "rentals": "Alquileres",

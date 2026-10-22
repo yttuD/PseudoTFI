@@ -26,14 +26,14 @@ export function NativeBottomNav({ locale }: { locale: string }) {
     },
     {
       label: tNav('mobilePublish'),
-      href: `/${locale}/auth/registro?intent=gestor`,
+      href: `/${locale}/auth/registro?portal=gestor`,
       icon: PlusCircle,
       isActive: pathname.includes('/mis-unidades/nueva') || pathname.includes('/auth/registro'),
       highlight: true,
     },
     {
       label: tNav('mobileManagers'),
-      href: `/${locale}/auth/login?next=/${locale}/dashboard`,
+      href: `/${locale}/auth/login?portal=gestor&next=/${locale}/dashboard`,
       icon: Terminal,
       isActive:
         pathname.includes('/dashboard') ||
