@@ -8,7 +8,7 @@ test.describe('UX-001: catalog image requests respect visual priority', () => {
   test('first card loads promptly, offscreen cards can defer without layout shift', async ({ page, context }) => {
     await context.clearCookies();
     await page.goto('/es/unidades');
-    const images = page.locator('a[href^="/es/unidades/"] img');
+    const images = page.getByTestId('unit-card').locator('img');
     await expect(images).toHaveCount(2);
     await expect(images.nth(0)).toHaveAttribute('loading', 'eager');
     await expect(images.nth(0)).toHaveAttribute('fetchpriority', 'high');

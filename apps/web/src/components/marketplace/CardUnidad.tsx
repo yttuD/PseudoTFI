@@ -32,9 +32,14 @@ export function CardUnidad({ unidad, locale, isFavorito = false, isLoggedIn = fa
     : (locale === 'en' ? 'day' : locale === 'pt' ? 'dia' : 'día');
     
   return (
-    <Link href={`/${locale}/unidades/${unidad.id}`} className="block group">
-      <Card className="overflow-hidden bg-background border-border/40 hover:border-border transition-all duration-300 cursor-pointer h-full flex flex-col shadow-sm hover:shadow-premium rounded-[1.5rem]">
-        <div className="aspect-[4/3] relative bg-muted overflow-hidden">
+    <Card data-testid="unit-card" className="relative group overflow-hidden bg-background border-border/40 hover:border-border focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1 transition-all duration-300 cursor-pointer h-full flex flex-col shadow-sm hover:shadow-premium rounded-[1.5rem]">
+      <Link
+        data-testid="unit-card-detail-link"
+        href={`/${locale}/unidades/${unidad.id}`}
+        aria-label={String(unidad.titulo || unidad.titulo_es || 'Unidad')}
+        className="absolute inset-0 z-10 rounded-[1.5rem] focus-visible:outline-none"
+      />
+      <div className="aspect-[4/3] relative bg-muted overflow-hidden">
           {Array.isArray(unidad.fotos) && unidad.fotos.length > 0 ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
@@ -63,7 +68,7 @@ export function CardUnidad({ unidad, locale, isFavorito = false, isLoggedIn = fa
             </Badge>
           </div>
 
-          <div className="absolute top-3 right-3">
+          <div className="absolute top-3 right-3 z-20">
             <FavoritoButton 
               unidadId={unidad.id as string} 
               initialIsFavorito={isFavorito}
@@ -94,7 +99,6 @@ export function CardUnidad({ unidad, locale, isFavorito = false, isLoggedIn = fa
             {(unidad.titulo || unidad.titulo_es) as string}
           </h3>
         </CardContent>
-      </Card>
-    </Link>
+    </Card>
   );
 }

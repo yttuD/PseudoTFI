@@ -130,11 +130,11 @@ export default async function UnidadesPage({
 
         {/* Grid Resultados */}
         <div className="flex-1 space-y-4">
-          <div className="flex items-center justify-between">
+          <div data-testid="catalog-results-heading" className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
             <h1 className="text-xl font-bold tracking-tight text-foreground">
               {tCatalogo('titulo')}
             </h1>
-            <span className="text-xs font-mono text-muted-foreground bg-muted px-2.5 py-1 rounded-full border border-border/40">
+            <span className="max-w-full self-start sm:self-auto text-xs font-mono text-muted-foreground bg-muted px-2.5 py-1 rounded-full border border-border/40">
               {catalogError ? tCatalogo('servicioNoDisponible') : `${unidades.length} ${unidades.length === 1 ? tCatalogo('unidadEncontrada') : tCatalogo('unidadesEncontradas')}`}
             </span>
           </div>
