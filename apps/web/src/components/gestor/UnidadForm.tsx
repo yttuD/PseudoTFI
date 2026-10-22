@@ -685,7 +685,7 @@ export function UnidadForm({
       onSubmit={form.handleSubmit((data) => onSubmit(data), onInvalid)} className="w-full max-w-7xl mx-auto flex flex-col gap-8 relative">
       {/* Optional direct jump across the long form, without a mandatory wizard. */}
       <nav aria-label={tUx('mobileSections')} data-testid="unidad-mobile-section-nav"
-        className="md:hidden sticky top-2 z-30 rounded-xl border border-border bg-card/95 p-3 shadow-sm">
+        className="md:hidden sticky top-16 z-40 isolate rounded-xl border border-border bg-card p-3 shadow-sm">
         <label htmlFor="unidad-section-picker" className="block pb-1 text-xs font-semibold text-foreground">
           {tUx('jumpTo')}
         </label>
@@ -715,7 +715,7 @@ export function UnidadForm({
         <div className="flex-1 w-full min-w-0 space-y-10 pb-16">
         
         {/* SECCIÓN 1: DATOS BÁSICOS & GRUPO */}
-        <section id="basicos" className="scroll-mt-24">
+        <section id="basicos" className="scroll-mt-44 md:scroll-mt-24">
           <Card className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-6">
             <CardHeader className="p-0 space-y-1">
               <CardTitle className="text-xl font-bold font-sans flex items-center gap-2">
@@ -777,7 +777,7 @@ export function UnidadForm({
         <hr className="border-border" />
 
         {/* SECCIÓN 2: FICHA DE MARKETPLACE & AUTO-TRADUCCIÓN */}
-        <section id="marketplace" className="scroll-mt-24">
+        <section id="marketplace" className="scroll-mt-44 md:scroll-mt-24">
           <Card className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-6">
             <CardHeader className="p-0 space-y-1">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -959,7 +959,7 @@ export function UnidadForm({
         <hr className="border-border" />
 
         {/* SECCIÓN 3: ESQUEMA DE TARIFAS (LENGUAJE NATURAL) */}
-        <section id="modalidades" className="scroll-mt-24">
+        <section id="modalidades" className="scroll-mt-44 md:scroll-mt-24">
           <Card className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-6">
             <CardHeader className="p-0 space-y-1">
               <CardTitle className="text-xl font-bold font-sans flex items-center gap-2">
@@ -1135,7 +1135,7 @@ export function UnidadForm({
 
         {/* SECCIÓN 4: GALERÍA DE FOTOS */}
         <hr className="border-border" />
-        <section id="fotos" className="scroll-mt-24 space-y-6">
+        <section id="fotos" className="scroll-mt-44 md:scroll-mt-24 space-y-6">
           <Card className="border-none shadow-none bg-transparent">
             <CardHeader className="px-0">
               <CardTitle className="text-xl font-bold font-sans flex items-center gap-2">
@@ -1217,7 +1217,7 @@ export function UnidadForm({
         <hr className="border-border" />
 
         {/* SECCIÓN 4: GEOLOCALIZACIÓN & UBICACIÓN */}
-        <section id="ubicacion" className="scroll-mt-24">
+        <section id="ubicacion" className="scroll-mt-44 md:scroll-mt-24">
           <Card className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-6">
             <CardHeader className="p-0 space-y-1">
               <CardTitle className="text-xl font-bold font-sans flex items-center gap-2">
