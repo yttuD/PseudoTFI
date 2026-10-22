@@ -373,11 +373,8 @@ export default async function DashboardPage({
             description={tDash('quotaContracted', { max: cupoMaximo, disp: cupoDisponible })}
             badge={
               <span
-                className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full"
-                style={{
-                  backgroundColor: `${gaugeColor}20`,
-                  color: gaugeColor,
-                }}
+                className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border-l-2 bg-muted text-foreground"
+                style={{ borderLeftColor: gaugeColor }}
               >
                 {percentage}% {tDash('quotaOccupancy')}
               </span>
