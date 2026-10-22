@@ -41,6 +41,8 @@ test.describe('UX-001: axe WCAG 2.2 A/AA critical and serious regression gate', 
       await page.addScriptTag({ path: axePath });
       for (const mode of ['light', 'dark'] as const) {
         await page.evaluate(theme => document.documentElement.classList.toggle('dark', theme === 'dark'), mode);
+        // Audit the settled state, not the transient colors midway through a CSS theme transition.
+        await page.waitForTimeout(500);
         const result = await page.evaluate(async () => {
         const engine = (window as Window & {
           axe?: { run: (doc: Document, options: object) => Promise<{ violations: AxeViolation[] }> };
