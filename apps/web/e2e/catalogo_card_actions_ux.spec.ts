@@ -31,3 +31,32 @@ test.describe('UX-001: card navigation and favorite are separate accessible acti
     await expect(page).toHaveURL(/\/es\/unidades\/a0000000-0000-0000-0000-000000000001/);
   });
 });
+
+
+test.describe('UX-001: WhatsApp contact links are valid and single-focus controls', () => {
+  test.beforeAll(async () => { await startMockApiServer(3001); });
+  test.afterAll(async () => { await stopMockApiServer(); });
+
+  test('contact number with 54 country prefix does not become 5454 and the CTA is a link', async ({ page, context }) => {
+    const id = '11111111-1111-1111-1111-111111111111';
+    const token = `${Buffer.from('{}').toString('base64url')}.${Buffer.from(JSON.stringify({
+      sub: id, accessContext: { actor: 'gestor', ownerOnly: true, capabilities: ['*'] },
+    })).toString('base64url')}.synthetic`;
+    await context.clearCookies();
+    await context.addCookies([{
+      name: 'sb-localhost-auth-token',
+      value: `base64-${Buffer.from(JSON.stringify({
+        access_token: token, user: { id, email: 'qa@example.invalid', user_metadata: { role: 'gestor' } },
+      })).toString('base64')}`,
+      domain: 'localhost', path: '/',
+    }]);
+    await page.goto('/es/unidades/a0000000-0000-0000-0000-000000000001');
+    const contact = page.getByRole('link', { name: 'Contactar por WhatsApp' });
+    await expect(contact).toBeVisible();
+    await expect(contact).toHaveAttribute('href', /^https:\/\/wa\.me\/5493777123456\?text=/);
+    await expect(contact).toHaveAttribute('rel', /noopener noreferrer/);
+    await expect(contact.locator('button')).toHaveCount(0);
+    await contact.focus();
+    await expect(contact).toBeFocused();
+  });
+});
