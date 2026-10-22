@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useForm, useFieldArray, useFormState, type FieldErrors } from 'react-hook-form';
+import { useForm, useFieldArray, type FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -181,8 +181,14 @@ export function UnidadForm({
     if (confirmDiscard) continueEditingRef.current?.focus();
   }, [confirmDiscard]);
 
-  // Subscribe during render: reading formState.isDirty only in a click callback can be stale.
-  const { isDirty } = useFormState({ control: form.control });
+  // Compare substantive form values with the actual initial values. RHF may report dirty
+  // after internal field-array initialization even when the person did not edit anything.
+  const initialValuesSnapshotRef = useRef(JSON.stringify(form.getValues()));
+  const hasUnsavedChanges = () => {
+    const originalAddress = typeof initialData?.direccion_texto === 'string' ? initialData.direccion_texto : '';
+    return JSON.stringify(form.getValues()) !== initialValuesSnapshotRef.current
+      || searchAddress !== originalAddress;
+  };
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -594,7 +600,7 @@ export function UnidadForm({
 
   const handleStatusChange = async (newStatus: 'pausada' | 'publicada') => {
     if (!unidadId) return;
-    if (isDirty && !window.confirm('Tenés cambios sin guardar. ¿Querés continuar sin guardarlos?')) return;
+    if (hasUnsavedChanges() && !window.confirm('Tenés cambios sin guardar. ¿Querés continuar sin guardarlos?')) return;
     setSaveError(null);
     setIsSubmitting(true);
     try {
@@ -661,8 +667,7 @@ export function UnidadForm({
 
   const handleCancel = () => {
     if (isSubmitting) return;
-    const originalAddress = typeof initialData?.direccion_texto === 'string' ? initialData.direccion_texto : '';
-    if (isDirty || searchAddress !== originalAddress) {
+    if (hasUnsavedChanges()) {
       setConfirmDiscard(true);
       return;
     }
