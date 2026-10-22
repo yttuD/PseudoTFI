@@ -232,6 +232,15 @@
     "themeLight": "Modo claro",
     "themeDark": "Modo oscuro",
     "themeToggle": "Cambiar tema",
+    "mobileExplore": "Explorar",
+    "mobileFavorites": "Favoritos",
+    "mobilePublish": "Publicar",
+    "mobileManagers": "Gestores",
+    "mobileAccount": "Cuenta",
+    "mobileNavigation": "Navegación principal móvil",
+    "mobileLocation": "Goya, Corrientes",
+    "mobileSearch": "Buscar unidades",
+    "mobileSearchHint": "Buscar departamentos, casas...",
     "skipToContent": "Ir al contenido principal"
   },
   "UnitDetail": {
@@ -503,5 +512,15 @@
     "localComercial": "Local Comercial",
     "oficina": "Oficina",
     "lote": "Lote / Terreno"
+  },
+  "Favoritos": {
+    "title": "Mis Favoritos",
+    "description": "Unidades que guardaste para consultar o comparar más tarde.",
+    "emptyTitle": "Aún no tienes favoritos guardados",
+    "emptyDescription": "Explora el catálogo y guarda las unidades que te interesen para consultarlas luego.",
+    "explore": "Explorar Unidades",
+    "loadErrorTitle": "No pudimos cargar tus favoritos",
+    "loadErrorDescription": "Tus favoritos no se eliminaron. No podemos consultarlos ahora; intentá de nuevo.",
+    "retry": "Reintentar"
   }
 }

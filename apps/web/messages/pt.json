@@ -232,6 +232,15 @@
     "themeLight": "Modo claro",
     "themeDark": "Modo escuro",
     "themeToggle": "Alternar tema",
+    "mobileExplore": "Explorar",
+    "mobileFavorites": "Favoritos",
+    "mobilePublish": "Publicar",
+    "mobileManagers": "Gestores",
+    "mobileAccount": "Conta",
+    "mobileNavigation": "Navegação principal móvel",
+    "mobileLocation": "Goya, Corrientes",
+    "mobileSearch": "Buscar imóveis",
+    "mobileSearchHint": "Buscar apartamentos, casas...",
     "skipToContent": "Ir para o conteúdo principal"
   },
   "UnitDetail": {
@@ -503,5 +512,15 @@
     "localComercial": "Espaço comercial",
     "oficina": "Escritório",
     "lote": "Lote / Terreno"
+  },
+  "Favoritos": {
+    "title": "Meus Favoritos",
+    "description": "Imóveis salvos para comparar ou consultar mais tarde.",
+    "emptyTitle": "Você ainda não tem favoritos",
+    "emptyDescription": "Explore os imóveis e salve os que interessam para consultar depois.",
+    "explore": "Explorar imóveis",
+    "loadErrorTitle": "Não foi possível carregar seus favoritos",
+    "loadErrorDescription": "Seus favoritos não foram excluídos. Tente novamente quando o serviço estiver disponível.",
+    "retry": "Tentar novamente"
   }
 }

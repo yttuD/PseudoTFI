@@ -232,6 +232,15 @@
     "themeLight": "Light mode",
     "themeDark": "Dark mode",
     "themeToggle": "Change theme",
+    "mobileExplore": "Explore",
+    "mobileFavorites": "Saved",
+    "mobilePublish": "List",
+    "mobileManagers": "Managers",
+    "mobileAccount": "Account",
+    "mobileNavigation": "Mobile main navigation",
+    "mobileLocation": "Goya, Corrientes",
+    "mobileSearch": "Search listings",
+    "mobileSearchHint": "Search apartments, houses...",
     "skipToContent": "Skip to main content"
   },
   "UnitDetail": {
@@ -503,5 +512,15 @@
     "localComercial": "Commercial space",
     "oficina": "Office",
     "lote": "Land / Lot"
+  },
+  "Favoritos": {
+    "title": "My Favorites",
+    "description": "Listings you saved to compare or return to later.",
+    "emptyTitle": "No saved favorites yet",
+    "emptyDescription": "Browse available listings and save the ones you like.",
+    "explore": "Explore listings",
+    "loadErrorTitle": "Your favorites couldn't be loaded",
+    "loadErrorDescription": "Your favorites have not been deleted. Try again when the service is available.",
+    "retry": "Try again"
   }
 }
