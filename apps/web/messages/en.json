@@ -565,5 +565,22 @@
     "prices": "Rates and prices",
     "photos": "Photo gallery",
     "location": "Location and GPS"
+  },
+  "Reportes": {
+    "trigger": "Report",
+    "title": "Report listing",
+    "description": "Why are you reporting this listing? Select a reason.",
+    "reasonLabel": "Report reason",
+    "reasonPlaceholder": "Select a reason",
+    "reasonFraud": "Possible scam or fraud",
+    "reasonFalse": "False or incorrect details",
+    "reasonUnavailable": "The property is no longer available",
+    "reasonOffensive": "Offensive or inappropriate content",
+    "reasonOther": "Other",
+    "cancel": "Cancel",
+    "submit": "Submit report",
+    "sending": "Sending...",
+    "success": "Report submitted. Our team will review it.",
+    "error": "We couldn't submit your report. Please try again."
   }
 }
