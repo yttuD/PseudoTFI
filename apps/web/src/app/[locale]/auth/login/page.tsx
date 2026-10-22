@@ -398,7 +398,7 @@ export default function LoginPage() {
               onClick={() => setLoginMethod("phone")}
               className={`flex items-center justify-center gap-2 rounded-lg py-2 min-h-[44px] text-xs font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                 loginMethod === "phone"
-                  ? "bg-surface text-primary shadow-sm"
+                  ? "bg-surface text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -410,7 +410,7 @@ export default function LoginPage() {
               onClick={() => setLoginMethod("email")}
               className={`flex items-center justify-center gap-2 rounded-lg py-2 min-h-[44px] text-xs font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                 loginMethod === "email"
-                  ? "bg-surface text-primary shadow-sm"
+                  ? "bg-surface text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -440,7 +440,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading || token.length < 6}
-              className="w-full min-h-[44px] flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-white shadow-md shadow-primary/20 hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary/40 focus:outline-hidden transition-all disabled:opacity-50"
+              className="w-full min-h-[44px] flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary/40 focus:outline-hidden transition-all disabled:opacity-50"
             >
               <span>{loading ? t("verificando") : t("verificarOtp")}</span>
               <ArrowRight className="h-4 w-4" />
@@ -482,7 +482,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading || !phone}
-              className="w-full min-h-[44px] flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-white shadow-md shadow-primary/20 hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary/40 focus:outline-hidden transition-all disabled:opacity-50"
+              className="w-full min-h-[44px] flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary/40 focus:outline-hidden transition-all disabled:opacity-50"
             >
               <span>{loading ? t("enviando") : t("enviarOtp")}</span>
               <ArrowRight className="h-4 w-4" />
@@ -526,7 +526,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full min-h-[44px] flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-white shadow-md shadow-primary/20 hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary focus-visible:ring-2 focus-visible:ring-primary/40 transition-all disabled:opacity-50"
+              className="w-full min-h-[44px] flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary focus-visible:ring-2 focus-visible:ring-primary/40 transition-all disabled:opacity-50"
             >
               <span>{loading ? t("ingresando") : t("ingresar")}</span>
               <ArrowRight className="h-4 w-4" />

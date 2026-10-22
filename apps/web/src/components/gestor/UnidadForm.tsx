@@ -703,11 +703,11 @@ export function UnidadForm({
         {/* Sticky ScrollSpy Sidebar */}
         <aside className="hidden md:block w-52 sticky top-6 self-start max-h-[calc(100dvh-3rem)] overflow-y-auto shrink-0">
           <nav className="flex flex-col gap-1 font-sans text-sm font-medium tracking-normal bg-card/50 p-2 rounded-2xl border border-border/60">
-            <button type="button" onClick={() => scrollTo('basicos')} className={`text-left border-l-2 pl-4 py-2.5 rounded-r-lg transition-colors ${activeSection === 'basicos' ? 'border-primary text-primary bg-primary/5 font-bold' : 'border-transparent text-muted-foreground hover:bg-muted'}`}>1. Básicos &amp; Grupo</button>
-            <button type="button" onClick={() => scrollTo('marketplace')} className={`text-left border-l-2 pl-4 py-2.5 rounded-r-lg transition-colors ${activeSection === 'marketplace' ? 'border-primary text-primary bg-primary/5 font-bold' : 'border-transparent text-muted-foreground hover:bg-muted'}`}>2. Ficha &amp; Idiomas</button>
-            <button type="button" onClick={() => scrollTo('modalidades')} className={`text-left border-l-2 pl-4 py-2.5 rounded-r-lg transition-colors ${activeSection === 'modalidades' ? 'border-primary text-primary bg-primary/5 font-bold' : 'border-transparent text-muted-foreground hover:bg-muted'}`}>3. Tarifas &amp; Precios</button>
-            <button type="button" onClick={() => scrollTo('fotos')} className={`text-left border-l-2 pl-4 py-2.5 rounded-r-lg transition-colors ${activeSection === 'fotos' ? 'border-primary text-primary bg-primary/5 font-bold' : 'border-transparent text-muted-foreground hover:bg-muted'}`}>4. Galería Fotos</button>
-            <button type="button" onClick={() => scrollTo('ubicacion')} className={`text-left border-l-2 pl-4 py-2.5 rounded-r-lg transition-colors ${activeSection === 'ubicacion' ? 'border-primary text-primary bg-primary/5 font-bold' : 'border-transparent text-muted-foreground hover:bg-muted'}`}>5. Ubicación &amp; GPS</button>
+            <button type="button" onClick={() => scrollTo('basicos')} className={`text-left border-l-2 pl-4 py-2.5 rounded-r-lg transition-colors ${activeSection === 'basicos' ? 'border-primary text-dorado-700 dark:text-dorado-200 bg-primary/5 font-bold' : 'border-transparent text-muted-foreground hover:bg-muted'}`}>1. Básicos &amp; Grupo</button>
+            <button type="button" onClick={() => scrollTo('marketplace')} className={`text-left border-l-2 pl-4 py-2.5 rounded-r-lg transition-colors ${activeSection === 'marketplace' ? 'border-primary text-dorado-700 dark:text-dorado-200 bg-primary/5 font-bold' : 'border-transparent text-muted-foreground hover:bg-muted'}`}>2. Ficha &amp; Idiomas</button>
+            <button type="button" onClick={() => scrollTo('modalidades')} className={`text-left border-l-2 pl-4 py-2.5 rounded-r-lg transition-colors ${activeSection === 'modalidades' ? 'border-primary text-dorado-700 dark:text-dorado-200 bg-primary/5 font-bold' : 'border-transparent text-muted-foreground hover:bg-muted'}`}>3. Tarifas &amp; Precios</button>
+            <button type="button" onClick={() => scrollTo('fotos')} className={`text-left border-l-2 pl-4 py-2.5 rounded-r-lg transition-colors ${activeSection === 'fotos' ? 'border-primary text-dorado-700 dark:text-dorado-200 bg-primary/5 font-bold' : 'border-transparent text-muted-foreground hover:bg-muted'}`}>4. Galería Fotos</button>
+            <button type="button" onClick={() => scrollTo('ubicacion')} className={`text-left border-l-2 pl-4 py-2.5 rounded-r-lg transition-colors ${activeSection === 'ubicacion' ? 'border-primary text-dorado-700 dark:text-dorado-200 bg-primary/5 font-bold' : 'border-transparent text-muted-foreground hover:bg-muted'}`}>5. Ubicación &amp; GPS</button>
           </nav>
         </aside>
 
@@ -825,7 +825,7 @@ export function UnidadForm({
                   }`}
                 >
                   <span>🇪🇸 Español</span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-primary/10 text-primary font-bold">Principal</span>
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-primary/10 text-dorado-700 dark:text-dorado-200 font-bold">Principal</span>
                 </button>
                 <button
                   type="button"
@@ -838,7 +838,7 @@ export function UnidadForm({
                   }`}
                 >
                   <span>🇬🇧 English</span>
-                  {autoTraducir && <span className="text-[10px] font-mono opacity-70">Auto</span>}
+                  {autoTraducir && <span className="text-[10px] font-mono text-foreground">Auto</span>}
                 </button>
                 <button
                   type="button"
@@ -851,7 +851,7 @@ export function UnidadForm({
                   }`}
                 >
                   <span>🇧🇷 Português</span>
-                  {autoTraducir && <span className="text-[10px] font-mono opacity-70">Auto</span>}
+                  {autoTraducir && <span className="text-[10px] font-mono text-foreground">Auto</span>}
                 </button>
               </div>
 
@@ -882,7 +882,7 @@ export function UnidadForm({
               {activeLangTab === 'en' && (
                 <div className="space-y-4">
                   {autoTraducir && (
-                    <div className="p-3.5 rounded-xl border border-primary/20 bg-primary/5 text-xs text-primary flex items-start sm:items-center gap-2.5">
+                    <div className="p-3.5 rounded-xl border border-primary/20 bg-primary/5 text-xs text-dorado-700 dark:text-dorado-200 flex items-start sm:items-center gap-2.5">
                       <Sparkles className="w-4 h-4 shrink-0 mt-0.5 sm:mt-0" />
                       <span className="leading-relaxed">
                         <strong>Automatic translation enabled:</strong> Your title and description will be automatically translated into English and Portuguese for foreign tenants and tourists. You can disable this option if you prefer to write your own texts.
@@ -913,7 +913,7 @@ export function UnidadForm({
               {activeLangTab === 'pt' && (
                 <div className="space-y-4">
                   {autoTraducir && (
-                    <div className="p-3.5 rounded-xl border border-primary/20 bg-primary/5 text-xs text-primary flex items-start sm:items-center gap-2.5">
+                    <div className="p-3.5 rounded-xl border border-primary/20 bg-primary/5 text-xs text-dorado-700 dark:text-dorado-200 flex items-start sm:items-center gap-2.5">
                       <Sparkles className="w-4 h-4 shrink-0 mt-0.5 sm:mt-0" />
                       <span className="leading-relaxed">
                         <strong>Tradução automática ativada:</strong> Seu título e descrição serão traduzidos automaticamente para o inglês e português para inquilinos e turistas estrangeiros. Você pode desativar esta opção se preferir escrever seus próprios textos.

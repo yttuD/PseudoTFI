@@ -66,23 +66,23 @@ export function NativeBottomNav({ locale }: { locale: string }) {
             className={cn(
               'flex flex-col items-center justify-center flex-1 h-full py-1 text-[11px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
               active
-                ? 'text-dorado-600 dark:text-dorado-300 font-semibold'
+                ? 'text-dorado-700 dark:text-dorado-300 font-semibold'
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
             <div className="relative">
               {item.highlight ? (
-                <div className="p-1 rounded-full bg-dorado-500/10 border border-dorado-500/20 text-dorado-600 dark:text-dorado-300">
+                <div className="p-1 rounded-full bg-dorado-500/10 border border-dorado-500/20 text-dorado-700 dark:text-dorado-300">
                   <Icon className="h-5 w-5" />
                 </div>
               ) : (
-                <Icon className={cn('h-5 w-5', active ? 'text-dorado-600 dark:text-dorado-300' : 'text-muted-foreground')} />
+                <Icon className={cn('h-5 w-5', active ? 'text-dorado-700 dark:text-dorado-300' : 'text-muted-foreground')} />
               )}
               {active && (
                 <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-dorado-500" />
               )}
             </div>
-            <span className={cn('mt-0.5 tracking-tight', active && 'text-dorado-600 dark:text-dorado-300 font-bold')}>
+            <span className={cn('mt-0.5 tracking-tight', active && 'text-dorado-700 dark:text-dorado-300 font-bold')}>
               {item.label}
             </span>
           </Link>
