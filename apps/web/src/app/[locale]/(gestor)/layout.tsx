@@ -91,8 +91,12 @@ export default async function GestorLayout({
 
   return (
     <div className="flex flex-col md:flex-row h-screen overflow-hidden bg-background relative">
+      <a href="#main-content"
+        className="sr-only focus:not-sr-only fixed left-3 top-3 z-[200] rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-md focus-visible:ring-2 focus-visible:ring-ring">
+        {tNav('skipToContent')}
+      </a>
       <Sidebar locale={locale} rol={rol} accessContext={accessContext} />
-      <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-muted/10 relative">
+      <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto p-4 md:p-8 bg-muted/10 relative focus:outline-none">
         {isPendingDelegado ? (
           <div className="space-y-6">
             <div
