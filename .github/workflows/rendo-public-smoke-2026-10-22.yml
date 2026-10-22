@@ -21,8 +21,20 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
-      - name: Check live login and both API health endpoints by GET only
-        run: node scripts/release/readonly-vercel-smoke.mjs --web https://rendo-beta-web.vercel.app --api https://rendo-beta-api.vercel.app
+      - name: Independently report all three health and login status codes
+        shell: bash
+        run: |
+          set -uo pipefail
+          failed=0
+          for url in \
+            https://rendo-beta-web.vercel.app/es/auth/login \
+            https://rendo-beta-api.vercel.app/health/live \
+            https://rendo-beta-api.vercel.app/health/ready; do
+            status="$(curl --silent --show-error --max-time 20 --retry 1 --retry-delay 2 -o /dev/null -w '%{http_code}' "$url")" || status=NETWORK_ERROR
+            printf 'GET %s -> HTTP %s\n' "$url" "$status"
+            if [ "$status" != "200" ]; then failed=1; fi
+          done
+          exit "$failed"
       - name: Check public ES, EN, PT and marketplace pages by GET only
         shell: bash
         run: |
