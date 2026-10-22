@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import { getClientAuthToken } from '@/lib/supabase/client-token';
-import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,8 +22,6 @@ import {
 import {
   Plus,
   FileText,
-  UploadCloud,
-  X,
   AlertCircle,
   Wallet,
   ShieldCheck,
@@ -169,9 +166,6 @@ export function AlquilerFormModal({
   const [gruposList, setGruposList] = useState<GrupoOption[]>(grupos);
 
   // Estado para el archivo PDF del contrato
-  const [contratoFile, setContratoFile] = useState<File | null>(null);
-  const [contratoError, setContratoError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -329,9 +323,6 @@ export function AlquilerFormModal({
 
   const resetAndClose = () => {
     form.reset();
-    setContratoFile(null);
-    setContratoError(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
     setConfirmDiscard(false);
     setSuccessMessage(null);
     setApiErrorMessage(null);
@@ -347,8 +338,7 @@ export function AlquilerFormModal({
     }
     // Do not dismiss while the network request is saving the contract.
     if (isSubmitting) return;
-    if (!successMessage && (contratoFile !== null ||
-      JSON.stringify(form.getValues()) !== openSnapshotRef.current)) {
+    if (!successMessage && JSON.stringify(form.getValues()) !== openSnapshotRef.current) {
       setConfirmDiscard(true);
       return;
     }
@@ -385,60 +375,13 @@ export function AlquilerFormModal({
   const saldoPendiente = Math.max(0, watchedTotal - cobradoInicial);
   const fondosCustodia = watchedDeposito;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    setContratoError(null);
-    if (!file) return;
-
-    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-      setContratoError('Solo se permiten archivos en formato PDF (.pdf)');
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      setContratoError('El archivo excede el límite máximo de 10 MB');
-      return;
-    }
-    setContratoFile(file);
-  };
-
-  const handleRemoveFile = () => {
-    setContratoFile(null);
-    setContratoError(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
-    setContratoError(null);
     setApiErrorMessage(null);
 
     try {
-      let contratoUrl: string | undefined = undefined;
-
-      // 1. Subida opcional de archivo PDF
-      if (contratoFile) {
-        try {
-          const supabase = createClient();
-          const cleanName = contratoFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-          const filePath = `${Date.now()}_${cleanName}`;
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('contratos')
-            .upload(filePath, contratoFile, { cacheControl: '3600', upsert: false });
-          if (uploadError || !uploadData?.path) {
-            throw new Error('El almacenamiento no confirmó la subida del contrato.');
-          }
-          const { data: pubData } = supabase.storage.from('contratos').getPublicUrl(uploadData.path);
-          contratoUrl = pubData?.publicUrl || uploadData.path;
-        } catch {
-          // An explicitly selected document is part of the user's intended
-          // contract. Never silently persist a different, document-less one.
-          throw new Error('No se pudo adjuntar el PDF. El alquiler no fue guardado; reintentá la subida.');
-        }
-      }
-
-      // 2. Construcción de intervalos según modalidad
+      // The private contratos bucket authorizes uploads only after an alquiler
+      // exists, under its UUID folder. Attach the PDF from the rentals list.\n\n      // 2. Construcción de intervalos según modalidad
       let inicioAtStr: string;
       let finAtStr: string;
 
@@ -516,7 +459,6 @@ export function AlquilerFormModal({
           monto_deposito: Number(data.monto_deposito || 0),
           estado_pago: data.estado_pago,
           observaciones: data.observaciones,
-          contrato_url: contratoUrl,
         }),
       });
 
@@ -527,7 +469,6 @@ export function AlquilerFormModal({
 
       setSuccessMessage('¡Alquiler registrado con éxito!');
       form.reset();
-      setContratoFile(null);
       router.refresh();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Error inesperado al registrar el alquiler';
@@ -570,7 +511,7 @@ export function AlquilerFormModal({
           >
             <p className="font-semibold text-foreground">Hay cambios sin guardar</p>
             <p className="text-muted-foreground">
-              Si cerrás, se perderán los datos ingresados y el PDF seleccionado.
+              Si cerrás, se perderán los datos ingresados.
             </p>
             <div className="flex flex-wrap gap-2">
               <Button
@@ -1170,63 +1111,14 @@ export function AlquilerFormModal({
               </div>
             </div>
 
-            {/* Anexar Contrato en PDF (Opcional) */}
-            <div className="border border-dashed border-border/80 rounded-xl p-3.5 bg-muted/10 space-y-2">
-              <Label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                <FileText className="h-3.5 w-3.5 text-primary" />
-                <span>Contrato Digital Firmado (Opcional)</span>
-              </Label>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,application/pdf"
-                onChange={handleFileChange}
-                className="hidden"
-                id="contrato-upload"
-              />
-
-              {!contratoFile ? (
-                <label
-                  htmlFor="contrato-upload"
-                  className="flex flex-col items-center justify-center p-3 rounded-lg border border-border bg-card/60 hover:bg-card cursor-pointer transition-colors text-center"
-                >
-                  <UploadCloud className="h-6 w-6 text-muted-foreground mb-1" />
-                  <span className="text-xs font-medium text-foreground">Subir contrato (.pdf, máx 10 MB)</span>
-                  <span className="text-[10px] text-muted-foreground mt-0.5">
-                    Podés asociar el documento legal firmado para consulta permanente
-                  </span>
-                </label>
-              ) : (
-                <div className="flex items-center justify-between p-2.5 rounded-lg border border-primary/30 bg-primary/5">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <FileText className="h-5 w-5 text-primary shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-foreground truncate">{contratoFile.name}</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {(contratoFile.size / (1024 * 1024)).toFixed(2)} MB
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleRemoveFile}
-                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                    title="Remover archivo"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-
-              {contratoError && (
-                <div className="flex items-center gap-1.5 text-xs text-destructive">
-                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                  <span>{contratoError}</span>
-                </div>
-              )}
+            <div data-testid="contrato-upload-after-save" className="rounded-xl border border-border/80 bg-muted/10 p-3.5 space-y-1">
+              <span className="flex items-center gap-1.5 text-xs font-semibold">
+                <FileText className="h-3.5 w-3.5 text-primary" /> Contrato digital (opcional)
+              </span>
+              <p className="text-xs text-muted-foreground">
+                Guardá primero el alquiler y después adjuntá el PDF desde su fila en Alquileres.
+                El archivo se guardará en una carpeta privada asociada a ese contrato.
+              </p>
             </div>
 
             {/* Acciones */}
