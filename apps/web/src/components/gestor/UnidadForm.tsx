@@ -101,6 +101,7 @@ export function UnidadForm({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState('basicos');
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const userEditedRef = useRef(false);
   const continueEditingRef = useRef<HTMLButtonElement>(null);
   const [openMobileMap, setOpenMobileMap] = useState(false);
 
@@ -188,8 +189,8 @@ export function UnidadForm({
   const initialValuesSnapshotRef = useRef(JSON.stringify(form.getValues()));
   const hasUnsavedChanges = () => {
     const originalAddress = typeof initialData?.direccion_texto === 'string' ? initialData.direccion_texto : '';
-    return JSON.stringify(form.getValues()) !== initialValuesSnapshotRef.current
-      || searchAddress !== originalAddress;
+    return userEditedRef.current && (JSON.stringify(form.getValues()) !== initialValuesSnapshotRef.current
+      || searchAddress !== originalAddress);
   };
 
   const { fields, append, remove } = useFieldArray({
@@ -338,6 +339,7 @@ export function UnidadForm({
     const lat = parseFloat(item.lat);
     const lng = parseFloat(item.lon);
 
+    userEditedRef.current = true;
     setSearchAddress(item.display_name);
     setAddressResultName(item.display_name);
     setShowDropdown(false);
@@ -350,6 +352,7 @@ export function UnidadForm({
   };
 
   const handleLocationSelect = (loc: { lat: number, lng: number }) => {
+    userEditedRef.current = true;
     form.setValue('ubicacion_exacta', loc, { shouldDirty: true });
     form.setValue('ubicacion_aprox', loc, { shouldDirty: true });
     setSearchAddress('');
@@ -678,7 +681,8 @@ export function UnidadForm({
   };
 
   return (
-    <form noValidate onSubmit={form.handleSubmit((data) => onSubmit(data), onInvalid)} className="w-full max-w-7xl mx-auto flex flex-col gap-8 relative">
+    <form noValidate onChangeCapture={() => { userEditedRef.current = true; }}
+      onSubmit={form.handleSubmit((data) => onSubmit(data), onInvalid)} className="w-full max-w-7xl mx-auto flex flex-col gap-8 relative">
       {/* Optional direct jump across the long form, without a mandatory wizard. */}
       <nav aria-label={tUx('mobileSections')} data-testid="unidad-mobile-section-nav"
         className="md:hidden sticky top-2 z-30 rounded-xl border border-border bg-card/95 p-3 shadow-sm">
@@ -724,7 +728,7 @@ export function UnidadForm({
               {/* Categoría */}
               <div className="grid gap-2">
                 <Label className="font-mono text-xs uppercase text-muted-foreground">Categoría *</Label>
-                <Select value={form.watch('categoria')} onValueChange={(val) => form.setValue('categoria', val as string, { shouldDirty: true, shouldValidate: true })}>
+                <Select value={form.watch('categoria')} onValueChange={(val) => { userEditedRef.current = true; form.setValue('categoria', val as string, { shouldDirty: true, shouldValidate: true }); }}>
                   <SelectTrigger id="categoria-select" className="h-12 rounded-xl"><span className="truncate">{categoriaLabel(form.watch('categoria'))}</span></SelectTrigger>
                   <SelectContent className="rounded-xl">
                     {CATEGORIAS_UNIDAD.map((categoria) => (
@@ -739,7 +743,7 @@ export function UnidadForm({
                 <Label className="font-mono text-xs uppercase text-muted-foreground">Grupo / Edificio</Label>
                 <Select 
                   value={form.watch('grupo_id') || 'sin-grupo'}
-                  onValueChange={(val) => form.setValue('grupo_id', val === 'sin-grupo' || !val ? undefined : val, { shouldDirty: true })}
+                  onValueChange={(val) => { userEditedRef.current = true; form.setValue('grupo_id', val === 'sin-grupo' || !val ? undefined : val, { shouldDirty: true }); }}
                 >
                   <SelectTrigger className="h-12 rounded-xl"><span className="truncate">{gruposList.find((grupo) => grupo.id === form.watch('grupo_id'))?.nombre || 'Sin grupo / unidad individual'}</span></SelectTrigger>
                   <SelectContent className="rounded-xl">
@@ -757,7 +761,7 @@ export function UnidadForm({
               {/* Zona Operativa */}
               <div className="grid gap-2">
                 <Label className="font-mono text-xs uppercase text-muted-foreground">Zona Operativa</Label>
-                <Select value={form.watch('zona_id')?.toString() || 'sin-zona'} onValueChange={(val) => form.setValue('zona_id', val === 'sin-zona' ? undefined : Number(val), { shouldDirty: true })}>
+                <Select value={form.watch('zona_id')?.toString() || 'sin-zona'} onValueChange={(val) => { userEditedRef.current = true; form.setValue('zona_id', val === 'sin-zona' ? undefined : Number(val), { shouldDirty: true }); }}>
                   <SelectTrigger className="h-12 rounded-xl"><span className="truncate">{zonasDisponibles.find((zona) => zona.id === form.watch('zona_id'))?.nombre || 'Sin zona predefinida'}</span></SelectTrigger>
                   <SelectContent className="rounded-xl">
                     <SelectItem value="sin-zona">Sin zona predefinida</SelectItem>
@@ -795,6 +799,7 @@ export function UnidadForm({
                   <Switch 
                     checked={autoTraducir} 
                     onCheckedChange={(checked) => {
+                      userEditedRef.current = true;
                       setAutoTraducir(checked);
                       form.setValue('auto_traducir', checked, { shouldDirty: true });
                     }} 
@@ -965,7 +970,7 @@ export function UnidadForm({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <button
                   type="button"
-                  onClick={() => append({ unidad_tiempo: 'día', cantidad_tiempo: 1, precio: Number.NaN })}
+                  onClick={() => { userEditedRef.current = true; append({ unidad_tiempo: 'día', cantidad_tiempo: 1, precio: Number.NaN }); }}
                   className="min-h-[90px] p-4 flex items-center gap-3.5 rounded-2xl border border-border/80 bg-surface/80 hover:border-dorado-500/60 hover:bg-dorado-500/5 hover:shadow-md transition-all text-left group cursor-pointer"
                 >
                   <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 group-hover:scale-105 transition-transform shrink-0">
@@ -979,7 +984,7 @@ export function UnidadForm({
 
                 <button
                   type="button"
-                  onClick={() => append({ unidad_tiempo: 'mes', cantidad_tiempo: 1, precio: Number.NaN })}
+                  onClick={() => { userEditedRef.current = true; append({ unidad_tiempo: 'mes', cantidad_tiempo: 1, precio: Number.NaN }); }}
                   className="min-h-[90px] p-4 flex items-center gap-3.5 rounded-2xl border border-border/80 bg-surface/80 hover:border-dorado-500/60 hover:bg-dorado-500/5 hover:shadow-md transition-all text-left group cursor-pointer"
                 >
                   <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform shrink-0">
@@ -993,7 +998,7 @@ export function UnidadForm({
 
                 <button
                   type="button"
-                  onClick={() => append({ unidad_tiempo: 'hora', cantidad_tiempo: 1, precio: Number.NaN })}
+                  onClick={() => { userEditedRef.current = true; append({ unidad_tiempo: 'hora', cantidad_tiempo: 1, precio: Number.NaN }); }}
                   className="min-h-[90px] p-4 flex items-center gap-3.5 rounded-2xl border border-border/80 bg-surface/80 hover:border-dorado-500/60 hover:bg-dorado-500/5 hover:shadow-md transition-all text-left group cursor-pointer"
                 >
                   <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 group-hover:scale-105 transition-transform shrink-0">
@@ -1041,7 +1046,7 @@ export function UnidadForm({
                             type="button"
                             variant="ghost"
                             size="sm"
-                            onClick={() => remove(index)}
+                            onClick={() => { userEditedRef.current = true; remove(index); }}
                             className="text-destructive hover:text-destructive hover:bg-destructive/10 text-xs font-mono min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
                           >
                             <Trash2 className="w-4 h-4 mr-1" /> Eliminar
