@@ -265,6 +265,9 @@ export class AlquileresService {
   }
 
   async create(createAlquilerDto: CreateAlquilerDto, token: string, workspaceId: string) {
+    if (createAlquilerDto.contrato_url !== undefined) {
+      throw new BadRequestException('El documento se adjunta después del alta desde la operación privada');
+    }
     const client = this.supabaseService.getClient(token);
     const unidadData = await this.validateUnidad(client, createAlquilerDto.unidad_id);
 
@@ -362,7 +365,7 @@ export class AlquileresService {
           estado_pago: estadoPago,
           monto_cobrado: montoCobrado,
           observaciones: createAlquilerDto.observaciones,
-          contrato_url: createAlquilerDto.contrato_url,
+          contrato_url: null,
         },
       ])
       .select()
@@ -591,38 +594,17 @@ export class AlquileresService {
   }
 
   /**
-   * Attach an existing PDF to an already-created rental without rewriting dates,
-   * deposits or money. Supabase Storage RLS enforces the rental UUID folder.
-   * The protected controller separately checks the actor's manage permission.
+   * Link an existing object scoped to this rental; no arbitrary URLs or money
+   * updates allowed. The controller checks the actor's manage permission, and
+   * Storage RLS checks the JWT against the UUID-folder owner.
    */
   async attachContract(id: string, path: string, token: string) {
     const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuid.test(id) || typeof path !== 'string' || !path.startsWith(`${id}/`)) {
+    if (!uuid.test(id) || typeof path !== 'string' || !path.startsWith(id + '/')) {
       throw new BadRequestException('Ruta privada de contrato inválida');
     }
     const filename = path.slice(id.length + 1);
-    if (!new RegExp('^[0-9a-f-]{36}_[a-zA-Z0-9._-]{1,100}\\.pdf
-    const client = this.supabaseService.getClient(token);
-
-    const { error } = await client
-      .from('alquileres')
-      .update({ deleted_at: new Date().toISOString() })
-      .eq('id', id)
-      .is('deleted_at', null)
-      .select()
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        throw new NotFoundException('Alquiler no encontrado');
-      }
-      throw new UnprocessableEntityException(error.message);
-    }
-
-    return { message: 'Alquiler borrado lógicamente' };
-  }
-}
-, 'i').test(filename) ||
+    if (!/^[0-9a-f-]{36}_[a-zA-Z0-9._-]{1,100}\.pdf$/i.test(filename) ||
         filename.includes('..')) {
       throw new BadRequestException('El documento debe ser un PDF con ruta de alquiler válida');
     }
@@ -634,8 +616,6 @@ export class AlquileresService {
     if (rental.contrato_url === path) return { id, contrato_url: path };
     if (rental.contrato_url) throw new ConflictException('El alquiler ya tiene un documento vinculado');
 
-    // The user's JWT (not service_role) must see this exact object through
-    // Storage SELECT/RLS; never trust a user-provided URL or unrelated object.
     const { data: objects, error: storageError } = await client.storage
       .from('contratos').list(id, { search: filename, limit: 100 });
     if (storageError || !objects?.some((obj: any) => obj.id && obj.name === filename)) {
@@ -646,8 +626,6 @@ export class AlquileresService {
     if (Number.isFinite(size) && size > 10 * 1024 * 1024) {
       throw new BadRequestException('El contrato supera 10 MB');
     }
-
-    // Optimistic no-overwrite guard against two concurrent attachments.
     const { data, error } = await client.from('alquileres')
       .update({ contrato_url: path }).eq('id', id).is('deleted_at', null)
       .is('contrato_url', null).select('id, contrato_url').maybeSingle();
