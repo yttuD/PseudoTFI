@@ -231,7 +231,16 @@
     "rolePending": "Pendente",
     "themeLight": "Modo claro",
     "themeDark": "Modo escuro",
-    "themeToggle": "Alternar tema"
+    "themeToggle": "Alternar tema",
+    "mobileExplore": "Explorar",
+    "mobileFavorites": "Favoritos",
+    "mobilePublish": "Publicar",
+    "mobileManagers": "Gestores",
+    "mobileAccount": "Conta",
+    "mobileNavigation": "Navegação principal móvel",
+    "mobileLocation": "Goya, Corrientes",
+    "mobileSearch": "Buscar imóveis",
+    "mobileSearchHint": "Buscar apartamentos, casas..."
   },
   "UnitDetail": {
     "translationPendingNotice": "Tradução pendente: parte das informações aparece no original em espanhol.",
@@ -463,14 +472,14 @@
     "saving": "Salvando...",
     "save": "Salvar alterações"
   },
-    "Catalogo": {
-      "titulo": "Catálogo de Unidades Disponíveis",
-      "servicioNoDisponible": "Serviço indisponível",
-      "unidadEncontrada": "unidade encontrada",
-      "unidadesEncontradas": "unidades encontradas",
-      "errorTitulo": "O catálogo está temporariamente indisponível",
-      "errorDescripcion": "Seus filtros serão preservados ao tentar novamente.",
-      "reintentar": "Tentar novamente",
-      "sinResultadosDescripcion": "Não encontramos unidades que correspondam aos critérios selecionados. Tente ajustar ou limpar os filtros."
-    }
+  "Catalogo": {
+    "titulo": "Catálogo de Unidades Disponíveis",
+    "servicioNoDisponible": "Serviço indisponível",
+    "unidadEncontrada": "unidade encontrada",
+    "unidadesEncontradas": "unidades encontradas",
+    "errorTitulo": "O catálogo está temporariamente indisponível",
+    "errorDescripcion": "Seus filtros serão preservados ao tentar novamente.",
+    "reintentar": "Tentar novamente",
+    "sinResultadosDescripcion": "Não encontramos unidades que correspondam aos critérios selecionados. Tente ajustar ou limpar os filtros."
+  }
 }

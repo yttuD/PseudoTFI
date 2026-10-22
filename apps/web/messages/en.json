@@ -231,7 +231,16 @@
     "rolePending": "Pending",
     "themeLight": "Light mode",
     "themeDark": "Dark mode",
-    "themeToggle": "Change theme"
+    "themeToggle": "Change theme",
+    "mobileExplore": "Explore",
+    "mobileFavorites": "Saved",
+    "mobilePublish": "List",
+    "mobileManagers": "Managers",
+    "mobileAccount": "Account",
+    "mobileNavigation": "Mobile main navigation",
+    "mobileLocation": "Goya, Corrientes",
+    "mobileSearch": "Search listings",
+    "mobileSearchHint": "Search apartments, houses..."
   },
   "UnitDetail": {
     "translationPendingNotice": "Translation pending: some information is shown in the original Spanish.",
@@ -463,14 +472,14 @@
     "saving": "Saving...",
     "save": "Save changes"
   },
-    "Catalogo": {
-      "titulo": "Available Units Catalog",
-      "servicioNoDisponible": "Service unavailable",
-      "unidadEncontrada": "unit found",
-      "unidadesEncontradas": "units found",
-      "errorTitulo": "The catalog is temporarily unavailable",
-      "errorDescripcion": "Your filters will be preserved when you retry.",
-      "reintentar": "Try again",
-      "sinResultadosDescripcion": "No units match the selected search criteria. Try adjusting or clearing your filters."
-    }
+  "Catalogo": {
+    "titulo": "Available Units Catalog",
+    "servicioNoDisponible": "Service unavailable",
+    "unidadEncontrada": "unit found",
+    "unidadesEncontradas": "units found",
+    "errorTitulo": "The catalog is temporarily unavailable",
+    "errorDescripcion": "Your filters will be preserved when you retry.",
+    "reintentar": "Try again",
+    "sinResultadosDescripcion": "No units match the selected search criteria. Try adjusting or clearing your filters."
+  }
 }
