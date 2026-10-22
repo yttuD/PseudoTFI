@@ -14,9 +14,10 @@ interface CardUnidadProps {
   isLoggedIn?: boolean;
   token?: string;
   exchangeRates?: ExchangeRates | null;
+  priority?: boolean;
 }
 
-export function CardUnidad({ unidad, locale, isFavorito = false, isLoggedIn = false, token, exchangeRates }: CardUnidadProps) {
+export function CardUnidad({ unidad, locale, isFavorito = false, isLoggedIn = false, token, exchangeRates, priority = false }: CardUnidadProps) {
   const t = useTranslations('unidad');
   const tDetail = useTranslations('UnitDetail');
   
@@ -36,10 +37,15 @@ export function CardUnidad({ unidad, locale, isFavorito = false, isLoggedIn = fa
         <div className="aspect-[4/3] relative bg-muted overflow-hidden">
           {Array.isArray(unidad.fotos) && unidad.fotos.length > 0 ? (
             /* eslint-disable-next-line @next/next/no-img-element */
-            <img 
-              src={unidad.fotos[0] as string} 
-              alt={(unidad.titulo_es as string) || 'Foto de la unidad'} 
-              className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" 
+            <img
+              src={unidad.fotos[0] as string}
+              alt={(unidad.titulo_es as string) || 'Foto de la unidad'}
+              loading={priority ? 'eager' : 'lazy'}
+              fetchPriority={priority ? 'high' : 'auto'}
+              decoding="async"
+              width={800}
+              height={600}
+              className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105"
             />
           ) : (
             <div className="flex items-center justify-center w-full h-full text-muted-foreground text-xs bg-muted">

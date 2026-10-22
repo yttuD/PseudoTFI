@@ -495,6 +495,8 @@
     "ubicacion": "Ubicación / Zona",
     "todasZonas": "Todas las zonas",
     "ayudaZonas": "“Todas” también incluye unidades fuera de las zonas listadas.",
+    "zonasError": "No pudimos cargar las zonas. Podés seguir buscando.",
+    "reintentarZonas": "Reintentar zonas",
     "precio": "Rango de Precio",
     "minimo": "Mínimo",
     "maximo": "Máximo",

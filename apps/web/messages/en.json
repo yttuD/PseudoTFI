@@ -495,6 +495,8 @@
     "ubicacion": "Location / Area",
     "todasZonas": "All areas",
     "ayudaZonas": "“All” also includes properties outside the listed areas.",
+    "zonasError": "Areas could not be loaded. You can still search.",
+    "reintentarZonas": "Retry areas",
     "precio": "Price range",
     "minimo": "Minimum",
     "maximo": "Maximum",

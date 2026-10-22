@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Search, Filter, Building2, MapPin, RotateCcw, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,7 @@ export function MarketplaceFiltrosSidebar({ collapsedOnMobile = false }: { colla
   const [precioMin, setPrecioMin] = useState(searchParams.get('precio_min') || '');
   const [precioMax, setPrecioMax] = useState(searchParams.get('precio_max') || '');
   const [zonas, setZonas] = useState<{ id: string | number; nombre: string }[]>([]);
+  const [zonasStatus, setZonasStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [mobileOpen, setMobileOpen] = useState(!collapsedOnMobile);
   const precioMaxRef = useRef<HTMLInputElement>(null);
   const mobileFilterToggleRef = useRef<HTMLButtonElement>(null);
@@ -81,18 +82,25 @@ export function MarketplaceFiltrosSidebar({ collapsedOnMobile = false }: { colla
     setPrecioMax(searchParams.get('precio_max') || '');
   }, [searchParams]);
 
-  useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/marketplace/zonas`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setZonas(data.flatMap((ciudad: { nombre: string; zonas?: { id: number; nombre: string }[] }) =>
-            (ciudad.zonas || []).map((zona) => ({ id: zona.id, nombre: `${ciudad.nombre} · ${zona.nombre}` }))
-          ));
-        }
-      })
-      .catch(() => {});
+  // Zone loading failures should never silently look like an empty result.
+  // Keep other filters usable and provide a quiet inline retry.
+  const cargarZonas = useCallback(async () => {
+    setZonasStatus('loading');
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/marketplace/zonas`);
+      if (!res.ok) throw new Error('Zona service unavailable');
+      const data: unknown = await res.json();
+      if (!Array.isArray(data)) throw new Error('Invalid zona list');
+      setZonas(data.flatMap((ciudad: { nombre: string; zonas?: { id: number; nombre: string }[] }) =>
+        (ciudad.zonas || []).map((zona) => ({ id: zona.id, nombre: `${ciudad.nombre} · ${zona.nombre}` }))
+      ));
+      setZonasStatus('ready');
+    } catch {
+      setZonasStatus('error');
+    }
   }, []);
+
+  useEffect(() => { void cargarZonas(); }, [cargarZonas]);
 
   const aplicarFiltros = () => {
     if (rangoInvalido) return;
@@ -224,6 +232,18 @@ export function MarketplaceFiltrosSidebar({ collapsedOnMobile = false }: { colla
             </SelectContent>
           </Select>
           <p className="mt-1.5 text-[11px] text-muted-foreground">{t('ayudaZonas')}</p>
+          {zonasStatus === 'error' && (
+            <div role="status" className="mt-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-foreground">
+              <span>{t('zonasError')}</span>
+              <button
+                type="button"
+                onClick={() => void cargarZonas()}
+                className="ml-2 inline-flex min-h-11 items-center font-semibold text-dorado-700 dark:text-dorado-200 underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-ring"
+              >
+                {t('reintentarZonas')}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Rango de Precios */}

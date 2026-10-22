@@ -154,9 +154,10 @@ export default async function UnidadesPage({
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {unidades.map((u: Record<string, unknown>) => (
+              {unidades.map((u: Record<string, unknown>, index: number) => (
                 <CardUnidad
                   key={u.id as string}
+                  priority={index === 0}
                   unidad={u}
                   locale={locale}
                   isFavorito={favIds.has(u.id as string)}
