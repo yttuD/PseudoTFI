@@ -1,0 +1,46 @@
+name: Rendo pricing fix focused browser checks
+on:
+  push:
+    branches:
+      - qa/pricing-focused-2026-10-22
+permissions:
+  contents: read
+jobs:
+  public-pricing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      AUTH_ALLOW_DEV_TOKENS: 'true'
+      NEXT_PUBLIC_AUTH_ALLOW_DEV_TOKENS: 'true'
+      NEXT_PUBLIC_API_URL: 'http://127.0.0.1:3001'
+      NEXT_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54321'
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'local-test-only'
+      PLAYWRIGHT_TEST: '1'
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Set up pinned pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.0.0 --activate
+      - name: Install web dependencies
+        run: pnpm install --frozen-lockfile --filter web...
+      - name: Build internal types
+        run: pnpm --filter @tfi/types build
+      - name: Install Chromium
+        working-directory: apps/web
+        run: node node_modules/@playwright/test/cli.js install --with-deps chromium
+      - name: Install pinned axe-core
+        run: |
+          npm install --prefix "$RUNNER_TEMP/rendo-axe" --no-save --ignore-scripts --no-audit --no-fund axe-core@4.13.0
+          test -s "$RUNNER_TEMP/rendo-axe/node_modules/axe-core/axe.min.js"
+      - name: Test duplicate public tariffs and minimum duration across locales and viewports
+        working-directory: apps/web
+        env:
+          AXE_SCRIPT_PATH: ${{ runner.temp }}/rendo-axe/node_modules/axe-core/axe.min.js
+        run: node node_modules/@playwright/test/cli.js test -c playwright.rendo-ci.config.ts e2e/unit_detail_published_contrast_ux.spec.ts --reporter=list
