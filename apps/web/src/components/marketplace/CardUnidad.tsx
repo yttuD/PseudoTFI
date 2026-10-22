@@ -20,6 +20,7 @@ interface CardUnidadProps {
 export function CardUnidad({ unidad, locale, isFavorito = false, isLoggedIn = false, token, exchangeRates, priority = false }: CardUnidadProps) {
   const t = useTranslations('unidad');
   const tDetail = useTranslations('UnitDetail');
+  const tCatalog = useTranslations('Catalogo');
   
   const modalidades = Array.isArray(unidad.modalidades_precio) ? unidad.modalidades_precio : [];
   const prices = modalidades.map((m: { precio: number; precio_usd?: number | null; precio_brl?: number | null; unidad_tiempo?: string }) => ({
@@ -36,7 +37,7 @@ export function CardUnidad({ unidad, locale, isFavorito = false, isLoggedIn = fa
       <Link
         data-testid="unit-card-detail-link"
         href={`/${locale}/unidades/${unidad.id}`}
-        aria-label={String(unidad.titulo || unidad.titulo_es || 'Unidad')}
+        aria-label={String(unidad.titulo || unidad.titulo_es || tCatalog('unnamedUnit'))}
         className="absolute inset-0 z-10 rounded-[1.5rem] focus-visible:outline-none"
       />
       <div className="aspect-[4/3] relative bg-muted overflow-hidden">
@@ -44,7 +45,7 @@ export function CardUnidad({ unidad, locale, isFavorito = false, isLoggedIn = fa
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={unidad.fotos[0] as string}
-              alt={(unidad.titulo_es as string) || 'Foto de la unidad'}
+              alt={String(unidad.titulo || unidad.titulo_es || tCatalog('photoAlt'))}
               loading={priority ? 'eager' : 'lazy'}
               fetchPriority={priority ? 'high' : 'auto'}
               decoding="async"
@@ -83,7 +84,7 @@ export function CardUnidad({ unidad, locale, isFavorito = false, isLoggedIn = fa
             {firstPrice && (
               <div data-testid="unit-card-price" className="bg-card rounded-xl px-3 py-1.5 shadow-sm border border-border">
                 <span className="text-[10px] text-muted-foreground uppercase font-mono mr-1 tracking-wider">{t('desde')}</span>
-                <span className="font-bold font-mono text-dorado-700 dark:text-dorado-200">{firstPrice.price?.text}{firstPrice.price?.approximate ? ' aprox.' : ''}</span>
+                <span className="font-bold font-mono text-dorado-700 dark:text-dorado-200">{firstPrice.price?.text}{firstPrice.price?.approximate ? ` ${tCatalog('estimated')}` : ''}</span>
                 <span className="text-[10px] text-muted-foreground ml-1">/ {periodLabel}</span>
               </div>
             )}
@@ -93,7 +94,7 @@ export function CardUnidad({ unidad, locale, isFavorito = false, isLoggedIn = fa
         <CardContent className="p-4 flex flex-col flex-1 gap-2">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground uppercase font-mono tracking-wider">
             <MapPin className="w-3.5 h-3.5 text-dorado-600 dark:text-dorado-400" />
-            <span className="truncate">{((unidad.zonas as Record<string, unknown>)?.nombre as string) || 'Fuera de zonas predefinidas'} • {categoriaLabel(unidad.categoria as string)}</span>
+            <span className="truncate">{((unidad.zonas as Record<string, unknown>)?.nombre as string) || tCatalog('outsideZone')} • {categoriaLabel(unidad.categoria as string, locale)}</span>
           </div>
           <h3 className="font-bold text-base md:text-lg line-clamp-2 leading-tight text-balance group-hover:text-dorado-600 dark:group-hover:text-dorado-400 transition-colors">
             {(unidad.titulo || unidad.titulo_es) as string}
