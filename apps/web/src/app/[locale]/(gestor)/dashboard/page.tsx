@@ -298,7 +298,7 @@ export default async function DashboardPage({
           {canCreateUnidad && (
             <Link
               href={`/${locale}/mis-unidades/nueva`}
-              className="px-4 py-2 min-h-[44px] flex items-center justify-center rounded-xl bg-primary text-white text-xs font-mono font-semibold shadow-sm hover:bg-primary/90 transition-all"
+              className="px-4 py-2 min-h-[44px] flex items-center justify-center rounded-xl bg-primary text-primary-foreground text-xs font-mono font-semibold shadow-sm hover:bg-primary/90 transition-all"
             >
               {tDash('newUnitBtn')}
             </Link>
@@ -427,7 +427,7 @@ export default async function DashboardPage({
           title={tDash('activeRentals')}
           description={tDash('activeRentalsDesc')}
           badge={
-            <span className="text-[10px] font-mono font-bold text-secondary bg-secondary/10 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-mono font-bold text-secondary-foreground bg-secondary/10 px-2 py-0.5 rounded-full">
               {tDash('activeBadge')}
             </span>
           }
@@ -463,7 +463,7 @@ export default async function DashboardPage({
               <div className="w-full h-full flex flex-col justify-center p-4 bg-primary/5 rounded-xl font-mono text-xs space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">{tDash('statusLabel')}</span>
-                  <span className="font-bold text-primary">
+                  <span className="font-bold text-dorado-700 dark:text-dorado-200">
                     {subscriptionEndsAt
                       ? (trialDaysRemaining < 0 ? tDash('statusExpired') : tDash('statusActive'))
                       : tDash('statusTrial')}
@@ -478,7 +478,7 @@ export default async function DashboardPage({
                 <div className="pt-2">
                   <Link
                     href={`/${locale}/facturacion`}
-                    className="block w-full text-center py-2 min-h-[44px] flex items-center justify-center rounded-lg bg-primary text-white font-semibold text-xs hover:bg-primary/90 transition-all shadow-sm"
+                    className="block w-full text-center py-2 min-h-[44px] flex items-center justify-center rounded-lg bg-primary text-primary-foreground font-semibold text-xs hover:bg-primary/90 transition-all shadow-sm"
                   >
                     {tDash('managePlanBtn')}
                   </Link>
@@ -500,7 +500,7 @@ export default async function DashboardPage({
               <div className="w-full h-full flex flex-col justify-center p-4 bg-primary/5 rounded-xl font-mono text-xs space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Estado Operativo</span>
-                  <span className="font-bold text-primary">Activo</span>
+                  <span className="font-bold text-dorado-700 dark:text-dorado-200">Activo</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Alquileres Vigentes</span>
@@ -509,7 +509,7 @@ export default async function DashboardPage({
                 <div className="pt-2">
                   <Link
                     href={`/${locale}/mis-unidades`}
-                    className="block w-full text-center py-2 min-h-[44px] flex items-center justify-center rounded-lg bg-primary text-white font-semibold text-xs hover:bg-primary/90 transition-all shadow-sm"
+                    className="block w-full text-center py-2 min-h-[44px] flex items-center justify-center rounded-lg bg-primary text-primary-foreground font-semibold text-xs hover:bg-primary/90 transition-all shadow-sm"
                   >
                     Ver Unidades
                   </Link>
@@ -606,7 +606,7 @@ export default async function DashboardPage({
             <div className="pt-2 border-t border-border/40 flex justify-end">
               <Link
                 href={`/${locale}/delegados`}
-                className="text-xs text-primary font-medium hover:underline inline-flex items-center min-h-[44px] gap-1 font-mono"
+                className="text-xs text-dorado-700 dark:text-dorado-200 font-medium hover:underline inline-flex items-center min-h-[44px] gap-1 font-mono"
               >
                 <span>Ver todos los delegados</span>
                 <ArrowUpRight className="h-3 w-3" />
@@ -635,7 +635,7 @@ export default async function DashboardPage({
               {!isDelegado && (
                 <Link
                   href={`/${locale}/logs`}
-                  className="text-xs text-primary hover:underline font-mono inline-flex items-center gap-1 min-h-[44px] min-w-[44px] px-2 py-1"
+                  className="text-xs text-dorado-700 dark:text-dorado-200 hover:underline font-mono inline-flex items-center gap-1 min-h-[44px] min-w-[44px] px-2 py-1"
                 >
                   <span>Ver auditoría completa</span>
                   <ArrowUpRight className="h-3 w-3" />
@@ -708,7 +708,7 @@ export default async function DashboardPage({
             <div className="pt-2 border-t border-border/40 flex justify-end">
               <Link
                 href={`/${locale}/logs`}
-                className="text-xs text-primary font-medium hover:underline inline-flex items-center min-h-[44px] gap-1 font-mono"
+                className="text-xs text-dorado-700 dark:text-dorado-200 font-medium hover:underline inline-flex items-center min-h-[44px] gap-1 font-mono"
               >
                 <span>Registro de auditoría completo</span>
                 <ArrowUpRight className="h-3 w-3" />

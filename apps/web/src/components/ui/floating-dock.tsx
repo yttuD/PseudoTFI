@@ -183,14 +183,14 @@ const DockIconContainer: React.FC<{
 
   if (!item.href || item.href.startsWith("#")) {
     return (
-      <div
+      <button
+        type="button"
         onClick={item.onClick}
-        role="button"
-        tabIndex={0}
-        className="flex min-w-[44px] min-h-[44px] items-center justify-center"
+        aria-label={item.title}
+        className="flex min-w-[44px] min-h-[44px] items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
         {content}
-      </div>
+      </button>
     );
   }
 
@@ -198,7 +198,8 @@ const DockIconContainer: React.FC<{
     <Link
       href={item.href}
       onClick={item.onClick}
-      className="flex min-w-[44px] min-h-[44px] items-center justify-center"
+      aria-label={item.title}
+      className="flex min-w-[44px] min-h-[44px] items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
       {content}
     </Link>
