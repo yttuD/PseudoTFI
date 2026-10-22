@@ -546,6 +546,31 @@ export class BetaRealFixtureManager {
       recordErr('invitaciones delete', error);
     }
 
+    // Remove only rental/tenant fixtures created and tracked by this test run.
+    // Storage objects must be removed before their rental folder loses the
+    // can_manage_alquiler() permission predicate.
+    if (this.trackedAlquilerIds.length > 0) {
+      for (const rentalId of this.trackedAlquilerIds) {
+        const { data: objects, error: listError } = await this.adminClient.storage
+          .from('contratos').list(rentalId, { limit: 100 });
+        recordErr('contract storage list', listError);
+        if (objects?.length) {
+          const paths = objects.map(o => `${rentalId}/${o.name}`);
+          const { error: removeError } = await this.adminClient.storage
+            .from('contratos').remove(paths);
+          recordErr('contract storage removal', removeError);
+        }
+      }
+      const { error } = await this.adminClient.from('alquileres').delete()
+        .in('id', this.trackedAlquilerIds);
+      recordErr('alquileres delete', error);
+    }
+    if (this.trackedInquilinoIds.length > 0) {
+      const { error } = await this.adminClient.from('inquilinos').delete()
+        .in('id', this.trackedInquilinoIds);
+      recordErr('inquilinos delete', error);
+    }
+
     // 7. Eliminar unidades
     if (this.trackedUnidadIds.length > 0) {
       const { error } = await this.adminClient

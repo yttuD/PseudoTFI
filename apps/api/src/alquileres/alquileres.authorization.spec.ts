@@ -43,6 +43,7 @@ describe('Alquileres and Inquilinos Authorization (T033 / US3)', () => {
       mockAlquileresService = {
         create: vi.fn().mockResolvedValue({ id: 'alq-created' }),
         update: vi.fn().mockResolvedValue({ id: 'alq-1' }),
+        attachContract: vi.fn().mockResolvedValue({ id: 'alq-1', contrato_url: 'file.pdf' }),
         remove: vi.fn().mockResolvedValue({ ok: true }),
       };
       const mockActionLogService: any = {
@@ -100,6 +101,28 @@ describe('Alquileres and Inquilinos Authorization (T033 / US3)', () => {
       await expect(
         controller.update('alq-1', { unidad_id: 'u-forbidden' } as any, req),
       ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('denies private document attachment outside delegated manage scope', async () => {
+      vi.spyOn(authzService, 'canManageAlquiler').mockResolvedValue(false);
+      const req = {
+        user: delegadoVerUser,
+        headers: { authorization: 'Bearer tok' },
+      } as unknown as AuthenticatedRequest;
+      await expect(controller.attachContract('alq-out', { path: 'test.pdf' }, req))
+        .rejects.toThrow(NotFoundException);
+      expect(mockAlquileresService.attachContract).not.toHaveBeenCalled();
+    });
+
+    it('permits authorized private attachment only through protected endpoint', async () => {
+      vi.spyOn(authzService, 'canManageAlquiler').mockResolvedValue(true);
+      const req = {
+        user: delegadoGestionarUser,
+        headers: { authorization: 'Bearer tok' },
+      } as unknown as AuthenticatedRequest;
+      await expect(controller.attachContract('alq-1', { path: 'test.pdf' }, req))
+        .resolves.toEqual({ id: 'alq-1', contrato_url: 'file.pdf' });
+      expect(mockAlquileresService.attachContract).toHaveBeenCalledWith('alq-1', 'test.pdf', 'tok');
     });
 
     it('denies Alquiler removal when out of scope', async () => {

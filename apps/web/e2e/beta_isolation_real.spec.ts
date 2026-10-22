@@ -130,6 +130,83 @@ test.describe('B007b — Inventario y Aislamiento Real Navegador', () => {
     }
   });
 
+  test('Contrato PDF privado: upload real y lectura firmada solo Gestor autorizado', async ({ browser }, testInfo) => {
+    const url = process.env.SUPABASE_INTERNAL_URL || '';
+    if (!url || !['localhost', '127.0.0.1'].includes(new URL(url).hostname)) {
+      throw new Error('El test de contratos requiere Supabase local.');
+    }
+
+    const { data: tenant, error: tenantError } = await fixtures.adminClient.from('inquilinos')
+      .insert({ gestor_id: gestorA.id, nombre_completo: 'Contrato QA local aislado' })
+      .select('id').single();
+    expect(tenantError).toBeNull();
+    expect(tenant?.id).toBeTruthy();
+    fixtures.trackedInquilinoIds.push(tenant!.id);
+
+    const { data: rental, error: rentalError } = await fixtures.adminClient.from('alquileres')
+      .insert({
+        gestor_id: gestorA.id,
+        unidad_id: unitA1Id,
+        inquilino_id: tenant!.id,
+        modalidad: 'mensual',
+        inicio_at: '2028-01-01T03:00:00.000Z',
+        fin_at: '2028-02-01T03:00:00.000Z',
+        fecha_inicio: '2028-01-01',
+        fecha_fin: '2028-01-31',
+        monto_total: 1500,
+        monto_sena: 0,
+        monto_deposito: 0,
+        sena_eleccion: 'sin_sena',
+        estado_pago: 'pendiente',
+        observaciones: 'Contrato ficticio de prueba local, sin datos personales',
+      }).select('id').single();
+    expect(rentalError).toBeNull();
+    expect(rental?.id).toBeTruthy();
+    const rentalId = rental!.id;
+    fixtures.trackedAlquilerIds.push(rentalId);
+
+    const context = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
+    try {
+      const page = await context.newPage();
+      await fixtures.loginViaUI(page, gestorA);
+      await page.goto('/es/alquileres');
+      const row = page.locator('tr').filter({ hasText: 'Contrato QA local aislado' });
+      await expect(row).toBeVisible();
+      const document = row.getByTestId('alquiler-contrato-documento');
+      await document.getByLabel('Adjuntar contrato PDF').setInputFiles({
+        name: 'local-private-lease.pdf',
+        mimeType: 'application/pdf',
+        buffer: Buffer.from('%PDF-1.4\n1 0 obj <<>> endobj\n%%EOF\n'),
+      });
+      await expect(document.getByText('PDF adjuntado al alquiler correctamente.')).toBeVisible();
+      const { data: verified, error: verifyError } = await fixtures.adminClient
+        .from('alquileres').select('contrato_url').eq('id', rentalId).single();
+      expect(verifyError).toBeNull();
+      const storedPath = verified?.contrato_url as string;
+      expect(storedPath.startsWith(rentalId + '/')).toBe(true);
+      expect(storedPath).toContain('_local-private-lease.pdf');
+      expect(storedPath).not.toContain('https://');
+
+      await document.getByRole('button', { name: 'Ver PDF privado' }).click();
+      const link = document.getByRole('link', { name: 'Abrir documento (enlace temporal)' });
+      await expect(link).toBeVisible();
+      const signed = await link.getAttribute('href');
+      expect(signed).toContain('/storage/v1/object/sign/contratos/');
+
+      const { createClient } = await import('@supabase/supabase-js');
+      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+      const wrongManager = createClient(url, anonKey, {
+        auth: { persistSession: false, autoRefreshToken: false },
+        global: { headers: { Authorization: 'Bearer ' + gestorB.accessToken } },
+      });
+      const forbidden = await wrongManager.storage.from('contratos').createSignedUrl(storedPath, 60);
+      expect(forbidden.error).not.toBeNull();
+      expect(forbidden.data?.signedUrl).toBeFalsy();
+    } finally {
+      await context.close();
+    }
+  });
+
   test('N01: logout real invalida sesión en el navegador y protege inventario tras recarga', async ({ browser }, testInfo) => {
     const context = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
     try {

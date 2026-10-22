@@ -265,6 +265,9 @@ export class AlquileresService {
   }
 
   async create(createAlquilerDto: CreateAlquilerDto, token: string, workspaceId: string) {
+    if (createAlquilerDto.contrato_url !== undefined) {
+      throw new BadRequestException('El documento se adjunta después del alta desde la operación privada');
+    }
     const client = this.supabaseService.getClient(token);
     const unidadData = await this.validateUnidad(client, createAlquilerDto.unidad_id);
 
@@ -362,7 +365,7 @@ export class AlquileresService {
           estado_pago: estadoPago,
           monto_cobrado: montoCobrado,
           observaciones: createAlquilerDto.observaciones,
-          contrato_url: createAlquilerDto.contrato_url,
+          contrato_url: null,
         },
       ])
       .select()
@@ -426,6 +429,9 @@ export class AlquileresService {
   }
 
   async update(id: string, updateAlquilerDto: UpdateAlquilerDto, token: string) {
+    if (updateAlquilerDto.contrato_url !== undefined) {
+      throw new BadRequestException('El documento se adjunta desde la operación privada de contratos');
+    }
     const client = this.supabaseService.getClient(token);
 
     const { data: currentAlquiler, error: currentError } = await client
@@ -572,8 +578,6 @@ export class AlquileresService {
     if (updateAlquilerDto.monto_deposito !== undefined) updatePayload.monto_deposito = Number(updateAlquilerDto.monto_deposito);
     if (updateAlquilerDto.estado !== undefined) updatePayload.estado = updateAlquilerDto.estado;
     if (updateAlquilerDto.observaciones !== undefined) updatePayload.observaciones = updateAlquilerDto.observaciones;
-    if (updateAlquilerDto.contrato_url !== undefined) updatePayload.contrato_url = updateAlquilerDto.contrato_url;
-
     const { data, error } = await client
       .from('alquileres')
       .update(updatePayload)
@@ -586,6 +590,47 @@ export class AlquileresService {
       throw new UnprocessableEntityException(error.message);
     }
 
+    return data;
+  }
+
+  /**
+   * Link an existing object scoped to this rental; no arbitrary URLs or money
+   * updates allowed. The controller checks the actor's manage permission, and
+   * Storage RLS checks the JWT against the UUID-folder owner.
+   */
+  async attachContract(id: string, path: string, token: string) {
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuid.test(id) || typeof path !== 'string' || !path.startsWith(id + '/')) {
+      throw new BadRequestException('Ruta privada de contrato inválida');
+    }
+    const filename = path.slice(id.length + 1);
+    if (!/^[0-9a-f-]{36}_[a-zA-Z0-9._-]{1,100}\.pdf$/i.test(filename) ||
+        filename.includes('..')) {
+      throw new BadRequestException('El documento debe ser un PDF con ruta de alquiler válida');
+    }
+
+    const client = this.supabaseService.getClient(token);
+    const { data: rental, error: rentalError } = await client.from('alquileres')
+      .select('id, contrato_url').eq('id', id).is('deleted_at', null).single();
+    if (rentalError || !rental) throw new NotFoundException('Alquiler no encontrado');
+    if (rental.contrato_url === path) return { id, contrato_url: path };
+    if (rental.contrato_url) throw new ConflictException('El alquiler ya tiene un documento vinculado');
+
+    const { data: objects, error: storageError } = await client.storage
+      .from('contratos').list(id, { search: filename, limit: 100 });
+    if (storageError || !objects?.some((obj: any) => obj.id && obj.name === filename)) {
+      throw new BadRequestException('El PDF no existe o no es accesible para este alquiler');
+    }
+    const object = objects.find((obj: any) => obj.id && obj.name === filename);
+    const size = Number(object?.metadata?.size);
+    if (Number.isFinite(size) && size > 10 * 1024 * 1024) {
+      throw new BadRequestException('El contrato supera 10 MB');
+    }
+    const { data, error } = await client.from('alquileres')
+      .update({ contrato_url: path }).eq('id', id).is('deleted_at', null)
+      .is('contrato_url', null).select('id, contrato_url').maybeSingle();
+    if (error) throw new UnprocessableEntityException('No se pudo vincular el PDF al alquiler');
+    if (!data) throw new ConflictException('El documento cambió durante la operación');
     return data;
   }
 
