@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Heart } from 'lucide-react';
 import { Skiper99AnimatedIcon } from '@/components/ui/skiper99';
 import { cn } from '@/lib/utils';
@@ -33,6 +34,7 @@ export function FavoritoButton({
   const [errorToast, setErrorToast] = useState<string | null>(null);
   const router = useRouter();
   const pathname = usePathname();
+  const t = useTranslations('unidad');
 
   useEffect(() => {
     setIsFavorito(initialFavorito ?? initialIsFavorito ?? false);
@@ -94,8 +96,8 @@ export function FavoritoButton({
       console.error('Error toggling favorito:', error);
       // Revert optimistic state
       setIsFavorito(previousState);
-      setErrorToast('No se pudo actualizar favoritos');
-      setTimeout(() => setErrorToast(null), 3000);
+      setErrorToast(t('favoritosError'));
+      setTimeout(() => setErrorToast(null), 5000);
     } finally {
       setIsLoading(false);
     }
@@ -110,7 +112,8 @@ export function FavoritoButton({
         iconSize={18}
         onClick={handleToggle}
         disabled={isLoading}
-        aria-label={isFavorito ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+        aria-label={isFavorito ? t('favoritosQuitar') : t('favoritosGuardar')}
+        aria-pressed={isFavorito}
         iconClassName={cn(
           isFavorito ? 'fill-red-500 text-red-500' : 'text-foreground/80 hover:text-red-500'
         )}
@@ -120,10 +123,10 @@ export function FavoritoButton({
           className
         )}
       >
-        {showText && <span>{isFavorito ? 'Guardado' : 'Guardar'}</span>}
+        {showText && <span>{isFavorito ? t('favoritosGuardado') : t('favoritosGuardarCorto')}</span>}
       </Skiper99AnimatedIcon>
       {errorToast && (
-        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 text-[11px] font-medium text-white bg-destructive/90 rounded-lg shadow-lg whitespace-nowrap pointer-events-none z-50 animate-in fade-in zoom-in duration-150">
+        <span role="alert" className="fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 px-3 py-2 text-xs font-medium text-destructive-foreground bg-destructive rounded-lg shadow-lg w-max max-w-[calc(100vw-2rem)] whitespace-normal text-center pointer-events-none z-[100] animate-in fade-in zoom-in duration-150">
           {errorToast}
         </span>
       )}

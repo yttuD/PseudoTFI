@@ -13,6 +13,11 @@
     "omitir": "Skip"
   },
   "unidad": {
+    "favoritosError": "Couldn't update favorites. Please try again.",
+    "favoritosGuardar": "Save to favorites",
+    "favoritosQuitar": "Remove from favorites",
+    "favoritosGuardado": "Saved",
+    "favoritosGuardarCorto": "Save",
     "contactar": "Contact",
     "verUbicacion": "See exact location",
     "sinFotos": "No photos available",
@@ -21,6 +26,17 @@
     "mes": "month"
   },
   "auth": {
+    "registroGestorTitulo": "Create your manager account",
+    "registroBuscadorTitulo": "Create your Rendo account",
+    "registroGestorBetaDescripcion": "Try Rendo with up to 10 units at no cost. Payments and receipts are not available yet.",
+    "registroGestorDescripcion": "Manage your properties, rentals and payments in one place.",
+    "registroBuscadorDescripcion": "Explore locations, contact managers and save your favorite properties.",
+    "registroGestorConfianza": "Secure property management",
+    "registroBuscadorConfianza": "Find your next property with confidence",
+    "registroPreguntaBuscador": "Looking for a rental?",
+    "registroEnlaceBuscador": "Create an account to search",
+    "registroPreguntaGestor": "Manage rental properties?",
+    "registroEnlaceGestor": "Create a manager account",
     "loginRequerido": "Log in to see exact location",
     "iniciarSesion": "Log In",
     "registro": "Create Account",

@@ -13,6 +13,11 @@
     "omitir": "Pular"
   },
   "unidad": {
+    "favoritosError": "Não foi possível atualizar os favoritos. Tente novamente.",
+    "favoritosGuardar": "Salvar nos favoritos",
+    "favoritosQuitar": "Remover dos favoritos",
+    "favoritosGuardado": "Salvo",
+    "favoritosGuardarCorto": "Salvar",
     "contactar": "Contatar",
     "verUbicacion": "Ver localização exata",
     "sinFotos": "Sem fotos disponíveis",
@@ -21,6 +26,17 @@
     "mes": "mês"
   },
   "auth": {
+    "registroGestorTitulo": "Crie sua conta de gestor",
+    "registroBuscadorTitulo": "Crie sua conta no Rendo",
+    "registroGestorBetaDescripcion": "Teste o Rendo com até 10 unidades gratuitamente. Pagamentos e recibos ainda não estão disponíveis.",
+    "registroGestorDescripcion": "Gerencie seus imóveis, aluguéis e pagamentos em um só lugar.",
+    "registroBuscadorDescripcion": "Explore localizações, entre em contato com gestores e salve seus imóveis favoritos.",
+    "registroGestorConfianza": "Gestão segura dos seus imóveis",
+    "registroBuscadorConfianza": "Encontre seu próximo imóvel com confiança",
+    "registroPreguntaBuscador": "Procurando um imóvel para alugar?",
+    "registroEnlaceBuscador": "Crie uma conta para buscar",
+    "registroPreguntaGestor": "Gerencia imóveis para aluguel?",
+    "registroEnlaceGestor": "Crie sua conta de gestor",
     "loginRequerido": "Faça login para ver a localização exata",
     "iniciarSesion": "Entrar",
     "registro": "Criar Conta",
