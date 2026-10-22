@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion, type TargetAndTransition } from "framer-motion";
+import { motion, useReducedMotion, type TargetAndTransition } from "framer-motion";
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { publicSpring } from "@/lib/motion-config";
@@ -54,6 +54,7 @@ export const Skiper99AnimatedIcon: React.FC<Skiper99Props> = ({
   ...props
 }) => {
   const currentVariant = animationVariants[animation];
+  const reducedMotion = useReducedMotion();
 
   return (
     <button
@@ -68,8 +69,8 @@ export const Skiper99AnimatedIcon: React.FC<Skiper99Props> = ({
     >
       <motion.div
         className="inline-flex items-center justify-center"
-        whileHover={currentVariant.hover}
-        whileTap={currentVariant.tap}
+        whileHover={reducedMotion ? undefined : currentVariant.hover}
+        whileTap={reducedMotion ? undefined : currentVariant.tap}
       >
         <Icon size={iconSize} className={cn("transition-colors", iconClassName)} />
       </motion.div>

@@ -63,7 +63,7 @@ export function CardUnidad({ unidad, locale, isFavorito = false, isLoggedIn = fa
           
           {/* Top badges */}
           <div className="absolute top-3 left-3 flex gap-2">
-            <Badge className="bg-background/90 hover:bg-background/90 backdrop-blur-md border-none text-foreground gap-1 shadow-sm">
+            <Badge data-testid="unit-card-published" className="bg-card border border-border text-card-foreground gap-1 shadow-sm">
               <FileCheck className="w-3 h-3" /> {tDetail('publishedUnit')}
             </Badge>
           </div>
@@ -81,9 +81,9 @@ export function CardUnidad({ unidad, locale, isFavorito = false, isLoggedIn = fa
           {/* Bottom details on image */}
           <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
             {firstPrice && (
-              <div className="bg-card/95 backdrop-blur-md rounded-xl px-3 py-1.5 shadow-sm border border-border">
+              <div data-testid="unit-card-price" className="bg-card rounded-xl px-3 py-1.5 shadow-sm border border-border">
                 <span className="text-[10px] text-muted-foreground uppercase font-mono mr-1 tracking-wider">{t('desde')}</span>
-                <span className="font-bold font-mono text-dorado-600 dark:text-dorado-500">{firstPrice.price?.text}{firstPrice.price?.approximate ? ' aprox.' : ''}</span>
+                <span className="font-bold font-mono text-dorado-700 dark:text-dorado-200">{firstPrice.price?.text}{firstPrice.price?.approximate ? ' aprox.' : ''}</span>
                 <span className="text-[10px] text-muted-foreground ml-1">/ {periodLabel}</span>
               </div>
             )}
