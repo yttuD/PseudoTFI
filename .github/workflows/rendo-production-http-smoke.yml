@@ -1,0 +1,46 @@
+name: Rendo beta public HTTP smoke (read-only)
+
+on:
+  push:
+    branches:
+      - codex/release-http-smoke-2026-10-22
+
+permissions:
+  contents: read
+
+jobs:
+  public-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Probe published Web and API without credentials or mutations
+        shell: bash
+        run: |
+          set -euo pipefail
+          probe() {
+            local url="$1"
+            local body code
+            body="$(mktemp)"
+            code="$(curl --silent --show-error --location \
+              --retry 2 --retry-delay 2 \
+              --connect-timeout 10 --max-time 40 --max-redirs 5 \
+              --output "$body" --write-out '%{http_code}' "$url")"
+            echo "$url => HTTP $code"
+            if [[ "$code" != "200" ]]; then
+              echo "::error::Unexpected HTTP $code from $url"
+              exit 1
+            fi
+            if [[ ! -s "$body" ]]; then
+              echo "::error::Empty successful response from $url"
+              exit 1
+            fi
+            rm -f "$body"
+          }
+          probe "https://rendo-beta-api.vercel.app/health/liveness"
+          probe "https://rendo-beta-api.vercel.app/health/readiness"
+          probe "https://rendo-beta-web.vercel.app/es"
+          probe "https://rendo-beta-web.vercel.app/en"
+          probe "https://rendo-beta-web.vercel.app/pt"
+          probe "https://rendo-beta-web.vercel.app/es/unidades"
+          probe "https://rendo-beta-web.vercel.app/es/auth/login"
+          echo "Beta public HTTP smoke passed."
