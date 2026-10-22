@@ -1192,14 +1192,14 @@ export function UnidadForm({
                       <CameraIcon className="w-4 h-4 text-primary" />
                       Cámara / Galería Móvil
                     </Button>
-                    <label className={`inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-mono text-xs font-semibold rounded-xl transition-colors shadow-xs min-h-[44px] min-w-[44px] ${unidadId ? 'cursor-pointer hover:bg-primary/90' : 'cursor-not-allowed opacity-50'}`}>
+                    <label className={`inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-mono text-xs font-semibold rounded-xl transition-colors shadow-xs min-h-[44px] min-w-[44px] focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 ${unidadId ? 'cursor-pointer hover:bg-primary/90' : 'cursor-not-allowed opacity-50'}`}>
                       <span>Seleccionar Archivos</span>
                       <input
                         type="file"
                         accept="image/*"
                         onChange={handleFileUpload}
                         disabled={isSubmitting || !unidadId}
-                        className="hidden"
+                        className="sr-only"
                       />
                     </label>
                   </div>
