@@ -565,5 +565,22 @@
     "prices": "Tarifas e preços",
     "photos": "Galeria de fotos",
     "location": "Localização e GPS"
+  },
+  "Reportes": {
+    "trigger": "Denunciar",
+    "title": "Denunciar anúncio",
+    "description": "Por que você quer denunciar este imóvel? Selecione um motivo.",
+    "reasonLabel": "Motivo da denúncia",
+    "reasonPlaceholder": "Selecione um motivo",
+    "reasonFraud": "Possível golpe ou fraude",
+    "reasonFalse": "Informações falsas ou incorretas",
+    "reasonUnavailable": "O imóvel não está mais disponível",
+    "reasonOffensive": "Conteúdo ofensivo ou inadequado",
+    "reasonOther": "Outro",
+    "cancel": "Cancelar",
+    "submit": "Enviar denúncia",
+    "sending": "Enviando...",
+    "success": "Denúncia enviada. Nossa equipe fará a análise.",
+    "error": "Não foi possível enviar a denúncia. Tente novamente."
   }
 }
