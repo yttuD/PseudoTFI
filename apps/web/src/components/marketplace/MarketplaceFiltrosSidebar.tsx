@@ -27,6 +27,8 @@ export function MarketplaceFiltrosSidebar({ collapsedOnMobile = false }: { colla
   const [zonas, setZonas] = useState<{ id: string | number; nombre: string }[]>([]);
   const [mobileOpen, setMobileOpen] = useState(!collapsedOnMobile);
   const precioMaxRef = useRef<HTMLInputElement>(null);
+  const mobileFilterToggleRef = useRef<HTMLButtonElement>(null);
+  const focusToggleAfterApplyRef = useRef(false);
 
   // Los chips representan los filtros realmente aplicados (URL), no el borrador.
   const applied = {
@@ -61,6 +63,15 @@ export function MarketplaceFiltrosSidebar({ collapsedOnMobile = false }: { colla
     if (collapsedOnMobile) setMobileOpen(false);
   }, [collapsedOnMobile]);
 
+  // After applying mobile filters, return keyboard/screen-reader focus to the
+  // visible control rather than leaving it on a now-hidden submit button.
+  useEffect(() => {
+    if (!mobileOpen && focusToggleAfterApplyRef.current) {
+      focusToggleAfterApplyRef.current = false;
+      mobileFilterToggleRef.current?.focus();
+    }
+  }, [mobileOpen]);
+
   // Sincronizar estado cuando cambie la URL (ej: volver atrás, click externo, etc.)
   useEffect(() => {
     setQ(searchParams.get('q') || '');
@@ -92,6 +103,12 @@ export function MarketplaceFiltrosSidebar({ collapsedOnMobile = false }: { colla
     if (precioMin) params.set('precio_min', precioMin);
     if (precioMax) params.set('precio_max', precioMax);
 
+    // Results become the next task: avoid leaving a large panel open on phones.
+    // Desktop stays expanded through its responsive CSS (lg:block).
+    if (collapsedOnMobile && mobileOpen) {
+      focusToggleAfterApplyRef.current = true;
+      setMobileOpen(false);
+    }
     router.push(`${pathname}?${params.toString()}`);
   };
 
@@ -111,7 +128,7 @@ export function MarketplaceFiltrosSidebar({ collapsedOnMobile = false }: { colla
           <Filter className="h-4 w-4 text-primary" />
           {collapsedOnMobile ? (
             <>
-              <button type="button" aria-expanded={mobileOpen} aria-controls="catalog-filters"
+              <button ref={mobileFilterToggleRef} type="button" aria-expanded={mobileOpen} aria-controls="catalog-filters"
                 onClick={() => setMobileOpen((open) => !open)}
                 className="lg:hidden min-h-11 flex items-center gap-2 text-sm font-bold text-foreground">
                 {t('titulo')}
