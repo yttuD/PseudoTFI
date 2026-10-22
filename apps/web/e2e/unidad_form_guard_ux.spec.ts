@@ -67,3 +67,50 @@ test.describe('UX-001: unit form should prevent accidental data loss and guide v
     await expect(price).toHaveAttribute('aria-invalid', 'false');
   });
 });
+
+
+test.describe('UX-001: irreversible unit deletion requires explicit accessible confirmation', () => {
+  test.beforeAll(async () => { await startMockApiServer(3001); });
+  test.afterAll(async () => { await stopMockApiServer(); });
+
+  test('Escape, API failure, and retry never remove a unit without explicit approval', async ({ page, context }) => {
+    await context.clearCookies();
+    await context.addCookies([gestorCookie()]);
+    const id = 'a0000000-0000-0000-0000-000000000001';
+    const deletes: string[] = [];
+    await page.route(`**/unidades/${id}`, async route => {
+      if (route.request().method() !== 'DELETE') return route.continue();
+      deletes.push(route.request().method());
+      await route.fulfill({ status: deletes.length === 1 ? 409 : 204, body: '' });
+    });
+
+    await page.goto(`/es/mis-unidades/${id}/editar`);
+    await expect(page.getByRole('heading', { name: 'Editar Unidad' })).toBeVisible();
+    const open = page.getByTestId('unidad-open-delete');
+    await open.click();
+    const dialog = page.getByTestId('unidad-delete-dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: '¿Eliminar esta unidad?' })).toBeVisible();
+    await expect(dialog).toContainText('No podés deshacer');
+    await expect(dialog.getByTestId('unidad-confirm-delete')).toBeFocused();
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).toHaveCount(0);
+    expect(deletes).toHaveLength(0);
+
+    await open.click();
+    await dialog.getByRole('button', { name: 'Conservar unidad' }).click();
+    await expect(dialog).toHaveCount(0);
+    expect(deletes).toHaveLength(0);
+
+    await open.click();
+    await dialog.getByTestId('unidad-confirm-delete').click();
+    await expect(dialog.getByTestId('unidad-delete-error')).toContainText('No se pudo eliminar');
+    await expect(page).toHaveURL(new RegExp(`/es/mis-unidades/${id}/editar`));
+    expect(deletes).toHaveLength(1);
+
+    await dialog.getByTestId('unidad-confirm-delete').click();
+    await expect(page).toHaveURL(/\/es\/mis-unidades\/?$/);
+    expect(deletes).toHaveLength(2);
+  });
+});
