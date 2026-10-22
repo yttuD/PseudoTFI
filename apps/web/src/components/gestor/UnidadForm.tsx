@@ -698,7 +698,7 @@ export function UnidadForm({
       <div className="flex flex-col md:flex-row gap-8 items-start w-full">
         {/* Sticky ScrollSpy Sidebar */}
         <aside className="hidden md:block w-52 sticky top-6 self-start max-h-[calc(100dvh-3rem)] overflow-y-auto shrink-0">
-          <nav className="flex flex-col gap-1 font-mono text-xs uppercase tracking-wider bg-card/50 p-2 rounded-2xl border border-border/60">
+          <nav className="flex flex-col gap-1 font-sans text-sm font-medium tracking-normal bg-card/50 p-2 rounded-2xl border border-border/60">
             <button type="button" onClick={() => scrollTo('basicos')} className={`text-left border-l-2 pl-4 py-2.5 rounded-r-lg transition-colors ${activeSection === 'basicos' ? 'border-primary text-primary bg-primary/5 font-bold' : 'border-transparent text-muted-foreground hover:bg-muted'}`}>1. Básicos &amp; Grupo</button>
             <button type="button" onClick={() => scrollTo('marketplace')} className={`text-left border-l-2 pl-4 py-2.5 rounded-r-lg transition-colors ${activeSection === 'marketplace' ? 'border-primary text-primary bg-primary/5 font-bold' : 'border-transparent text-muted-foreground hover:bg-muted'}`}>2. Ficha &amp; Idiomas</button>
             <button type="button" onClick={() => scrollTo('modalidades')} className={`text-left border-l-2 pl-4 py-2.5 rounded-r-lg transition-colors ${activeSection === 'modalidades' ? 'border-primary text-primary bg-primary/5 font-bold' : 'border-transparent text-muted-foreground hover:bg-muted'}`}>3. Tarifas &amp; Precios</button>
@@ -712,18 +712,18 @@ export function UnidadForm({
         
         {/* SECCIÓN 1: DATOS BÁSICOS & GRUPO */}
         <section id="basicos" className="scroll-mt-24">
-          <Card className="bg-card border border-border rounded-2xl p-6 shadow-xl space-y-6">
+          <Card className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-6">
             <CardHeader className="p-0 space-y-1">
               <CardTitle className="text-xl font-bold font-sans flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-dorado-600 dark:text-dorado-400" />
                 Datos Básicos &amp; Grupo
               </CardTitle>
-              <CardDescription className="font-mono text-xs">Clasificación y pertenencia edilicia de la unidad</CardDescription>
+              <CardDescription className="text-sm leading-relaxed text-muted-foreground">Clasificación y pertenencia edilicia de la unidad</CardDescription>
             </CardHeader>
             <CardContent className="p-0 grid gap-6 md:grid-cols-3">
               {/* Categoría */}
               <div className="grid gap-2">
-                <Label className="font-mono text-xs uppercase text-muted-foreground">Categoría *</Label>
+                <Label className="text-sm font-medium text-foreground/90">Categoría *</Label>
                 <Select value={form.watch('categoria')} onValueChange={(val) => form.setValue('categoria', val as string, { shouldDirty: true, shouldValidate: true })}>
                   <SelectTrigger id="categoria-select" className="h-12 rounded-xl"><span className="truncate">{categoriaLabel(form.watch('categoria'))}</span></SelectTrigger>
                   <SelectContent className="rounded-xl">
@@ -736,7 +736,7 @@ export function UnidadForm({
 
               {/* Grupo Organizativo */}
               <div className="grid gap-2">
-                <Label className="font-mono text-xs uppercase text-muted-foreground">Grupo / Edificio</Label>
+                <Label className="text-sm font-medium text-foreground/90">Grupo / Edificio</Label>
                 <Select 
                   value={form.watch('grupo_id') || 'sin-grupo'}
                   onValueChange={(val) => form.setValue('grupo_id', val === 'sin-grupo' || !val ? undefined : val, { shouldDirty: true })}
@@ -751,12 +751,12 @@ export function UnidadForm({
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-[11px] text-muted-foreground">Opcional. Agrupa unidades de un mismo edificio o complejo.</p>
+                <p className="text-xs leading-relaxed text-muted-foreground">Opcional. Agrupa unidades de un mismo edificio o complejo.</p>
               </div>
 
               {/* Zona Operativa */}
               <div className="grid gap-2">
-                <Label className="font-mono text-xs uppercase text-muted-foreground">Zona Operativa</Label>
+                <Label className="text-sm font-medium text-foreground/90">Zona Operativa</Label>
                 <Select value={form.watch('zona_id')?.toString() || 'sin-zona'} onValueChange={(val) => form.setValue('zona_id', val === 'sin-zona' ? undefined : Number(val), { shouldDirty: true })}>
                   <SelectTrigger className="h-12 rounded-xl"><span className="truncate">{zonasDisponibles.find((zona) => zona.id === form.watch('zona_id'))?.nombre || 'Sin zona predefinida'}</span></SelectTrigger>
                   <SelectContent className="rounded-xl">
@@ -764,7 +764,7 @@ export function UnidadForm({
                     {zonasDisponibles.map((zona) => <SelectItem key={zona.id} value={zona.id.toString()}>{zona.nombre}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <p className="text-[11px] text-muted-foreground">Opcional; dejala vacía si está sobre la ruta o fuera de estas zonas. La ubicación se fija más abajo.</p>
+                <p className="text-xs leading-relaxed text-muted-foreground">Opcional; dejala vacía si está sobre la ruta o fuera de estas zonas. La ubicación se fija más abajo.</p>
               </div>
             </CardContent>
           </Card>
@@ -774,7 +774,7 @@ export function UnidadForm({
 
         {/* SECCIÓN 2: FICHA DE MARKETPLACE & AUTO-TRADUCCIÓN */}
         <section id="marketplace" className="scroll-mt-24">
-          <Card className="bg-card border border-border rounded-2xl p-6 shadow-xl space-y-6">
+          <Card className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-6">
             <CardHeader className="p-0 space-y-1">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
@@ -782,12 +782,12 @@ export function UnidadForm({
                     <Languages className="w-5 h-5 text-dorado-600 dark:text-dorado-400" />
                     Ficha de Marketplace
                   </CardTitle>
-                  <CardDescription className="font-mono text-xs">Información pública visible para inquilinos y turistas</CardDescription>
+                  <CardDescription className="text-sm leading-relaxed text-muted-foreground">Información pública visible para inquilinos y turistas</CardDescription>
                 </div>
 
                 {/* Toggle Switch de Auto-traducción */}
                 <div className="flex items-center gap-3 p-2.5 rounded-xl border border-primary/20 bg-primary/5 shadow-2xs">
-                  <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+                  <Sparkles className="w-4 h-4 text-primary" />
                   <div className="flex flex-col">
                     <span className="text-xs font-semibold text-foreground">Traducción automática</span>
                     <span className="text-[10px] text-muted-foreground font-mono">Disponible en inglés y portugués</span>
@@ -848,7 +848,7 @@ export function UnidadForm({
               {activeLangTab === 'es' && (
                 <div className="space-y-4">
                   <div className="grid gap-2">
-                    <Label className="font-mono text-xs uppercase text-muted-foreground">Título de la Publicación (Español) *</Label>
+                    <Label className="text-sm font-medium text-foreground/90">Título de la Publicación (Español) *</Label>
                     <Input 
                       {...form.register('titulo_es')} 
                       placeholder="Ej. Cabaña Premium frente al río con pileta y quincho" 
@@ -856,7 +856,7 @@ export function UnidadForm({
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label className="font-mono text-xs uppercase text-muted-foreground">Descripción Completa (Español) *</Label>
+                    <Label className="text-sm font-medium text-foreground/90">Descripción Completa (Español) *</Label>
                     <Textarea 
                       {...form.register('descripcion_es')} 
                       placeholder="Describe los ambientes, equipamiento, vistas, cercanías y servicios incluidos..." 
@@ -879,7 +879,7 @@ export function UnidadForm({
                     </div>
                   )}
                   <div className="grid gap-2">
-                    <Label className="font-mono text-xs uppercase text-muted-foreground">Título en Inglés (Listing Title)</Label>
+                    <Label className="text-sm font-medium text-foreground/90">Título en Inglés (Listing Title)</Label>
                     <Input 
                       {...form.register('titulo_en')} 
                       placeholder="e.g. Premium Riverfront Cabin with Private Pool" 
@@ -887,7 +887,7 @@ export function UnidadForm({
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label className="font-mono text-xs uppercase text-muted-foreground">Descripción en Inglés (Full Description)</Label>
+                    <Label className="text-sm font-medium text-foreground/90">Descripción en Inglés (Full Description)</Label>
                     <Textarea 
                       {...form.register('descripcion_en')} 
                       placeholder="Property details, amenities and nearby highlights..." 
@@ -910,7 +910,7 @@ export function UnidadForm({
                     </div>
                   )}
                   <div className="grid gap-2">
-                    <Label className="font-mono text-xs uppercase text-muted-foreground">Título em Português</Label>
+                    <Label className="text-sm font-medium text-foreground/90">Título em Português</Label>
                     <Input 
                       {...form.register('titulo_pt')} 
                       placeholder="ex. Chalé Premium à beira do rio com piscina" 
@@ -918,7 +918,7 @@ export function UnidadForm({
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label className="font-mono text-xs uppercase text-muted-foreground">Descrição em Português</Label>
+                    <Label className="text-sm font-medium text-foreground/90">Descrição em Português</Label>
                     <Textarea 
                       {...form.register('descripcion_pt')} 
                       placeholder="Detalhes do imóvel, comodidades e localização..." 
@@ -932,12 +932,12 @@ export function UnidadForm({
               {/* Redes de Contacto */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
                 <div className="grid gap-2">
-                  <Label className="font-mono text-xs uppercase text-muted-foreground">WhatsApp de Contacto Directo</Label>
+                  <Label className="text-sm font-medium text-foreground/90">WhatsApp de Contacto Directo</Label>
                   <Input {...form.register('whatsapp')} placeholder="+54 9 3777 123456" className="h-12 font-mono rounded-xl" />
-                  <p className="text-[11px] text-muted-foreground font-mono">Visible solo para inquilinos autenticados en el marketplace.</p>
+                  <p className="text-xs leading-relaxed text-muted-foreground font-mono">Visible solo para inquilinos autenticados en el marketplace.</p>
                 </div>
                 <div className="grid gap-2">
-                  <Label className="font-mono text-xs uppercase text-muted-foreground">Instagram (Opcional)</Label>
+                  <Label className="text-sm font-medium text-foreground/90">Instagram (Opcional)</Label>
                   <Input {...form.register('instagram')} placeholder="@mi_propiedad" className="h-12 font-mono rounded-xl" />
                 </div>
               </div>
@@ -949,13 +949,13 @@ export function UnidadForm({
 
         {/* SECCIÓN 3: ESQUEMA DE TARIFAS (LENGUAJE NATURAL) */}
         <section id="modalidades" className="scroll-mt-24">
-          <Card className="bg-card border border-border rounded-2xl p-6 shadow-xl space-y-6">
+          <Card className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-6">
             <CardHeader className="p-0 space-y-1">
               <CardTitle className="text-xl font-bold font-sans flex items-center gap-2">
                 <Sun className="w-5 h-5 text-dorado-600 dark:text-dorado-400" />
                 Esquema de Tarifas
               </CardTitle>
-              <CardDescription className="font-mono text-xs">
+              <CardDescription className="text-sm leading-relaxed text-muted-foreground">
                 Configura cómo deseas cobrar y los plazos mínimos de estadía o contrato
               </CardDescription>
             </CardHeader>
@@ -968,7 +968,7 @@ export function UnidadForm({
                   onClick={() => append({ unidad_tiempo: 'día', cantidad_tiempo: 1, precio: Number.NaN })}
                   className="min-h-[90px] p-4 flex items-center gap-3.5 rounded-2xl border border-border/80 bg-surface/80 hover:border-dorado-500/60 hover:bg-dorado-500/5 hover:shadow-md transition-all text-left group cursor-pointer"
                 >
-                  <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 group-hover:scale-105 transition-transform shrink-0">
+                  <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 transition-transform shrink-0">
                     <Sun className="w-5 h-5" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -982,7 +982,7 @@ export function UnidadForm({
                   onClick={() => append({ unidad_tiempo: 'mes', cantidad_tiempo: 1, precio: Number.NaN })}
                   className="min-h-[90px] p-4 flex items-center gap-3.5 rounded-2xl border border-border/80 bg-surface/80 hover:border-dorado-500/60 hover:bg-dorado-500/5 hover:shadow-md transition-all text-left group cursor-pointer"
                 >
-                  <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform shrink-0">
+                  <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 transition-transform shrink-0">
                     <Calendar className="w-5 h-5" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -996,7 +996,7 @@ export function UnidadForm({
                   onClick={() => append({ unidad_tiempo: 'hora', cantidad_tiempo: 1, precio: Number.NaN })}
                   className="min-h-[90px] p-4 flex items-center gap-3.5 rounded-2xl border border-border/80 bg-surface/80 hover:border-dorado-500/60 hover:bg-dorado-500/5 hover:shadow-md transition-all text-left group cursor-pointer"
                 >
-                  <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 group-hover:scale-105 transition-transform shrink-0">
+                  <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 transition-transform shrink-0">
                     <Clock className="w-5 h-5" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -1051,7 +1051,7 @@ export function UnidadForm({
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {/* Precio */}
                           <div className="grid gap-2">
-                            <Label className="font-mono text-xs uppercase text-muted-foreground">
+                            <Label className="text-sm font-medium text-foreground/90">
                               {isDia ? 'Precio por Día / Noche ($ ARS) *' : isMes ? 'Monto Mensual ($ ARS) *' : 'Precio por Hora ($ ARS) *'}
                             </Label>
                             <div className="relative">
@@ -1074,12 +1074,12 @@ export function UnidadForm({
                                 Ingresá un precio válido en ARS (0 o más).
                               </span>
                             )}
-                            <span className="text-[11px] text-muted-foreground">Tarifa final visible en la ficha de la unidad.</span>
+                            <span className="text-xs leading-relaxed text-muted-foreground">Tarifa final visible en la ficha de la unidad.</span>
                           </div>
 
                           {/* Estadía o Plazo Mínimo */}
                           <div className="grid gap-2">
-                            <Label className="font-mono text-xs uppercase text-muted-foreground">
+                            <Label className="text-sm font-medium text-foreground/90">
                               {isDia ? 'Estadía Mínima Requerida (Días) *' : isMes ? 'Plazo Mínimo de Alquiler (Meses) *' : 'Reserva Mínima (Horas) *'}
                             </Label>
                             <Input
@@ -1095,21 +1095,21 @@ export function UnidadForm({
                                 Indicá un plazo mínimo de al menos 1.
                               </span>
                             )}
-                            <span className="text-[11px] text-muted-foreground">
+                            <span className="text-xs leading-relaxed text-muted-foreground">
                               {isDia ? 'Mínimo de noches que el huésped debe reservar.' : isMes ? 'Meses mínimos de vigencia del contrato.' : 'Cantidad mínima de horas por turno.'}
                             </span>
                           </div>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-border/60 pt-4">
                           <div className="grid gap-2">
-                            <Label htmlFor={`precio_usd_${index}`} className="font-mono text-xs uppercase text-muted-foreground">Precio para público en inglés (USD)</Label>
+                            <Label htmlFor={`precio_usd_${index}`} className="text-sm font-medium text-foreground/90">Precio para público en inglés (USD)</Label>
                             <Input id={`precio_usd_${index}`} type="number" min="0.01" step="0.01" placeholder="Automático desde ARS" className="h-11 rounded-xl" {...form.register(`modalidades.${index}.precio_usd`, { setValueAs: (value) => value === '' ? undefined : Number(value) })} />
-                            <span className="text-[11px] text-muted-foreground">Dejá vacío para convertir automáticamente con la cotización fechada del BCRA; ingresá un importe para fijarlo a mano.</span>
+                            <span className="text-xs leading-relaxed text-muted-foreground">Dejá vacío para convertir automáticamente con la cotización fechada del BCRA; ingresá un importe para fijarlo a mano.</span>
                           </div>
                           <div className="grid gap-2">
-                            <Label htmlFor={`precio_brl_${index}`} className="font-mono text-xs uppercase text-muted-foreground">Precio para público en portugués (BRL)</Label>
+                            <Label htmlFor={`precio_brl_${index}`} className="text-sm font-medium text-foreground/90">Precio para público en portugués (BRL)</Label>
                             <Input id={`precio_brl_${index}`} type="number" min="0.01" step="0.01" placeholder="Automático desde ARS" className="h-11 rounded-xl" {...form.register(`modalidades.${index}.precio_brl`, { setValueAs: (value) => value === '' ? undefined : Number(value) })} />
-                            <span className="text-[11px] text-muted-foreground">Dejá vacío para convertir automáticamente; ingresá un importe para fijarlo a mano.</span>
+                            <span className="text-xs leading-relaxed text-muted-foreground">Dejá vacío para convertir automáticamente; ingresá un importe para fijarlo a mano.</span>
                           </div>
                         </div>
                       </div>
@@ -1130,7 +1130,7 @@ export function UnidadForm({
                 <ImagePlus className="w-5 h-5 text-dorado-600 dark:text-dorado-400" />
                 Galería de Fotos
               </CardTitle>
-              <CardDescription className="font-mono text-xs">
+              <CardDescription className="text-sm leading-relaxed text-muted-foreground">
                 ({fotos.length}/10) fotos de la unidad{!unidadId ? ' · Guardá el borrador antes de subirlas' : ''}
               </CardDescription>
             </CardHeader>
@@ -1206,13 +1206,13 @@ export function UnidadForm({
 
         {/* SECCIÓN 4: GEOLOCALIZACIÓN & UBICACIÓN */}
         <section id="ubicacion" className="scroll-mt-24">
-          <Card className="bg-card border border-border rounded-2xl p-6 shadow-xl space-y-6">
+          <Card className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-6">
             <CardHeader className="p-0 space-y-1">
               <CardTitle className="text-xl font-bold font-sans flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-dorado-600 dark:text-dorado-400" />
                 Geolocalización &amp; Ubicación
               </CardTitle>
-              <CardDescription className="font-mono text-xs">
+              <CardDescription className="text-sm leading-relaxed text-muted-foreground">
                 Busca la dirección exacta por texto o coloca el pin manualmente sobre el mapa Leaflet con geocodificación inversa bidireccional
               </CardDescription>
             </CardHeader>
@@ -1221,12 +1221,12 @@ export function UnidadForm({
               {/* Buscador de Direcciones con Autocompletado Nominatim */}
               <div ref={dropdownRef} className="p-4 rounded-2xl border border-primary/20 bg-card/85 backdrop-blur-md shadow-sm space-y-2 relative z-30">
                 <div className="flex items-center justify-between">
-                  <Label className="font-mono text-xs uppercase text-muted-foreground flex items-center gap-1.5">
+                  <Label className="text-sm font-medium text-foreground/90 flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 text-primary" />
                     Dirección, Ciudad o Localidad (Autocompletado con Nominatim)
                   </Label>
                   {isSearchingAddress && (
-                    <span className="flex items-center gap-1.5 text-[11px] font-mono text-primary animate-pulse">
+                    <span className="flex items-center gap-1.5 text-[11px] font-mono text-primary">
                       <Spinner size="sm" />
                       Buscando en Goya, Ctes...
                     </span>
@@ -1273,7 +1273,7 @@ export function UnidadForm({
 
                   {/* Dropdown flotante de sugerencias Nominatim */}
                   {showDropdown && suggestions.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-1.5 z-50 bg-card border border-border rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto divide-y divide-border/40 backdrop-blur-xl animate-in fade-in-0 zoom-in-95 duration-100">
+                    <div className="absolute top-full left-0 right-0 mt-1.5 z-50 bg-card border border-border rounded-xl shadow-lg overflow-hidden max-h-60 overflow-y-auto divide-y divide-border/40 backdrop-blur-xl animate-in fade-in-0 zoom-in-95 duration-100">
                       {suggestions.map((item) => {
                         const road = item.address?.road || item.name || '';
                         const houseNumber = item.address?.house_number ? ` ${item.address.house_number}` : '';
@@ -1292,7 +1292,7 @@ export function UnidadForm({
                               <span className="text-xs font-semibold text-foreground block truncate">
                                 {mainTitle}
                               </span>
-                              <span className="text-[11px] text-muted-foreground block truncate">
+                              <span className="text-xs leading-relaxed text-muted-foreground block truncate">
                                 {subtitle}
                               </span>
                             </div>
@@ -1366,7 +1366,7 @@ export function UnidadForm({
                       <div className="absolute bottom-6 left-4 right-4 z-[1000] pb-safe">
                         <Button
                           type="button"
-                          className="w-full h-12 rounded-xl shadow-xl font-mono uppercase text-xs tracking-wider bg-dorado-500 hover:bg-dorado-600 text-azul-900 font-bold"
+                          className="w-full h-12 rounded-xl shadow-sm font-mono uppercase text-xs tracking-wider bg-dorado-500 hover:bg-dorado-600 text-azul-900 font-bold"
                           onClick={() => setOpenMobileMap(false)}
                         >
                           Confirmar Ubicación
@@ -1386,13 +1386,13 @@ export function UnidadForm({
                       <span className="truncate">{addressResultName || searchAddress || 'Ubicación fijada en mapa'}</span>
                     </div>
                     {ubicacionExacta && (
-                      <div className="text-[11px] text-muted-foreground font-mono">
+                      <div className="text-xs leading-relaxed text-muted-foreground font-mono">
                         GPS: {ubicacionExacta.lat.toFixed(5)}, {ubicacionExacta.lng.toFixed(5)}
                       </div>
                     )}
                   </div>
                 ) : (
-                  <p className="mt-1.5 text-[11px] text-muted-foreground italic">
+                  <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground italic">
                     Sin ubicación fijada aún. Podés buscar por dirección o abrir el mapa.
                   </p>
                 )}
@@ -1412,7 +1412,7 @@ export function UnidadForm({
       </div>
 
       {/* En móvil queda al final del formulario para no tapar los campos. */}
-      <div className="relative lg:sticky lg:bottom-0 z-40 w-full bg-card/95 backdrop-blur-md border border-border p-4 shadow-2xl flex flex-col gap-3 rounded-2xl">
+      <div className="relative lg:sticky lg:bottom-0 z-40 w-full bg-card/95 backdrop-blur-md border border-border p-4 shadow-lg flex flex-col gap-3 rounded-2xl">
         {saveError && <p role="alert" className="w-full rounded-lg border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">{saveError}</p>}
         {confirmDiscard && (
           <div role="alert" data-testid="unidad-unsaved-confirm" className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 space-y-2">
@@ -1443,7 +1443,7 @@ export function UnidadForm({
             variant="ghost" 
             onClick={handleCancel}
             disabled={isSubmitting}
-            className="font-mono uppercase text-xs tracking-wider rounded-xl hover:bg-muted min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
+            className="font-sans text-sm font-semibold rounded-xl hover:bg-muted min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
           >
             Cancelar
           </Button>
