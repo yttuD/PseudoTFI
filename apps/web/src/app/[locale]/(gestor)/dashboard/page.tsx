@@ -294,11 +294,11 @@ export default async function DashboardPage({
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div data-testid="dashboard-primary-actions" className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
           {canCreateUnidad && (
             <Link
               href={`/${locale}/mis-unidades/nueva`}
-              className="px-4 py-2 min-h-[44px] flex items-center justify-center rounded-xl bg-primary text-primary-foreground text-xs font-mono font-semibold shadow-sm hover:bg-primary/90 transition-all"
+              className="w-full min-[380px]:w-auto px-4 py-2 min-h-[44px] flex items-center justify-center rounded-xl bg-primary text-primary-foreground text-xs font-mono font-semibold shadow-sm hover:bg-primary/90 transition-all"
             >
               {tDash('newUnitBtn')}
             </Link>
@@ -311,7 +311,7 @@ export default async function DashboardPage({
           {!isDelegado && (
             <Link
               href={`/${locale}/facturacion`}
-              className="px-4 py-2 min-h-[44px] flex items-center justify-center rounded-xl bg-surface border border-border text-foreground text-xs font-mono font-semibold hover:bg-muted transition-all"
+              className="w-full min-[380px]:w-auto px-4 py-2 min-h-[44px] flex items-center justify-center rounded-xl bg-surface border border-border text-foreground text-xs font-mono font-semibold hover:bg-muted transition-all"
             >
               {tDash('buyQuotaBtn')}
             </Link>
