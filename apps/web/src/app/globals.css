@@ -287,3 +287,18 @@ html, body {
     display: none !important;
   }
 }
+
+/* Respect the OS preference for reduced motion across the interface, not
+   only the decorative skyline. Keep focus, state and loading text intact. */
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
