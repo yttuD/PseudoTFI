@@ -1,0 +1,37 @@
+name: Rendo public read-only post-release smoke
+
+on:
+  push:
+    branches:
+      - qa/rendo-public-smoke-2026-10-22
+
+permissions:
+  contents: read
+
+jobs:
+  public-http-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Checkout release smoke script without persisting credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Set up Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Check live login and both API health endpoints by GET only
+        run: node scripts/release/readonly-vercel-smoke.mjs --web https://rendo-beta-web.vercel.app --api https://rendo-beta-api.vercel.app
+      - name: Check public ES, EN, PT and marketplace pages by GET only
+        shell: bash
+        run: |
+          set -euo pipefail
+          for route in es en pt es/unidades; do
+            url="https://rendo-beta-web.vercel.app/$route"
+            status="$(curl --silent --show-error --max-time 20 --retry 1 --retry-delay 2 -o /dev/null -w '%{http_code}' "$url")"
+            printf 'GET /%s -> HTTP %s\n' "$route" "$status"
+            test "$status" = "200"
+          done
+      - name: Confirm live response status only — no tokens or writes
+        run: echo "PASS 7 read-only public HTTP routes; does not validate browser authentication, user data or RLS."
