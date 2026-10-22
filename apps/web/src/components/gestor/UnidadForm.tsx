@@ -16,7 +16,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { createBrowserClient } from '@supabase/ssr';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   MapPin, 
   Maximize2, 
@@ -101,6 +101,9 @@ export function UnidadForm({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState('basicos');
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const deleteInFlightRef = useRef(false);
   const userEditedRef = useRef(false);
   const continueEditingRef = useRef<HTMLButtonElement>(null);
   const [openMobileMap, setOpenMobileMap] = useState(false);
@@ -625,7 +628,9 @@ export function UnidadForm({
   };
 
   const handleDelete = async () => {
-    if (!unidadId || !window.confirm('¿Eliminar esta unidad? Dejará de aparecer en el inventario y en el catálogo. Esta acción no se puede deshacer desde la app.')) return;
+    if (!unidadId || isSubmitting || deleteInFlightRef.current) return;
+    deleteInFlightRef.current = true;
+    setDeleteError(null);
     setSaveError(null);
     setIsSubmitting(true);
     try {
@@ -633,11 +638,13 @@ export function UnidadForm({
         method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!response.ok) throw new Error('No se pudo eliminar la unidad. Si tiene alquileres activos, finalizalos antes de volver a intentar.');
+      setConfirmDelete(false);
       router.push(`/${locale}/mis-unidades`);
       router.refresh();
     } catch (error) {
-      setSaveError(error instanceof Error ? error.message : 'No se pudo eliminar la unidad.');
+      setDeleteError(error instanceof Error ? error.message : 'No se pudo eliminar la unidad.');
     } finally {
+      deleteInFlightRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -1424,6 +1431,35 @@ export function UnidadForm({
         </div>
       </div>
 
+      <Dialog open={confirmDelete} onOpenChange={(nextOpen) => {
+        if (isSubmitting) return;
+        setConfirmDelete(nextOpen);
+        if (nextOpen) setDeleteError(null);
+      }}>
+        <DialogContent data-testid="unidad-delete-dialog" className="sm:max-w-[460px]">
+          <DialogHeader>
+            <DialogTitle>¿Eliminar esta unidad?</DialogTitle>
+            <DialogDescription>
+              Se quitará del inventario y del catálogo. No podés deshacer esta acción desde la aplicación.
+              {hasUnsavedChanges() ? ' También se perderán los cambios que todavía no guardaste.' : ''}
+            </DialogDescription>
+          </DialogHeader>
+          {deleteError && (
+            <p role="alert" data-testid="unidad-delete-error" className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+              {deleteError}
+            </p>
+          )}
+          <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
+            <Button type="button" variant="outline" autoFocus className="min-h-11" disabled={isSubmitting} onClick={() => setConfirmDelete(false)}>
+              Conservar unidad
+            </Button>
+            <Button type="button" variant="destructive" data-testid="unidad-confirm-delete" className="min-h-11" disabled={isSubmitting} onClick={() => void handleDelete()}>
+              {isSubmitting ? 'Eliminando...' : 'Eliminar definitivamente'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* En móvil queda al final del formulario para no tapar los campos. */}
       <div className="relative lg:sticky lg:bottom-0 z-40 w-full bg-card/95 backdrop-blur-md border border-border p-4 shadow-lg flex flex-col gap-3 rounded-2xl">
         {saveError && <p role="alert" className="w-full rounded-lg border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">{saveError}</p>}
@@ -1450,7 +1486,7 @@ export function UnidadForm({
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
           {unidadId && estadoActual === 'publicada' && <Button type="button" variant="outline" disabled={isSubmitting} onClick={() => handleStatusChange('pausada')} className="min-h-11">Pausar</Button>}
           {unidadId && estadoActual === 'pausada' && <Button type="button" variant="outline" disabled={isSubmitting} onClick={() => handleStatusChange('publicada')} className="min-h-11">Reactivar</Button>}
-          {unidadId && <Button type="button" variant="ghost" disabled={isSubmitting} onClick={handleDelete} className="min-h-11 text-destructive">Eliminar</Button>}
+          {unidadId && <Button type="button" variant="ghost" disabled={isSubmitting} data-testid="unidad-open-delete" onClick={() => { setDeleteError(null); setConfirmDelete(true); }} className="min-h-11 text-destructive">Eliminar</Button>}
           <Button 
             type="button" 
             variant="ghost" 
