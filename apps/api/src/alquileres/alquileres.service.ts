@@ -426,6 +426,9 @@ export class AlquileresService {
   }
 
   async update(id: string, updateAlquilerDto: UpdateAlquilerDto, token: string) {
+    if (updateAlquilerDto.contrato_url !== undefined) {
+      throw new BadRequestException('El documento se adjunta desde la operación privada de contratos');
+    }
     const client = this.supabaseService.getClient(token);
 
     const { data: currentAlquiler, error: currentError } = await client
@@ -572,10 +575,6 @@ export class AlquileresService {
     if (updateAlquilerDto.monto_deposito !== undefined) updatePayload.monto_deposito = Number(updateAlquilerDto.monto_deposito);
     if (updateAlquilerDto.estado !== undefined) updatePayload.estado = updateAlquilerDto.estado;
     if (updateAlquilerDto.observaciones !== undefined) updatePayload.observaciones = updateAlquilerDto.observaciones;
-    if (updateAlquilerDto.contrato_url !== undefined) {
-      throw new BadRequestException('El documento se adjunta desde la operación privada de contratos');
-    }
-
     const { data, error } = await client
       .from('alquileres')
       .update(updatePayload)
