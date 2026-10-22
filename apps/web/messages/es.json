@@ -522,5 +522,15 @@
     "loadErrorTitle": "No pudimos cargar tus favoritos",
     "loadErrorDescription": "Tus favoritos no se eliminaron. No podemos consultarlos ahora; intentá de nuevo.",
     "retry": "Reintentar"
+  },
+  "UnidadFormUX": {
+    "mobileSections": "Secciones del formulario de unidad",
+    "jumpTo": "Ir a una sección",
+    "choose": "Elegí una sección",
+    "basics": "Datos básicos y grupo",
+    "description": "Ficha e idiomas",
+    "prices": "Tarifas y precios",
+    "photos": "Galería de fotos",
+    "location": "Ubicación y GPS"
   }
 }
