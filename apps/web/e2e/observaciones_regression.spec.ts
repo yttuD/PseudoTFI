@@ -276,3 +276,17 @@ test('UX-001: catálogo sin filtros ni coincidencias no inventa propiedades ni p
     await stopMockApiServer();
   }
 });
+
+
+test('UX-001: HTTP 200 con datos inválidos muestra error y conserva filtros', async ({ page }) => {
+  await startMockApiServer(3001);
+  try {
+    await page.goto('/es/unidades?q=invalid-payload');
+    await expect(page.getByText('El catálogo no está disponible temporalmente')).toBeVisible();
+    await expect(page.getByText('Servicio no disponible')).toBeVisible();
+    await expect(page.getByText('0 unidades encontradas')).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Reintentar' })).toHaveAttribute('href', /q=invalid-payload/);
+  } finally {
+    await stopMockApiServer();
+  }
+});

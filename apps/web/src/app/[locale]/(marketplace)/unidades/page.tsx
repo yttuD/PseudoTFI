@@ -80,7 +80,9 @@ export default async function UnidadesPage({
     });
     if (res.ok) {
       const data = await res.json();
-      unidades = Array.isArray(data) ? data : data?.data || [];
+      const results = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : null;
+      if (!results) throw new Error('Invalid marketplace catalog response');
+      unidades = results;
       catalogFetched = true;
     } else {
       catalogError = true;
