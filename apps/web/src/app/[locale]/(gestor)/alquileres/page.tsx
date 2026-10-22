@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { getServerAuth } from '@/lib/supabase/server-auth';
 import { cookies } from 'next/headers';
 import { AlquilerFormModal } from '@/components/gestor/AlquilerFormModal';
+import { RentalContractDocument } from '@/components/gestor/RentalContractDocument';
 import { Badge } from '@/components/ui/badge';
 import {
   Table,
@@ -166,6 +167,7 @@ export default async function AlquileresPage() {
                     <TableHead>Monto Total</TableHead>
                     <TableHead>Seña</TableHead>
                     <TableHead>Estado</TableHead>
+                    <TableHead>Documento</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -186,6 +188,9 @@ export default async function AlquileresPage() {
                         {Number(alq.monto_sena || 0) > 0 ? `$${Number(alq.monto_sena).toLocaleString('es-AR')}` : '-'}
                       </TableCell>
                       <TableCell>{getStatusBadge(alq.estado)}</TableCell>
+                      <TableCell>
+                        <RentalContractDocument rentalId={alq.id} storedPath={alq.contrato_url} token={token || ''} canManage={!isReadOnly} />
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -209,6 +214,7 @@ export default async function AlquileresPage() {
                     </span>
                     <span className="font-bold text-foreground">${Number(alq.monto_total || 0).toLocaleString('es-AR')}</span>
                   </div>
+                  <RentalContractDocument rentalId={alq.id} storedPath={alq.contrato_url} token={token || ''} canManage={!isReadOnly} />
                   {Number(alq.monto_sena || 0) > 0 && (
                     <div className="text-xs font-mono text-amber-600 dark:text-amber-400">
                       Seña: ${Number(alq.monto_sena).toLocaleString('es-AR')}
