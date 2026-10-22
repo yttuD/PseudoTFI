@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useForm, useFieldArray, type FieldErrors } from 'react-hook-form';
+import { useTranslations } from 'next-intl';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -87,6 +88,7 @@ export function UnidadForm({
   grupos?: { id: string; nombre: string }[]
 }) {
   const router = useRouter();
+  const tUx = useTranslations('UnidadFormUX');
   const searchParams = useSearchParams();
   const preselectedGrupoId = searchParams.get('grupo_id') || undefined;
 
@@ -243,8 +245,9 @@ export function UnidadForm({
         }
       }
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    // Capture scroll within the manager's scrollable main, too.
+    window.addEventListener('scroll', handleScroll, true);
+    return () => window.removeEventListener('scroll', handleScroll, true);
   }, []);
 
   // Cerrar dropdown al hacer click fuera
@@ -676,6 +679,22 @@ export function UnidadForm({
 
   return (
     <form noValidate onSubmit={form.handleSubmit((data) => onSubmit(data), onInvalid)} className="w-full max-w-7xl mx-auto flex flex-col gap-8 relative">
+      {/* Optional direct jump across the long form, without a mandatory wizard. */}
+      <nav aria-label={tUx('mobileSections')} data-testid="unidad-mobile-section-nav"
+        className="md:hidden sticky top-2 z-30 rounded-xl border border-border bg-card/95 p-3 shadow-sm">
+        <label htmlFor="unidad-section-picker" className="block pb-1 text-xs font-semibold text-foreground">
+          {tUx('jumpTo')}
+        </label>
+        <select id="unidad-section-picker" value={activeSection}
+          onChange={(event) => scrollTo(event.currentTarget.value)}
+          className="w-full min-h-11 rounded-lg border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+          <option value="basicos">{tUx('basics')}</option>
+          <option value="marketplace">{tUx('description')}</option>
+          <option value="modalidades">{tUx('prices')}</option>
+          <option value="fotos">{tUx('photos')}</option>
+          <option value="ubicacion">{tUx('location')}</option>
+        </select>
+      </nav>
       <div className="flex flex-col md:flex-row gap-8 items-start w-full">
         {/* Sticky ScrollSpy Sidebar */}
         <aside className="hidden md:block w-52 sticky top-6 self-start max-h-[calc(100dvh-3rem)] overflow-y-auto shrink-0">
