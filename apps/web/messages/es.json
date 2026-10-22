@@ -26,6 +26,17 @@
     "mes": "mes"
   },
   "auth": {
+    "loginGestorTitulo": "Ingresá a Rendo Gestor",
+    "loginBuscadorTitulo": "Bienvenido a Rendo",
+    "loginGestorBetaDescripcion": "Accedé para gestionar tus unidades y alquileres de prueba. Los cobros y comprobantes todavía no están disponibles.",
+    "loginGestorDescripcion": "Gestioná tus inmuebles, alquileres y cobros desde tu cuenta.",
+    "loginBuscadorDescripcion": "Iniciá sesión para consultar ubicaciones, contactar gestores y guardar favoritos.",
+    "loginGestorConfianza": "Gestión segura de tus propiedades",
+    "loginBuscadorConfianza": "Buscá inmuebles con confianza",
+    "loginPreguntaBuscador": "¿Buscás alquilar?",
+    "loginEnlaceBuscador": "Ingresá para buscar",
+    "loginPreguntaGestor": "¿Administrás inmuebles?",
+    "loginEnlaceGestor": "Ingresá como gestor",
     "registroGestorTitulo": "Creá tu cuenta de gestor",
     "registroBuscadorTitulo": "Creá tu cuenta en Rendo",
     "registroGestorBetaDescripcion": "Probá Rendo con hasta 10 unidades sin costo. Los cobros y comprobantes todavía no están disponibles.",

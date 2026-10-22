@@ -545,9 +545,7 @@ export default function RegisterPage() {
               <p className="text-xs text-muted-foreground">
                 {t("registroPreguntaBuscador")}{" "}
                 <Link
-                  href={`/${locale}/auth/registro?portal=marketplace${
-                    nextParam ? `&next=${encodeURIComponent(nextParam)}` : ""
-                  }`}
+                  href={`/${locale}/auth/registro?portal=marketplace`}
                   className="font-semibold text-azul-900 dark:text-dorado-300 hover:underline"
                 >
                   {t("registroEnlaceBuscador")}
@@ -557,9 +555,7 @@ export default function RegisterPage() {
               <p className="text-xs text-muted-foreground">
                 {t("registroPreguntaGestor")}{" "}
                 <Link
-                  href={`/${locale}/auth/registro?portal=gestor${
-                    nextParam ? `&next=${encodeURIComponent(nextParam)}` : ""
-                  }`}
+                  href={`/${locale}/auth/registro?portal=gestor`}
                   className="font-semibold text-azul-900 dark:text-dorado-300 hover:underline"
                 >
                   {t("registroEnlaceGestor")}

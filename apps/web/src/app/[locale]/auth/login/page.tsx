@@ -354,19 +354,13 @@ export default function LoginPage() {
     }
   };
 
-  const pageTitle = isGestorPortal
-    ? "Rendo Gestor :: Acceso Operativo"
-    : "Te damos la bienvenida a Rendo";
-
-  const pageSubtitle = isGestorPortal
-    ? isClosedBeta
-      ? "Ingresá a tu terminal para probar la gestión de unidades y alquileres. Los cobros y comprobantes están deshabilitados."
-      : "Ingresá a tu terminal para administrar unidades, alquileres y facturación."
-    : "Iniciá sesión para ver ubicaciones exactas, contactar gestores por WhatsApp y guardar favoritos.";
-
-  const trustBadge = isGestorPortal
-    ? "Terminal Operativo Seguro"
-    : "Marketplace Inmobiliario Directo";
+  const pageTitle = t(isGestorPortal ? 'loginGestorTitulo' : 'loginBuscadorTitulo');
+  const pageSubtitle = t(
+    isGestorPortal
+      ? isClosedBeta ? 'loginGestorBetaDescripcion' : 'loginGestorDescripcion'
+      : 'loginBuscadorDescripcion'
+  );
+  const trustBadge = t(isGestorPortal ? 'loginGestorConfianza' : 'loginBuscadorConfianza');
 
   return (
     <AuthLayout
@@ -553,26 +547,22 @@ export default function LoginPage() {
           <div className="pt-2 border-t border-border/40">
             {isGestorPortal ? (
               <p className="text-xs text-muted-foreground">
-                ¿Buscás alquilar una Unidad?{" "}
+                {t('loginPreguntaBuscador')}{" "}
                 <Link
-                  href={`/${locale}/auth/login?portal=marketplace${
-                    nextParam ? `&next=${encodeURIComponent(nextParam)}` : ""
-                  }`}
+                  href={`/${locale}/auth/login?portal=marketplace`}
                   className="font-semibold text-azul-900 dark:text-dorado-300 hover:underline"
                 >
-                  Ingresá como inquilino aquí
+                  {t('loginEnlaceBuscador')}
                 </Link>
               </p>
             ) : (
               <p className="text-xs text-muted-foreground">
-                ¿Sos Gestor inmobiliario?{" "}
+                {t('loginPreguntaGestor')}{" "}
                 <Link
-                  href={`/${locale}/auth/login?portal=gestor${
-                    nextParam ? `&next=${encodeURIComponent(nextParam)}` : ""
-                  }`}
+                  href={`/${locale}/auth/login?portal=gestor`}
                   className="font-semibold text-azul-900 dark:text-dorado-300 hover:underline"
                 >
-                  Accedé al portal de gestores aquí
+                  {t('loginEnlaceGestor')}
                 </Link>
               </p>
             )}
