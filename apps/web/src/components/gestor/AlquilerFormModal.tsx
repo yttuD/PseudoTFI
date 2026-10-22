@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, type FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
@@ -478,6 +478,20 @@ export function AlquilerFormModal({
     }
   };
 
+  const handleInvalid = (errors: FieldErrors<FormData>) => {
+    const order: (keyof FormData)[] = [
+      'unidad_id', 'inquilino_id', 'fecha_inicio', 'fecha_fin',
+      'monto_total', 'sena_valor', 'monto_sena', 'monto_deposito',
+    ];
+    const first = order.find((field) => !!errors[field]);
+    requestAnimationFrame(() => {
+      const target = first ? document.getElementById(first) : null;
+      (target || document.getElementById('alquiler-validation-summary'))?.focus();
+    });
+  };
+  const hasValidationErrors = form.formState.isSubmitted
+    && Object.keys(form.formState.errors).length > 0;
+
   const hasInquilinos = inquilinosList.length > 0;
   const hasUnidades = unidadesList.length > 0;
 
@@ -538,6 +552,7 @@ export function AlquilerFormModal({
         {apiErrorMessage && (
           <div
             data-testid="alquiler-api-error"
+            role="alert"
             className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs my-2"
           >
             <AlertCircle className="h-4 w-4 shrink-0" />
@@ -567,7 +582,14 @@ export function AlquilerFormModal({
             </div>
           </div>
         ) : (
-          <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-1">
+          <form noValidate onSubmit={form.handleSubmit(onSubmit, handleInvalid)} className="space-y-4 pt-1">
+            {hasValidationErrors && (
+              <div id="alquiler-validation-summary" data-testid="alquiler-validation-summary"
+                role="alert" tabIndex={-1}
+                className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive focus:outline-none">
+                Revisá los campos señalados antes de guardar. No se registró ningún alquiler.
+              </div>
+            )}
             {/* Selector Canónico de Modalidad */}
             <div className="grid gap-1.5 p-3 rounded-xl bg-muted/20 border border-border/80">
               <div className="flex items-center justify-between">
@@ -633,8 +655,10 @@ export function AlquilerFormModal({
               <select
                 id="unidad_id"
                 name="unidad_id"
+                aria-invalid={!!form.formState.errors.unidad_id}
+                aria-describedby={form.formState.errors.unidad_id ? 'alquiler-unidad-error' : undefined}
                 value={form.watch('unidad_id')}
-                onChange={(e) => form.setValue('unidad_id', e.target.value)}
+                onChange={(e) => form.setValue('unidad_id', e.target.value, { shouldDirty: true, shouldValidate: true })}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs sm:text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/20 truncate"
                 disabled={!hasUnidades}
               >
@@ -646,7 +670,7 @@ export function AlquilerFormModal({
                 ))}
               </select>
               {form.formState.errors.unidad_id && (
-                <span className="text-xs text-destructive">{form.formState.errors.unidad_id.message}</span>
+                <span id="alquiler-unidad-error" className="text-xs text-destructive">{form.formState.errors.unidad_id.message}</span>
               )}
             </div>
 
@@ -659,8 +683,10 @@ export function AlquilerFormModal({
                 <select
                   id="inquilino_id"
                   name="inquilino_id"
+                  aria-invalid={!!form.formState.errors.inquilino_id}
+                  aria-describedby={form.formState.errors.inquilino_id ? 'alquiler-inquilino-error' : undefined}
                   value={form.watch('inquilino_id')}
-                  onChange={(e) => form.setValue('inquilino_id', e.target.value)}
+                  onChange={(e) => form.setValue('inquilino_id', e.target.value, { shouldDirty: true, shouldValidate: true })}
                   className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-xs sm:text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/20 truncate"
                   disabled={!hasInquilinos}
                 >
@@ -691,7 +717,7 @@ export function AlquilerFormModal({
                 />
               </div>
               {form.formState.errors.inquilino_id && (
-                <span className="text-xs text-destructive">{form.formState.errors.inquilino_id.message}</span>
+                <span id="alquiler-inquilino-error" className="text-xs text-destructive">{form.formState.errors.inquilino_id.message}</span>
               )}
             </div>
 
@@ -770,6 +796,8 @@ export function AlquilerFormModal({
               <Input
                 id="monto_total"
                 type="number"
+                aria-invalid={!!form.formState.errors.monto_total}
+                aria-describedby={form.formState.errors.monto_total ? 'alquiler-monto-error' : undefined}
                 min={0}
                 step="any"
                 {...form.register('monto_total', { valueAsNumber: true })}
@@ -777,7 +805,7 @@ export function AlquilerFormModal({
                 className="text-xs sm:text-sm font-semibold"
               />
               {form.formState.errors.monto_total && (
-                <span className="text-xs text-destructive">{form.formState.errors.monto_total.message}</span>
+                <span id="alquiler-monto-error" className="text-xs text-destructive">{form.formState.errors.monto_total.message}</span>
               )}
               <p data-testid="alquiler-monto-ayuda" className="text-xs text-muted-foreground">Ingresá el monto real acordado. No se precarga ningún importe de ejemplo.</p>
             </div>
