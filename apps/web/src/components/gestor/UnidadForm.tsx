@@ -1450,7 +1450,7 @@ export function UnidadForm({
             </p>
           )}
           <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
-            <Button type="button" variant="outline" className="min-h-11" disabled={isSubmitting} onClick={() => setConfirmDelete(false)}>
+            <Button type="button" variant="outline" autoFocus className="min-h-11" disabled={isSubmitting} onClick={() => setConfirmDelete(false)}>
               Conservar unidad
             </Button>
             <Button type="button" variant="destructive" data-testid="unidad-confirm-delete" className="min-h-11" disabled={isSubmitting} onClick={() => void handleDelete()}>
