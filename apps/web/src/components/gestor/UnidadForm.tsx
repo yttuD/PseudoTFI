@@ -1453,7 +1453,7 @@ export function UnidadForm({
             <Button type="button" variant="outline" className="min-h-11" disabled={isSubmitting} onClick={() => setConfirmDelete(false)}>
               Conservar unidad
             </Button>
-            <Button type="button" variant="destructive" className="min-h-11" disabled={isSubmitting} onClick={() => void handleDelete()}>
+            <Button type="button" variant="destructive" data-testid="unidad-confirm-delete" className="min-h-11" disabled={isSubmitting} onClick={() => void handleDelete()}>
               {isSubmitting ? 'Eliminando...' : 'Eliminar definitivamente'}
             </Button>
           </div>
@@ -1486,7 +1486,7 @@ export function UnidadForm({
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
           {unidadId && estadoActual === 'publicada' && <Button type="button" variant="outline" disabled={isSubmitting} onClick={() => handleStatusChange('pausada')} className="min-h-11">Pausar</Button>}
           {unidadId && estadoActual === 'pausada' && <Button type="button" variant="outline" disabled={isSubmitting} onClick={() => handleStatusChange('publicada')} className="min-h-11">Reactivar</Button>}
-          {unidadId && <Button type="button" variant="ghost" disabled={isSubmitting} onClick={() => { setDeleteError(null); setConfirmDelete(true); }} className="min-h-11 text-destructive">Eliminar</Button>}
+          {unidadId && <Button type="button" variant="ghost" disabled={isSubmitting} data-testid="unidad-open-delete" onClick={() => { setDeleteError(null); setConfirmDelete(true); }} className="min-h-11 text-destructive">Eliminar</Button>}
           <Button 
             type="button" 
             variant="ghost" 
