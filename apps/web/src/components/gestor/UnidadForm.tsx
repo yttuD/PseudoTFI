@@ -644,7 +644,7 @@ export function UnidadForm({
           : 'marketplace';
     scrollTo(section);
     requestAnimationFrame(() => {
-      if (errors.modalidades) {
+      if (Array.isArray(errors.modalidades)) {
         const index = errors.modalidades.findIndex(Boolean);
         if (index >= 0) {
           const field = errors.modalidades[index]?.precio ? 'precio' : 'cantidad_tiempo';
