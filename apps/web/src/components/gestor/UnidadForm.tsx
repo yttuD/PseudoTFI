@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, type FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -98,6 +98,8 @@ export function UnidadForm({
   const [saveError, setSaveError] = useState<string | null>(searchParams.get('save_error') ? 'La unidad quedó como borrador. Revisá las tarifas y guardá nuevamente.' : null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState('basicos');
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const continueEditingRef = useRef<HTMLButtonElement>(null);
   const [openMobileMap, setOpenMobileMap] = useState(false);
 
   // Estados de Idioma y Auto-traducción
@@ -174,6 +176,10 @@ export function UnidadForm({
       fotos: []
     }
   });
+
+  useEffect(() => {
+    if (confirmDiscard) continueEditingRef.current?.focus();
+  }, [confirmDiscard]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -327,13 +333,13 @@ export function UnidadForm({
     setAddressError(null);
 
     // Actualizar coordenadas en el formulario y disparar recentrado fluido en el mapa
-    form.setValue('ubicacion_exacta', { lat, lng });
-    form.setValue('ubicacion_aprox', { lat, lng });
+    form.setValue('ubicacion_exacta', { lat, lng }, { shouldDirty: true });
+    form.setValue('ubicacion_aprox', { lat, lng }, { shouldDirty: true });
   };
 
   const handleLocationSelect = (loc: { lat: number, lng: number }) => {
-    form.setValue('ubicacion_exacta', loc);
-    form.setValue('ubicacion_aprox', loc);
+    form.setValue('ubicacion_exacta', loc, { shouldDirty: true });
+    form.setValue('ubicacion_aprox', loc, { shouldDirty: true });
     setSearchAddress('');
     setAddressResultName(null);
   };
@@ -624,13 +630,44 @@ export function UnidadForm({
   const scrollTo = (id: string) => {
     const el = document.getElementById(id);
     if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      el.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
       setActiveSection(id);
     }
   };
 
+  const onInvalid = (errors: FieldErrors<FormData>) => {
+    setSaveError('Revisá los campos señalados. Tus datos siguen en el formulario.');
+    const section = errors.modalidades ? 'modalidades'
+      : errors.categoria ? 'basicos'
+        : errors.ubicacion_aprox || errors.ubicacion_exacta ? 'ubicacion'
+          : 'marketplace';
+    scrollTo(section);
+    requestAnimationFrame(() => {
+      if (errors.modalidades) {
+        const index = errors.modalidades.findIndex(Boolean);
+        if (index >= 0) {
+          const field = errors.modalidades[index]?.precio ? 'precio' : 'cantidad_tiempo';
+          document.querySelector<HTMLInputElement>(`[name="modalidades.${index}.${field}"]`)?.focus({ preventScroll: true });
+        }
+      } else if (errors.categoria) {
+        document.getElementById('categoria-select')?.focus({ preventScroll: true });
+      }
+    });
+  };
+
+  const handleCancel = () => {
+    if (isSubmitting) return;
+    const originalAddress = typeof initialData?.direccion_texto === 'string' ? initialData.direccion_texto : '';
+    if (form.formState.isDirty || searchAddress !== originalAddress) {
+      setConfirmDiscard(true);
+      return;
+    }
+    router.push(`/${locale}/mis-unidades`);
+  };
+
   return (
-    <form onSubmit={form.handleSubmit((data) => onSubmit(data), () => setSaveError('Revisá los campos del formulario: una categoría, precio o plazo tiene un valor inválido.'))} className="w-full max-w-7xl mx-auto flex flex-col gap-8 relative">
+    <form noValidate onSubmit={form.handleSubmit((data) => onSubmit(data), onInvalid)} className="w-full max-w-7xl mx-auto flex flex-col gap-8 relative">
       <div className="flex flex-col md:flex-row gap-8 items-start w-full">
         {/* Sticky ScrollSpy Sidebar */}
         <aside className="hidden md:block w-52 sticky top-6 self-start max-h-[calc(100dvh-3rem)] overflow-y-auto shrink-0">
@@ -732,7 +769,7 @@ export function UnidadForm({
                     checked={autoTraducir} 
                     onCheckedChange={(checked) => {
                       setAutoTraducir(checked);
-                      form.setValue('auto_traducir', checked);
+                      form.setValue('auto_traducir', checked, { shouldDirty: true });
                     }} 
                   />
                 </div>
@@ -999,11 +1036,17 @@ export function UnidadForm({
                                 data-testid="input-precio"
                                 min={0}
                                 step="0.01"
-                                required
+                                aria-invalid={!!form.formState.errors.modalidades?.[index]?.precio}
+                                aria-describedby={form.formState.errors.modalidades?.[index]?.precio ? `precio_error_${index}` : undefined}
                                 className="h-12 pl-8 font-mono text-base rounded-xl font-semibold"
                                 {...form.register(`modalidades.${index}.precio`, { valueAsNumber: true })}
                               />
                             </div>
+                            {form.formState.errors.modalidades?.[index]?.precio && (
+                              <span id={`precio_error_${index}`} role="alert" className="text-xs text-destructive">
+                                Ingresá un precio válido en ARS (0 o más).
+                              </span>
+                            )}
                             <span className="text-[11px] text-muted-foreground">Tarifa final visible en la ficha de la unidad.</span>
                           </div>
 
@@ -1015,9 +1058,16 @@ export function UnidadForm({
                             <Input
                               type="number"
                               min={1}
+                              aria-invalid={!!form.formState.errors.modalidades?.[index]?.cantidad_tiempo}
+                              aria-describedby={form.formState.errors.modalidades?.[index]?.cantidad_tiempo ? `plazo_error_${index}` : undefined}
                               className="h-12 font-mono text-base rounded-xl font-semibold text-center"
                               {...form.register(`modalidades.${index}.cantidad_tiempo`, { valueAsNumber: true })}
                             />
+                            {form.formState.errors.modalidades?.[index]?.cantidad_tiempo && (
+                              <span id={`plazo_error_${index}`} role="alert" className="text-xs text-destructive">
+                                Indicá un plazo mínimo de al menos 1.
+                              </span>
+                            )}
                             <span className="text-[11px] text-muted-foreground">
                               {isDia ? 'Mínimo de noches que el huésped debe reservar.' : isMes ? 'Meses mínimos de vigencia del contrato.' : 'Cantidad mínima de horas por turno.'}
                             </span>
@@ -1337,6 +1387,22 @@ export function UnidadForm({
       {/* En móvil queda al final del formulario para no tapar los campos. */}
       <div className="relative lg:sticky lg:bottom-0 z-40 w-full bg-card/95 backdrop-blur-md border border-border p-4 shadow-2xl flex flex-col gap-3 rounded-2xl">
         {saveError && <p role="alert" className="w-full rounded-lg border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">{saveError}</p>}
+        {confirmDiscard && (
+          <div role="alert" data-testid="unidad-unsaved-confirm" className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 space-y-2">
+            <p className="text-sm font-semibold text-foreground">Hay cambios sin guardar</p>
+            <p className="text-xs text-muted-foreground">Si salís, se perderán los datos que todavía no guardaste.</p>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" ref={continueEditingRef}
+                data-testid="unidad-seguir-editando" onClick={() => setConfirmDiscard(false)}>
+                Seguir editando
+              </Button>
+              <Button type="button" variant="destructive" data-testid="unidad-descartar-cambios"
+                onClick={() => router.push(`/${locale}/mis-unidades`)}>
+                Descartar cambios
+              </Button>
+            </div>
+          </div>
+        )}
         <div className="flex flex-wrap items-center justify-between gap-3 w-full">
         <span className="text-sm font-mono text-muted-foreground hidden sm:inline-block">
           {isSubmitting ? 'Procesando...' : `Estado: ${estadoActual.replace(/_/g, ' ')}`}
@@ -1348,7 +1414,8 @@ export function UnidadForm({
           <Button 
             type="button" 
             variant="ghost" 
-            onClick={() => router.push(`/${locale}/mis-unidades`)}
+            onClick={handleCancel}
+            disabled={isSubmitting}
             className="font-mono uppercase text-xs tracking-wider rounded-xl hover:bg-muted min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
           >
             Cancelar
@@ -1367,7 +1434,7 @@ export function UnidadForm({
               unidadId ? 'Guardar cambios' : 'Guardar borrador'
             )}
           </Button>
-          {unidadId && estadoActual === 'borrador' && <Button type="button" disabled={isSubmitting} onClick={form.handleSubmit((data) => onSubmit(data, true), () => setSaveError('Revisá los campos del formulario antes de publicar.'))} className="min-h-11 bg-emerald-700 hover:bg-emerald-800 text-white">Guardar y publicar</Button>}
+          {unidadId && estadoActual === 'borrador' && <Button type="button" disabled={isSubmitting} onClick={form.handleSubmit((data) => onSubmit(data, true), onInvalid)} className="min-h-11 bg-emerald-700 hover:bg-emerald-800 text-white">Guardar y publicar</Button>}
         </div>
         </div>
       </div>
