@@ -209,6 +209,10 @@
     }
   },
   "Nav": {
+    "profileMenu": "Profile menu",
+    "roleTenant": "Tenant",
+    "signingOut": "Signing out...",
+    "logoutFailed": "We couldn't sign you out. Please try again.",
     "dashboard": "Property Manager Dashboard",
     "units": "Units",
     "rentals": "Rentals",
