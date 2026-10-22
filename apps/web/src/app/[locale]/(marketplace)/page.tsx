@@ -135,7 +135,7 @@ export default function Home() {
   ];
 
   return (
-    <main className="flex-1 flex flex-col min-h-screen overflow-hidden bg-background">
+    <div className="flex-1 flex flex-col min-h-screen overflow-hidden bg-background">
       {/* 1. HERO SECTION WITH PROCEDURAL ANIMATED CITY SKYLINE */}
       <section className="relative w-full min-h-[92vh] flex flex-col justify-center items-center pt-12 pb-20 px-4 sm:px-6 lg:px-8">
         {/* Procedural Animated City Skyline & Stars Background */}
@@ -508,6 +508,6 @@ export default function Home() {
           />
         </div>
       </section>}
-    </main>
+    </div>
   );
 }
