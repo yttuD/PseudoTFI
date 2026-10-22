@@ -50,4 +50,35 @@ test.describe('UX-001: published listing state stays readable inside the detail 
       expect(violations,`WCAG detail page ${theme}`).toEqual([]);
     }
   });
+
+  test('tablist exposes its panel, supports arrow keys and restores roving focus', async ({ page, context }) => {
+    await context.clearCookies();
+    await page.goto('/es/unidades/a0000000-0000-0000-0000-000000000001');
+    const list = page.getByRole('tablist').first();
+    const tabs = list.getByRole('tab');
+    await expect(tabs).toHaveCount(3);
+    const first = tabs.nth(0);
+    const second = tabs.nth(1);
+    const last = tabs.nth(2);
+    const panel = page.getByRole('tabpanel').first();
+    await expect(first).toHaveAttribute('aria-selected', 'true');
+    await expect(first).toHaveAttribute('tabindex', '0');
+    await expect(second).toHaveAttribute('tabindex', '-1');
+
+    await first.focus();
+    await first.press('ArrowRight');
+    await expect(second).toBeFocused();
+    await expect(second).toHaveAttribute('aria-selected', 'true');
+    await expect(first).toHaveAttribute('tabindex', '-1');
+    await expect(panel).toHaveAttribute('aria-labelledby', await second.getAttribute('id') || '');
+    await expect(second).toHaveAttribute('aria-controls', await panel.getAttribute('id') || '');
+
+    await second.press('End');
+    await expect(last).toBeFocused();
+    await expect(last).toHaveAttribute('aria-selected', 'true');
+    await last.press('Home');
+    await expect(first).toBeFocused();
+    await expect(first).toHaveAttribute('aria-selected', 'true');
+  });
+
 });
