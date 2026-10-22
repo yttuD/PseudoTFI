@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useForm, useFieldArray, type FieldErrors } from 'react-hook-form';
+import { useForm, useFieldArray, useFormState, type FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -180,6 +180,9 @@ export function UnidadForm({
   useEffect(() => {
     if (confirmDiscard) continueEditingRef.current?.focus();
   }, [confirmDiscard]);
+
+  // Subscribe during render: reading formState.isDirty only in a click callback can be stale.
+  const { isDirty } = useFormState({ control: form.control });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -591,7 +594,7 @@ export function UnidadForm({
 
   const handleStatusChange = async (newStatus: 'pausada' | 'publicada') => {
     if (!unidadId) return;
-    if (form.formState.isDirty && !window.confirm('Tenés cambios sin guardar. ¿Querés continuar sin guardarlos?')) return;
+    if (isDirty && !window.confirm('Tenés cambios sin guardar. ¿Querés continuar sin guardarlos?')) return;
     setSaveError(null);
     setIsSubmitting(true);
     try {
@@ -659,7 +662,7 @@ export function UnidadForm({
   const handleCancel = () => {
     if (isSubmitting) return;
     const originalAddress = typeof initialData?.direccion_texto === 'string' ? initialData.direccion_texto : '';
-    if (form.formState.isDirty || searchAddress !== originalAddress) {
+    if (isDirty || searchAddress !== originalAddress) {
       setConfirmDiscard(true);
       return;
     }
