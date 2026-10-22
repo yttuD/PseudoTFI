@@ -495,6 +495,8 @@
     "ubicacion": "Localização / Região",
     "todasZonas": "Todas as regiões",
     "ayudaZonas": "“Todas” também inclui imóveis fora das regiões listadas.",
+    "zonasError": "Não foi possível carregar as regiões. Você ainda pode buscar.",
+    "reintentarZonas": "Tentar regiões novamente",
     "precio": "Faixa de preço",
     "minimo": "Mínimo",
     "maximo": "Máximo",
