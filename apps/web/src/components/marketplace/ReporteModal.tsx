@@ -37,6 +37,15 @@ export function ReporteModal({ unidadId, isLoggedIn, token, className = '' }: Re
   const [hasError, setHasError] = useState(false);
   const [wasSent, setWasSent] = useState(false);
   const pathname = usePathname();
+  // @base-ui's default Value displays the raw string ID when only item values
+  // are supplied. Always present the selected option in the current locale.
+  const reasonLabels: Record<string, string> = {
+    fraude: t('reasonFraud'),
+    falso: t('reasonFalse'),
+    no_disponible: t('reasonUnavailable'),
+    ofensivo: t('reasonOffensive'),
+    otro: t('reasonOther'),
+  };
 
   const handleOpenClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -130,7 +139,7 @@ export function ReporteModal({ unidadId, isLoggedIn, token, className = '' }: Re
                 required
               >
                 <SelectTrigger id="motivo" className="min-h-[44px] h-11 bg-background text-sm">
-                  <SelectValue placeholder={t('reasonPlaceholder')} />
+                  <SelectValue placeholder={t('reasonPlaceholder')}>{motivo ? reasonLabels[motivo] : undefined}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="fraude">{t('reasonFraud')}</SelectItem>
