@@ -89,7 +89,7 @@ export default function CuentaPage() {
   };
 
   return (
-    <main className="container mx-auto max-w-2xl px-4 py-8 sm:py-12">
+    <div className="container mx-auto max-w-2xl px-4 py-8 sm:py-12">
       <div className="mb-6">
         <p className="text-xs font-semibold uppercase tracking-widest text-dorado-700 dark:text-dorado-300">{t('account')}</p>
         <h1 className="mt-2 text-3xl font-bold text-foreground">{t('title')}</h1>
@@ -122,6 +122,6 @@ export default function CuentaPage() {
           <button type="submit" disabled={saving} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-50">{saving ? t('saving') : t('save')}</button>
         </form>
       )}
-    </main>
+    </div>
   );
 }
