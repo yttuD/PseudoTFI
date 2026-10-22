@@ -49,3 +49,18 @@ test('N05: duplicate and blank IDs fail closed before any translation request', 
   assert.throws(() => planMissingTranslations([{ id: 'u1' }, { id: 'u1' }]), /duplicados/);
   assert.throws(() => planMissingTranslations([{ id: '  ' }]), /identificador/);
 });
+
+
+test('N05: uppercase legacy placeholders are replaceable only when identical to Spanish source', () => {
+  const unit = { id: 'u1', titulo_es: 'CASA Zona norte', descripcion_es: 'una habitacion, un baño, patio',
+    titulo_en: '[EN] CASA Zona norte', descripcion_en: '[EN] una habitacion, un baño, patio',
+    titulo_pt: '[PT] CASA Zona norte', descripcion_pt: '[PT] una habitacion, un baño, patio' };
+  const plan = planMissingTranslations([unit]);
+  assert.equal(plan.length, 2);
+  assert.deepEqual(plan.map(x => x.fields.map(f => f[0])), [
+    ['titulo', 'descripcion'], ['titulo', 'descripcion'],
+  ]);
+  assert.equal(needsTranslation('CASA Zona norte', '[EN] Changed title', 'en'), false);
+  assert.equal(needsTranslation('', '[EN] ', 'en'), false);
+  assert.equal(needsTranslation('Casa', '[FR] Casa', 'en'), false);
+});

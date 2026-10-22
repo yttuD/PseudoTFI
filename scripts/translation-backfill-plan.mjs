@@ -7,7 +7,10 @@ export function needsTranslation(source, current, locale) {
   if (typeof current !== 'string') return false;
   // Only replace an exact legacy placeholder. A manually edited string such
   // as "[en] My own copy" is not proof of disposable generated text.
-  return current.trim() === `[${locale}] ${source.trim()}`;
+  // Historical placeholders were emitted in both lowercase and uppercase.
+  // Only exact source copies qualify; never overwrite independently edited text.
+  return current.trim() === `[${locale}] ${source.trim()}` ||
+    current.trim() === `[${locale.toUpperCase()}] ${source.trim()}`;
 }
 
 export function planMissingTranslations(units) {
