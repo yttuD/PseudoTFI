@@ -231,7 +231,16 @@
     "rolePending": "Pendiente",
     "themeLight": "Modo claro",
     "themeDark": "Modo oscuro",
-    "themeToggle": "Cambiar tema"
+    "themeToggle": "Cambiar tema",
+    "mobileExplore": "Explorar",
+    "mobileFavorites": "Favoritos",
+    "mobilePublish": "Publicar",
+    "mobileManagers": "Gestores",
+    "mobileAccount": "Cuenta",
+    "mobileNavigation": "Navegación principal móvil",
+    "mobileLocation": "Goya, Corrientes",
+    "mobileSearch": "Buscar unidades",
+    "mobileSearchHint": "Buscar departamentos, casas..."
   },
   "UnitDetail": {
     "translationPendingNotice": "Esta ficha todavía no tiene la traducción completa. Se muestra parte del texto original en español.",

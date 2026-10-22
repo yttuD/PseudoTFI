@@ -231,7 +231,16 @@
     "rolePending": "Pendente",
     "themeLight": "Modo claro",
     "themeDark": "Modo escuro",
-    "themeToggle": "Alternar tema"
+    "themeToggle": "Alternar tema",
+    "mobileExplore": "Explorar",
+    "mobileFavorites": "Favoritos",
+    "mobilePublish": "Publicar",
+    "mobileManagers": "Gestores",
+    "mobileAccount": "Conta",
+    "mobileNavigation": "Navegação principal móvel",
+    "mobileLocation": "Goya, Corrientes",
+    "mobileSearch": "Buscar imóveis",
+    "mobileSearchHint": "Buscar apartamentos, casas..."
   },
   "UnitDetail": {
     "translationPendingNotice": "Tradução pendente: parte das informações aparece no original em espanhol.",

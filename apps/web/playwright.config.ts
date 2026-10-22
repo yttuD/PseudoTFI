@@ -17,7 +17,7 @@ export default defineConfig({
     command: 'node ./e2e/fixtures/test-server.js',
     url: 'http://localhost:3000',
     reuseExistingServer: false,
-    timeout: 120000,
+    timeout: 240000,
     env: {
       AUTH_ALLOW_DEV_TOKENS: 'true',
       NEXT_PUBLIC_AUTH_ALLOW_DEV_TOKENS: 'true',
