@@ -170,8 +170,8 @@ export function AlquilerFormModal({
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      unidad_id: unidades[0]?.id || '',
-      inquilino_id: inquilinos[0]?.id || '',
+      unidad_id: '',
+      inquilino_id: '',
       modalidad: 'mensual',
       fecha_inicio: new Date(),
       fecha_fin: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
@@ -289,9 +289,6 @@ export function AlquilerFormModal({
         .then((json) => {
           if (json?.data && Array.isArray(json.data) && json.data.length > 0) {
             setUnidadesList(json.data);
-            if (!form.getValues('unidad_id')) {
-              form.setValue('unidad_id', json.data[0].id);
-            }
           }
         })
         .catch(() => {});
@@ -312,9 +309,6 @@ export function AlquilerFormModal({
         .then((json) => {
           if (json?.data && Array.isArray(json.data) && json.data.length > 0) {
             setInquilinosList(json.data);
-            if (!form.getValues('inquilino_id')) {
-              form.setValue('inquilino_id', json.data[0].id);
-            }
           }
         })
         .catch(() => {});
