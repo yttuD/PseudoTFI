@@ -126,7 +126,7 @@ export function FavoritoButton({
         {showText && <span>{isFavorito ? t('favoritosGuardado') : t('favoritosGuardarCorto')}</span>}
       </Skiper99AnimatedIcon>
       {errorToast && (
-        <span role="alert" className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 text-[11px] font-medium text-destructive-foreground bg-destructive rounded-lg shadow-lg w-max max-w-[min(80vw,20rem)] whitespace-normal text-center pointer-events-none z-50 animate-in fade-in zoom-in duration-150">
+        <span role="alert" className="fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 px-3 py-2 text-xs font-medium text-destructive-foreground bg-destructive rounded-lg shadow-lg w-max max-w-[calc(100vw-2rem)] whitespace-normal text-center pointer-events-none z-[100] animate-in fade-in zoom-in duration-150">
           {errorToast}
         </span>
       )}
