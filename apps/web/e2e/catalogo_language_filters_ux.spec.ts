@@ -16,7 +16,7 @@ test.describe('UX-001: changing catalog language preserves user filters', () => 
       if (request.isNavigationRequest() && request.url().includes('/en/unidades')) requested.push(request.url());
     });
     await language.click();
-    await page.getByRole('option',{name:/English/i}).click();
+    await page.getByRole('listbox',{name:'Idioma'}).getByRole('option',{name:/English/i}).click();
     await expect(page).toHaveURL(/\/en\/unidades\?q=casa&tipo=departamento/);
     const url = new URL(page.url());
     expect(url.searchParams.get('q')).toBe('casa');

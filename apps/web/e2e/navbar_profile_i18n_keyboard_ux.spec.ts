@@ -36,8 +36,11 @@ test.describe('UX-001: profile navigation remains translated and operable with k
         await expect(navigation).toBeVisible();
         const account = navigation.getByRole('link', { name: accountName });
         await expect(account).toHaveAttribute('href', `/${locale}/cuenta`);
+        // This scenario signs in as gestor; Publish must bypass registration.
+        const publish = navigation.getByRole('link', { name: { es:'Publicar', en:'List', pt:'Publicar' }[locale as 'es'|'en'|'pt'] });
+        await expect(publish).toHaveAttribute('href', `/${locale}/mis-unidades/nueva`);
         const manager = navigation.getByRole('link', { name: managersName });
-        await expect(manager).toHaveAttribute('href', `/${locale}/auth/login?portal=gestor&next=/${locale}/dashboard`);
+        await expect(manager).toHaveAttribute('href', `/${locale}/dashboard`);
         await account.focus();
         await expect(account).toBeFocused();
         // The desktop-only profile trigger must not compete with native mobile navigation.
