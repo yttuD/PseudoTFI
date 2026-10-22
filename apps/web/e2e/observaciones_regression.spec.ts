@@ -222,35 +222,30 @@ test('UX-001: alquiler nuevo protege cambios ante Cancelar y Escape', async ({ p
   await expect(page.locator('#monto_total')).toHaveValue('0');
 });
 
-test('UX-001: PDF seleccionado falla de forma visible y nunca guarda alquiler sin documento', async ({ page, context }) => {
+test('UX-001: PDF privado se adjunta solo después de registrar alquiler', async ({ page, context }) => {
   await context.clearCookies();
   await context.addCookies([gestorCookie()]);
-  let alquilerWrites = 0;
-  await page.route('**/alquileres', async (route) => {
-    if (route.request().method() === 'POST') {
-      alquilerWrites += 1;
-      await route.fulfill({ status: 201, contentType: 'application/json', body: '{}' });
-    } else {
-      await route.continue();
-    }
-  });
-  await page.route('**/storage/v1/object/contratos/**', async (route) => {
-    await route.fulfill({ status: 503, contentType: 'application/json', body: '{"message":"storage temporarily unavailable"}' });
-  });
   await page.goto('/es/alquileres');
+  const documentControl = page.getByTestId('alquiler-contrato-documento').filter({ visible: true }).first();
+  await expect(documentControl).toBeVisible();
+  await expect(documentControl.getByLabel('Adjuntar contrato PDF')).toBeVisible();
+
   await page.getByTestId('btn-nuevo-alquiler').click();
-  await page.locator('#monto_total').fill('1500');
-  await page.locator('#contrato-upload').setInputFiles({
-    name: 'contrato-e2e.pdf',
-    mimeType: 'application/pdf',
-    buffer: Buffer.from('%PDF-1.4\\n%%EOF'),
+  await expect(page.getByTestId('contrato-upload-after-save')).toContainText(
+    'Guardá primero el alquiler y después adjuntá el PDF'
+  );
+  await expect(page.locator('#contrato-upload')).toHaveCount(0);
+  await expect(page.locator('#monto_total')).toHaveValue('0');
+  await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Nuevo Alquiler' })).toHaveCount(0);
+
+  // An invalid file is rejected before contacting Storage or updating money.
+  await documentControl.getByLabel('Adjuntar contrato PDF').setInputFiles({
+    name: 'not-a-contract.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('not pdf'),
   });
-  await page.getByTestId('btn-guardar-alquiler').click();
-  await expect(page.getByTestId('alquiler-api-error')).toContainText('No se pudo adjuntar el PDF');
-  await expect(page.locator('#monto_total')).toHaveValue('1500');
-  await expect(page.getByText('contrato-e2e.pdf')).toBeVisible();
-  await expect(page.getByTestId('alquiler-success-feedback')).toHaveCount(0);
-  expect(alquilerWrites).toBe(0);
+  await expect(documentControl.getByRole('alert')).toContainText('PDF válido');
 });
 });
 
