@@ -13,6 +13,11 @@
     "omitir": "Omitir"
   },
   "unidad": {
+    "favoritosError": "No pudimos actualizar favoritos. Intentá de nuevo.",
+    "favoritosGuardar": "Guardar en favoritos",
+    "favoritosQuitar": "Quitar de favoritos",
+    "favoritosGuardado": "Guardado",
+    "favoritosGuardarCorto": "Guardar",
     "contactar": "Contactar",
     "verUbicacion": "Ver ubicación exacta",
     "sinFotos": "Sin fotos disponibles",
@@ -21,6 +26,17 @@
     "mes": "mes"
   },
   "auth": {
+    "registroGestorTitulo": "Creá tu cuenta de gestor",
+    "registroBuscadorTitulo": "Creá tu cuenta en Rendo",
+    "registroGestorBetaDescripcion": "Probá Rendo con hasta 10 unidades sin costo. Los cobros y comprobantes todavía no están disponibles.",
+    "registroGestorDescripcion": "Administrá tus unidades, alquileres y cobros desde un solo lugar.",
+    "registroBuscadorDescripcion": "Consultá ubicaciones, contactá gestores y guardá tus propiedades favoritas.",
+    "registroGestorConfianza": "Gestión segura de tus propiedades",
+    "registroBuscadorConfianza": "Buscá inmuebles con confianza",
+    "registroPreguntaBuscador": "¿Buscás alquilar?",
+    "registroEnlaceBuscador": "Creá tu cuenta para buscar",
+    "registroPreguntaGestor": "¿Administrás inmuebles?",
+    "registroEnlaceGestor": "Creá tu cuenta de gestor",
     "loginRequerido": "Iniciá sesión para ver la ubicación exacta",
     "iniciarSesion": "Iniciar Sesión",
     "registro": "Crear Cuenta",

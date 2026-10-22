@@ -396,6 +396,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setLoginMethod("phone")}
+              aria-pressed={loginMethod === "phone"}
               className={`flex items-center justify-center gap-2 rounded-lg py-2 min-h-[44px] text-xs font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                 loginMethod === "phone"
                   ? "bg-surface text-foreground shadow-sm"
@@ -408,6 +409,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setLoginMethod("email")}
+              aria-pressed={loginMethod === "email"}
               className={`flex items-center justify-center gap-2 rounded-lg py-2 min-h-[44px] text-xs font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                 loginMethod === "email"
                   ? "bg-surface text-foreground shadow-sm"
