@@ -92,7 +92,7 @@ test.describe('UX-001: irreversible unit deletion requires explicit accessible c
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole('heading', { name: '¿Eliminar esta unidad?' })).toBeVisible();
     await expect(dialog).toContainText('No podés deshacer');
-    await expect(dialog.getByTestId('unidad-confirm-delete')).toBeFocused();
+    await expect(dialog.getByRole('button', { name: 'Conservar unidad' })).toBeFocused();
 
     await page.keyboard.press('Escape');
     await expect(dialog).toHaveCount(0);
