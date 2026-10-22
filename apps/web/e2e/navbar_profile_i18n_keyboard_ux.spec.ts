@@ -29,6 +29,21 @@ test.describe('UX-001: profile navigation remains translated and operable with k
       await context.clearCookies();
       await context.addCookies([managerCookie()]);
       await page.goto(`/${locale}/unidades`);
+      if (page.viewportSize()!.width < 768) {
+        // The marketplace deliberately uses NativeBottomNav at mobile widths.
+        // Verify the actual mobile affordances rather than searching for a hidden desktop menu.
+        const navigation = page.locator('nav.fixed.bottom-0');
+        await expect(navigation).toBeVisible();
+        const account = navigation.getByRole('link', { name: { es:'Cuenta', en:'Account', pt:'Conta' }[locale] });
+        await expect(account).toHaveAttribute('href', `/${locale}/cuenta`);
+        const manager = navigation.getByRole('link', { name: { es:'Gestores', en:'Managers', pt:'Gestores' }[locale] });
+        await expect(manager).toHaveAttribute('href', `/${locale}/auth/login?portal=gestor&next=/${locale}/dashboard`);
+        await account.focus();
+        await expect(account).toBeFocused();
+        // The desktop-only profile trigger must not compete with native mobile navigation.
+        await expect(page.getByRole('button', { name: menuName })).toHaveCount(0);
+        return;
+      }
       const trigger = page.getByRole('button', { name: menuName });
       await expect(trigger).toBeVisible();
       await expect(trigger).toHaveAttribute('aria-expanded', 'false');
