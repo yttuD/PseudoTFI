@@ -34,7 +34,7 @@ jobs:
         run: pnpm --filter @tfi/types build
       - name: Install Chromium
         working-directory: apps/web
-        run: node node_modules/@playwright/test/cli.js install --with-deps chromium
+        run: node node_modules/@playwright/test/cli.js install chromium
       - name: Install pinned axe-core
         run: |
           npm install --prefix "$RUNNER_TEMP/rendo-axe" --no-save --ignore-scripts --no-audit --no-fund axe-core@4.13.0
