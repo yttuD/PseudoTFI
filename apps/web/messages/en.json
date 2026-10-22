@@ -231,7 +231,8 @@
     "rolePending": "Pending",
     "themeLight": "Light mode",
     "themeDark": "Dark mode",
-    "themeToggle": "Change theme"
+    "themeToggle": "Change theme",
+    "skipToContent": "Skip to main content"
   },
   "UnitDetail": {
     "translationPendingNotice": "Translation pending: some information is shown in the original Spanish.",
