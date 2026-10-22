@@ -463,14 +463,44 @@
     "saving": "Saving...",
     "save": "Save changes"
   },
-    "Catalogo": {
-      "titulo": "Available Units Catalog",
-      "servicioNoDisponible": "Service unavailable",
-      "unidadEncontrada": "unit found",
-      "unidadesEncontradas": "units found",
-      "errorTitulo": "The catalog is temporarily unavailable",
-      "errorDescripcion": "Your filters will be preserved when you retry.",
-      "reintentar": "Try again",
-      "sinResultadosDescripcion": "No units match the selected search criteria. Try adjusting or clearing your filters."
-    }
+  "Catalogo": {
+    "titulo": "Available Units Catalog",
+    "servicioNoDisponible": "Service unavailable",
+    "unidadEncontrada": "unit found",
+    "unidadesEncontradas": "units found",
+    "errorTitulo": "The catalog is temporarily unavailable",
+    "errorDescripcion": "Your filters will be preserved when you retry.",
+    "reintentar": "Try again",
+    "sinResultadosDescripcion": "No units match the selected search criteria. Try adjusting or clearing your filters."
+  },
+  "CatalogoFiltros": {
+    "titulo": "Catalog filters",
+    "limpiar": "Clear",
+    "palabrasClave": "Keywords",
+    "ejemplo": "E.g., house with garden",
+    "ayudaPalabras": "Search by unit title or description.",
+    "tipo": "Property type",
+    "todasCategorias": "All property types",
+    "todas": "All",
+    "ubicacion": "Location / Area",
+    "todasZonas": "All areas",
+    "ayudaZonas": "“All” also includes properties outside the listed areas.",
+    "precio": "Price range",
+    "minimo": "Minimum",
+    "maximo": "Maximum",
+    "notaConversion": "Automatically converted prices use the BCRA exchange rate; prices set by the owner appear unchanged.",
+    "rangoInvalido": "Enter a valid range: nonnegative values with minimum at or below maximum.",
+    "aplicar": "Apply filters",
+    "activos": "Applied filters:",
+    "pendientes": "You have unapplied changes.",
+    "zonaSeleccionada": "Selected area",
+    "departamento": "Apartment",
+    "cabana": "Cabin",
+    "casa": "House",
+    "salon": "Event venue",
+    "cancha": "Sports court",
+    "localComercial": "Commercial space",
+    "oficina": "Office",
+    "lote": "Land / Lot"
+  }
 }
