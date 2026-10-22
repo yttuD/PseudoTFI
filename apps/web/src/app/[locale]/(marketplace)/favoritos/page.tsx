@@ -1,8 +1,10 @@
 import { createServerClient } from '@supabase/ssr';
+import { getServerAuth } from '@/lib/supabase/server-auth';
+import { getTranslations } from 'next-intl/server';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Heart, Compass } from 'lucide-react';
+import { Heart, Compass, AlertCircle, RefreshCw } from 'lucide-react';
 import { CardUnidad } from '@/components/marketplace/CardUnidad';
 
 export default async function FavoritosPage({
@@ -12,6 +14,7 @@ export default async function FavoritosPage({
   params: { locale: string };
   searchParams?: Record<string, string | string[] | undefined>;
 }) {
+  const tFav = await getTranslations('Favoritos');
   const cookieStore = cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,46 +28,15 @@ export default async function FavoritosPage({
     }
   );
 
-  let token: string | undefined;
-  let isAuth = false;
-
-  try {
-    let session = null;
-    try {
-      const sessionPromise = supabase.auth.getSession();
-      const sessionTimeout = new Promise<{ data: { session: null } }>((resolve) =>
-        setTimeout(() => resolve({ data: { session: null } }), 400)
-      );
-      const sessionRes = await Promise.race([sessionPromise, sessionTimeout]);
-      session = sessionRes.data?.session;
-    } catch {
-      session = null;
-    }
-
-    const authCookie =
-      cookieStore.get('sb-localhost-auth-token')?.value ||
-      cookieStore.get('sb-127-auth-token')?.value ||
-      cookieStore.get('sb-auth-token')?.value;
-
-    isAuth = !!session || !!authCookie;
-    token = session?.access_token;
-    if (!token && authCookie) {
-      try {
-        const parsed = JSON.parse(atob(authCookie.replace('base64-', '')));
-        token = parsed.access_token;
-      } catch {
-        token = 'dev-access-token';
-      }
-    }
-  } catch {}
-
-  // 1. Si no está autenticado, redirigir a login preservando next
-  if (!isAuth) {
-    redirect(`/${locale}/auth/login?portal=marketplace&next=/${locale}/favoritos`);
-  }
+  // La sesión la resuelve el adaptador común; no se inventa un token dev.
+  const { accessToken: token } = await getServerAuth(cookieStore, supabase);
+  const loginUrl = `/${locale}/auth/login?portal=marketplace&next=/${locale}/favoritos`;
+  if (!token) redirect(loginUrl);
 
   // 2. Si está logueado, consultar GET /favoritos
   let favoritos: Record<string, unknown>[] = [];
+  let favoritosLoadError = false;
+  let sessionExpired = false;
   if (token) {
     try {
       const qParams = new URLSearchParams();
@@ -77,17 +49,32 @@ export default async function FavoritosPage({
       const favRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favoritos${qs}`, {
         headers: { Authorization: `Bearer ${token}` },
         cache: 'no-store',
-        signal: AbortSignal.timeout(2000),
+        signal: AbortSignal.timeout(6000),
       });
-      if (favRes.ok) {
-        const favData = await favRes.json();
-        const favList = Array.isArray(favData) ? favData : favData?.data || [];
-        favoritos = favList.map((f: Record<string, unknown>) => (f.unidad || f) as Record<string, unknown>).filter(Boolean);
+      if (favRes.status === 401) {
+        sessionExpired = true;
+      } else if (!favRes.ok) {
+        favoritosLoadError = true;
+      } else {
+        const favData: unknown = await favRes.json();
+        const favList = Array.isArray(favData)
+          ? favData
+          : favData && typeof favData === 'object' && 'data' in favData && Array.isArray(favData.data)
+            ? favData.data
+            : null;
+        if (!favList) throw new Error('Invalid favorites response');
+        favoritos = favList
+          .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object')
+          .map((entry) => (entry.unidad || entry) as Record<string, unknown>)
+          .filter(Boolean);
       }
     } catch (e) {
       console.error('Error fetching favoritos:', e);
+      favoritosLoadError = true;
     }
   }
+
+  if (sessionExpired) redirect(loginUrl);
 
   return (
     <div className="min-h-screen bg-background pb-16">
@@ -98,22 +85,33 @@ export default async function FavoritosPage({
             <Heart className="h-5 w-5 fill-rose-500" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Mis Favoritos</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">{tFav('title')}</h1>
             <p className="text-xs text-muted-foreground">
-              Unidades que guardaste para consultar o comparar más tarde.
+              {tFav('description')}
             </p>
           </div>
         </div>
 
         {/* Content */}
-        {favoritos.length === 0 ? (
+        {favoritosLoadError ? (
+          <div role="alert" data-testid="favorites-load-error" className="max-w-md mx-auto my-12 text-center p-8 rounded-3xl bg-surface border border-destructive/30">
+            <AlertCircle aria-hidden="true" className="h-8 w-8 text-destructive mx-auto mb-3" />
+            <h2 className="text-lg font-bold text-foreground mb-2">{tFav('loadErrorTitle')}</h2>
+            <p className="text-sm text-muted-foreground mb-5">{tFav('loadErrorDescription')}</p>
+            <Link href={`/${locale}/favoritos${searchParams ? `?${new URLSearchParams(Object.entries(searchParams).filter((entry): entry is [string, string] => typeof entry[1] === 'string')).toString()}` : ''}`}
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 text-primary-foreground font-semibold focus-visible:ring-2 focus-visible:ring-ring">
+              <RefreshCw aria-hidden="true" className="h-4 w-4" />
+              {tFav('retry')}
+            </Link>
+          </div>
+        ) : favoritos.length === 0 ? (
           <div className="max-w-md mx-auto my-12 text-center p-8 rounded-3xl bg-surface border border-border/80 shadow-glass">
             <div className="h-14 w-14 rounded-2xl bg-muted/60 text-muted-foreground/40 flex items-center justify-center mx-auto mb-4 border border-border/40">
               <Heart className="h-7 w-7 stroke-[1.5]" />
             </div>
-            <h2 className="text-lg font-bold text-foreground mb-2">Aún no tienes favoritos guardados</h2>
+            <h2 className="text-lg font-bold text-foreground mb-2">{tFav('emptyTitle')}</h2>
             <p className="text-xs text-muted-foreground mb-6 leading-relaxed">
-              Explora el catálogo y guarda las unidades que te interesen para consultarlas luego
+              {tFav('emptyDescription')}
             </p>
             <Link
               id="btn-explorar-unidades"
@@ -121,7 +119,7 @@ export default async function FavoritosPage({
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-dorado-500 hover:bg-dorado-600 text-azul-950 font-semibold text-xs shadow-md shadow-dorado-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               <Compass className="h-4 w-4" />
-              <span>Explorar Unidades</span>
+              <span>{tFav('explore')}</span>
             </Link>
           </div>
         ) : (
