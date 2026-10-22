@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { startMockApiServer, stopMockApiServer } from './fixtures/mock-api-server';
+import { whatsappDestination, whatsappContactUrl } from '../src/lib/whatsapp-link';
 
 test.describe('UX-001: card navigation and favorite are separate accessible actions', () => {
   test.beforeAll(async () => { await startMockApiServer(3001); });
@@ -34,6 +35,20 @@ test.describe('UX-001: card navigation and favorite are separate accessible acti
 
 
 test.describe('UX-001: WhatsApp contact links are valid and single-focus controls', () => {
+  test('country prefixes and messages are normalized only when unambiguous', () => {
+    expect(whatsappDestination('+54 9 3777 123456')).toBe('5493777123456');
+    expect(whatsappDestination('5493777123456')).toBe('5493777123456');
+    expect(whatsappDestination('005493777123456')).toBe('5493777123456');
+    expect(whatsappDestination('3777123456')).toBe('543777123456');
+    expect(whatsappDestination('+55 11 98765 4321')).toBe('5511987654321');
+    expect(whatsappDestination('5511987654321')).toBe('5511987654321');
+    expect(whatsappDestination('abc')).toBeNull();
+    expect(whatsappDestination('')).toBeNull();
+    expect(whatsappDestination('++++5493777123456')).toBeNull();
+    expect(whatsappContactUrl('+5493777123456', 'Hola, ¿está disponible?'))
+      .toContain('https://wa.me/5493777123456?text=');
+  });
+
   test.beforeAll(async () => { await startMockApiServer(3001); });
   test.afterAll(async () => { await stopMockApiServer(); });
 
