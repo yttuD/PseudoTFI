@@ -3,12 +3,15 @@ name: Rendo N01 isolated Auth and RLS integration
 on:
   pull_request:
     branches:
+      - codex/ui-playwright-matrix-2026-10-20
       - codex/github-handoff-2026-10-19
       - codex/n01b-http-local-read-2026-10-20
+      - codex/release-candidate-n01-n08-2026-10-20
     paths:
       - 'apps/api/**'
       - 'packages/**'
       - 'supabase/**'
+      - 'scripts/db/**'
       - 'pnpm-lock.yaml'
       - '.github/workflows/rendo-n01-local-integration.yml'
 
@@ -79,6 +82,8 @@ jobs:
           echo("Preflight PASS: local API and DB only");
           function echo(message) { process.stdout.write(message + "\n"); }
           '
+      - name: Verify versioned migration grants against local database
+        run: node scripts/db/run-local-rpc-hardening.mjs
       - name: N01 actual Auth RLS HTTP suite (isolated local database)
         working-directory: apps/api
         timeout-minutes: 8

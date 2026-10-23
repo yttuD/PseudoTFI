@@ -3,7 +3,6 @@ import { MarketplaceService } from './marketplace.service.js';
 import { BuscarUnidadesDto } from './dto/buscar-unidades.dto.js';
 import { SupabaseService } from '../supabase/supabase.service.js';
 import type { Request as ExpressRequest } from 'express';
-import { isReleaseRuntime } from '../config/release-readiness.js';
 import { getExchangeRates } from './exchange-rates.js';
 
 @Controller('marketplace')
@@ -23,17 +22,16 @@ export class MarketplaceController {
     const token = this.extractTokenFromHeader(req);
     let isAuthenticated = false;
 
-    if (token) {
-      if (token.startsWith('dev-') || token.startsWith('mock-')) {
-        isAuthenticated = !isReleaseRuntime();
-      } else {
-        try {
-          const supabase = this.supabaseService.getClient(token);
-          const { data, error } = await supabase.auth.getUser(token);
-          isAuthenticated = !error && !!data?.user;
-        } catch {
-          isAuthenticated = false;
-        }
+    // Public detail must never treat an arbitrary demo prefix as proof of identity.
+    // Development/demo tokens are for guarded operational routes, not private
+    // contact or exact-location fields on a publicly reachable endpoint.
+    if (token && !token.startsWith('dev-') && !token.startsWith('mock-')) {
+      try {
+        const supabase = this.supabaseService.getClient(token);
+        const { data, error } = await supabase.auth.getUser(token);
+        isAuthenticated = !error && !!data?.user?.id;
+      } catch {
+        isAuthenticated = false;
       }
     }
 

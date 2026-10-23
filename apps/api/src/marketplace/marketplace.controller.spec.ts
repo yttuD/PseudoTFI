@@ -35,6 +35,55 @@ describe('public detail contact privacy', () => {
     expect(supabase.getClient).not.toHaveBeenCalled();
   });
 
+  it.each(['dev-random', 'mock-random', 'dev-token-gestor-demo', 'mock-arbitrary'])(
+    'does not trust unverified demo prefix %s, even with development auth enabled',
+    async (token) => {
+      vi.stubEnv('RENDO_BETA_MODE', 'false');
+      vi.stubEnv('NODE_ENV', 'development');
+      vi.stubEnv('AUTH_ALLOW_DEV_TOKENS', 'true');
+      const { controller, marketplace, supabase } = setup(async () => ({
+        data: { user: { id: 'should-not-be-used' } },
+        error: null,
+      }));
+      await controller.findOne('unit', 'es', {
+        headers: { authorization: `Bearer ${token}` },
+      } as Request);
+      expect(marketplace.findOne).toHaveBeenCalledWith('unit', false, 'es');
+      expect(supabase.getClient).not.toHaveBeenCalled();
+    },
+  );
+
+  it('keeps private details inaccessible without a bearer session', async () => {
+    const { controller, marketplace, supabase } = setup(async () => ({
+      data: { user: { id: 'should-not-be-used' } },
+      error: null,
+    }));
+    await controller.findOne('unit', 'en', { headers: {} } as Request);
+    expect(marketplace.findOne).toHaveBeenCalledWith('unit', false, 'en');
+    expect(supabase.getClient).not.toHaveBeenCalled();
+  });
+
+  it('does not unlock a detail when Supabase returns no verified user id', async () => {
+    const { controller, marketplace } = setup(async () => ({
+      data: { user: {} },
+      error: null,
+    }));
+    await controller.findOne('unit', 'es', {
+      headers: { authorization: 'Bearer fake-session' },
+    } as Request);
+    expect(marketplace.findOne).toHaveBeenCalledWith('unit', false, 'es');
+  });
+
+  it('fails closed when Supabase token verification throws', async () => {
+    const { controller, marketplace } = setup(async () => {
+      throw new Error('Auth unavailable');
+    });
+    await controller.findOne('unit', 'es', {
+      headers: { authorization: 'Bearer expired-session' },
+    } as Request);
+    expect(marketplace.findOne).toHaveBeenCalledWith('unit', false, 'es');
+  });
+
   it('accepts a verified Supabase user only', async () => {
     const { controller, marketplace, supabase } = setup(async () => ({ data: { user: { id: 'real-user' } }, error: null }));
     await controller.findOne('unit', 'es', { headers: { authorization: 'Bearer signed-token' } } as Request);

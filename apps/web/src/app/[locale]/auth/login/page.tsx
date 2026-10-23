@@ -354,19 +354,13 @@ export default function LoginPage() {
     }
   };
 
-  const pageTitle = isGestorPortal
-    ? "Rendo Gestor :: Acceso Operativo"
-    : "Te damos la bienvenida a Rendo";
-
-  const pageSubtitle = isGestorPortal
-    ? isClosedBeta
-      ? "Ingresá a tu terminal para probar la gestión de unidades y alquileres. Los cobros y comprobantes están deshabilitados."
-      : "Ingresá a tu terminal para administrar unidades, alquileres y facturación."
-    : "Iniciá sesión para ver ubicaciones exactas, contactar gestores por WhatsApp y guardar favoritos.";
-
-  const trustBadge = isGestorPortal
-    ? "Terminal Operativo Seguro"
-    : "Marketplace Inmobiliario Directo";
+  const pageTitle = t(isGestorPortal ? 'loginGestorTitulo' : 'loginBuscadorTitulo');
+  const pageSubtitle = t(
+    isGestorPortal
+      ? isClosedBeta ? 'loginGestorBetaDescripcion' : 'loginGestorDescripcion'
+      : 'loginBuscadorDescripcion'
+  );
+  const trustBadge = t(isGestorPortal ? 'loginGestorConfianza' : 'loginBuscadorConfianza');
 
   return (
     <AuthLayout
@@ -396,9 +390,10 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setLoginMethod("phone")}
+              aria-pressed={loginMethod === "phone"}
               className={`flex items-center justify-center gap-2 rounded-lg py-2 min-h-[44px] text-xs font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                 loginMethod === "phone"
-                  ? "bg-surface text-primary shadow-sm"
+                  ? "bg-surface text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -408,9 +403,10 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setLoginMethod("email")}
+              aria-pressed={loginMethod === "email"}
               className={`flex items-center justify-center gap-2 rounded-lg py-2 min-h-[44px] text-xs font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                 loginMethod === "email"
-                  ? "bg-surface text-primary shadow-sm"
+                  ? "bg-surface text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -440,7 +436,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading || token.length < 6}
-              className="w-full min-h-[44px] flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-white shadow-md shadow-primary/20 hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary/40 focus:outline-hidden transition-all disabled:opacity-50"
+              className="w-full min-h-[44px] flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary/40 focus:outline-hidden transition-all disabled:opacity-50"
             >
               <span>{loading ? t("verificando") : t("verificarOtp")}</span>
               <ArrowRight className="h-4 w-4" />
@@ -482,7 +478,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading || !phone}
-              className="w-full min-h-[44px] flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-white shadow-md shadow-primary/20 hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary/40 focus:outline-hidden transition-all disabled:opacity-50"
+              className="w-full min-h-[44px] flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary/40 focus:outline-hidden transition-all disabled:opacity-50"
             >
               <span>{loading ? t("enviando") : t("enviarOtp")}</span>
               <ArrowRight className="h-4 w-4" />
@@ -526,7 +522,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full min-h-[44px] flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-white shadow-md shadow-primary/20 hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary focus-visible:ring-2 focus-visible:ring-primary/40 transition-all disabled:opacity-50"
+              className="w-full min-h-[44px] flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary focus-visible:ring-2 focus-visible:ring-primary/40 transition-all disabled:opacity-50"
             >
               <span>{loading ? t("ingresando") : t("ingresar")}</span>
               <ArrowRight className="h-4 w-4" />
@@ -551,26 +547,22 @@ export default function LoginPage() {
           <div className="pt-2 border-t border-border/40">
             {isGestorPortal ? (
               <p className="text-xs text-muted-foreground">
-                ¿Buscás alquilar una Unidad?{" "}
+                {t('loginPreguntaBuscador')}{" "}
                 <Link
-                  href={`/${locale}/auth/login?portal=marketplace${
-                    nextParam ? `&next=${encodeURIComponent(nextParam)}` : ""
-                  }`}
+                  href={`/${locale}/auth/login?portal=marketplace`}
                   className="font-semibold text-azul-900 dark:text-dorado-300 hover:underline"
                 >
-                  Ingresá como inquilino aquí
+                  {t('loginEnlaceBuscador')}
                 </Link>
               </p>
             ) : (
               <p className="text-xs text-muted-foreground">
-                ¿Sos Gestor inmobiliario?{" "}
+                {t('loginPreguntaGestor')}{" "}
                 <Link
-                  href={`/${locale}/auth/login?portal=gestor${
-                    nextParam ? `&next=${encodeURIComponent(nextParam)}` : ""
-                  }`}
+                  href={`/${locale}/auth/login?portal=gestor`}
                   className="font-semibold text-azul-900 dark:text-dorado-300 hover:underline"
                 >
-                  Accedé al portal de gestores aquí
+                  {t('loginEnlaceGestor')}
                 </Link>
               </p>
             )}

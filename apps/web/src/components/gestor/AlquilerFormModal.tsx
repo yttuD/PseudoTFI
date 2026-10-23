@@ -1,12 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, type FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import { getClientAuthToken } from '@/lib/supabase/client-token';
-import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,8 +22,6 @@ import {
 import {
   Plus,
   FileText,
-  UploadCloud,
-  X,
   AlertCircle,
   Wallet,
   ShieldCheck,
@@ -159,6 +156,8 @@ export function AlquilerFormModal({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const continueEditingRef = useRef<HTMLButtonElement>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [apiErrorMessage, setApiErrorMessage] = useState<string | null>(null);
 
@@ -167,21 +166,18 @@ export function AlquilerFormModal({
   const [gruposList, setGruposList] = useState<GrupoOption[]>(grupos);
 
   // Estado para el archivo PDF del contrato
-  const [contratoFile, setContratoFile] = useState<File | null>(null);
-  const [contratoError, setContratoError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      unidad_id: unidades[0]?.id || '',
-      inquilino_id: inquilinos[0]?.id || '',
+      unidad_id: '',
+      inquilino_id: '',
       modalidad: 'mensual',
       fecha_inicio: new Date(),
       fecha_fin: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       hora_inicio: '10:00',
       hora_fin: '14:00',
-      monto_total: 100000,
+      monto_total: 0, // Neutral initial value: the Gestor must enter the real contract amount.
       sena_eleccion: 'sin_sena',
       sena_tipo: 'monto_fijo',
       sena_valor: 0,
@@ -191,6 +187,13 @@ export function AlquilerFormModal({
       observaciones: '',
     },
   });
+
+  // Capture the actual baseline when the dialog opens (not at mount), so
+  // every form change, including setValue/select changes, is accounted for.
+  const openSnapshotRef = useRef('');
+  useEffect(() => {
+    if (confirmDiscard) continueEditingRef.current?.focus();
+  }, [confirmDiscard]);
 
   const watchedModalidad = form.watch('modalidad');
   const watchedUnidadId = form.watch('unidad_id');
@@ -286,9 +289,6 @@ export function AlquilerFormModal({
         .then((json) => {
           if (json?.data && Array.isArray(json.data) && json.data.length > 0) {
             setUnidadesList(json.data);
-            if (!form.getValues('unidad_id')) {
-              form.setValue('unidad_id', json.data[0].id);
-            }
           }
         })
         .catch(() => {});
@@ -309,21 +309,34 @@ export function AlquilerFormModal({
         .then((json) => {
           if (json?.data && Array.isArray(json.data) && json.data.length > 0) {
             setInquilinosList(json.data);
-            if (!form.getValues('inquilino_id')) {
-              form.setValue('inquilino_id', json.data[0].id);
-            }
           }
         })
         .catch(() => {});
     }
   }, [inquilinos, token, form]);
 
+  const resetAndClose = () => {
+    form.reset();
+    setConfirmDiscard(false);
+    setSuccessMessage(null);
+    setApiErrorMessage(null);
+    setOpen(false);
+  };
+
   const handleOpenChange = (nextOpen: boolean) => {
-    setOpen(nextOpen);
-    if (!nextOpen) {
-      setSuccessMessage(null);
-      setApiErrorMessage(null);
+    if (nextOpen) {
+      openSnapshotRef.current = JSON.stringify(form.getValues());
+      setConfirmDiscard(false);
+      setOpen(true);
+      return;
     }
+    // Do not dismiss while the network request is saving the contract.
+    if (isSubmitting) return;
+    if (!successMessage && JSON.stringify(form.getValues()) !== openSnapshotRef.current) {
+      setConfirmDiscard(true);
+      return;
+    }
+    resetAndClose();
   };
 
   // Cambio de modalidad con ajuste dinámico de fechas/tiempos
@@ -356,55 +369,13 @@ export function AlquilerFormModal({
   const saldoPendiente = Math.max(0, watchedTotal - cobradoInicial);
   const fondosCustodia = watchedDeposito;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    setContratoError(null);
-    if (!file) return;
-
-    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-      setContratoError('Solo se permiten archivos en formato PDF (.pdf)');
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      setContratoError('El archivo excede el límite máximo de 10 MB');
-      return;
-    }
-    setContratoFile(file);
-  };
-
-  const handleRemoveFile = () => {
-    setContratoFile(null);
-    setContratoError(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
-    setContratoError(null);
     setApiErrorMessage(null);
 
     try {
-      let contratoUrl: string | undefined = undefined;
-
-      // 1. Subida opcional de archivo PDF
-      if (contratoFile) {
-        try {
-          const supabase = createClient();
-          const cleanName = contratoFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-          const filePath = `${Date.now()}_${cleanName}`;
-          const { data: uploadData } = await supabase.storage
-            .from('contratos')
-            .upload(filePath, contratoFile, { cacheControl: '3600', upsert: false });
-          if (uploadData?.path) {
-            const { data: pubData } = supabase.storage.from('contratos').getPublicUrl(uploadData.path);
-            contratoUrl = pubData?.publicUrl || uploadData.path;
-          }
-        } catch {}
-      }
-
-      // 2. Construcción de intervalos según modalidad
+      // The private contratos bucket authorizes uploads only after an alquiler
+      // exists, under its UUID folder. Attach the PDF from the rentals list.\n\n      // 2. Construcción de intervalos según modalidad
       let inicioAtStr: string;
       let finAtStr: string;
 
@@ -482,7 +453,6 @@ export function AlquilerFormModal({
           monto_deposito: Number(data.monto_deposito || 0),
           estado_pago: data.estado_pago,
           observaciones: data.observaciones,
-          contrato_url: contratoUrl,
         }),
       });
 
@@ -493,7 +463,6 @@ export function AlquilerFormModal({
 
       setSuccessMessage('¡Alquiler registrado con éxito!');
       form.reset();
-      setContratoFile(null);
       router.refresh();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Error inesperado al registrar el alquiler';
@@ -503,18 +472,32 @@ export function AlquilerFormModal({
     }
   };
 
+  const handleInvalid = (errors: FieldErrors<FormData>) => {
+    const order: (keyof FormData)[] = [
+      'unidad_id', 'inquilino_id', 'fecha_inicio', 'fecha_fin',
+      'monto_total', 'sena_valor', 'monto_sena', 'monto_deposito',
+    ];
+    const first = order.find((field) => !!errors[field]);
+    requestAnimationFrame(() => {
+      const target = first ? document.getElementById(first) : null;
+      (target || document.getElementById('alquiler-validation-summary'))?.focus();
+    });
+  };
+  const hasValidationErrors = form.formState.isSubmitted
+    && Object.keys(form.formState.errors).length > 0;
+
   const hasInquilinos = inquilinosList.length > 0;
   const hasUnidades = unidadesList.length > 0;
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setSuccessMessage(null); setApiErrorMessage(null); } }}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger
-        onClick={() => setOpen(true)}
+        onClick={() => handleOpenChange(true)}
         render={
           <Button
             data-testid="btn-nuevo-alquiler"
             className="min-h-[44px] min-w-[44px]"
-            onClick={() => setOpen(true)}
+            onClick={() => handleOpenChange(true)}
           >
             <Plus className="mr-2 h-4 w-4" /> Nuevo Alquiler
           </Button>
@@ -528,9 +511,42 @@ export function AlquilerFormModal({
           </DialogDescription>
         </DialogHeader>
 
+        {confirmDiscard && !successMessage && (
+          <div
+            data-testid="alquiler-unsaved-confirm"
+            role="alert"
+            className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 space-y-3 text-sm"
+          >
+            <p className="font-semibold text-foreground">Hay cambios sin guardar</p>
+            <p className="text-muted-foreground">
+              Si cerrás, se perderán los datos ingresados.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                ref={continueEditingRef}
+                onClick={() => setConfirmDiscard(false)}
+                data-testid="alquiler-seguir-editando"
+              >
+                Seguir editando
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={resetAndClose}
+                data-testid="alquiler-descartar-cambios"
+              >
+                Descartar cambios
+              </Button>
+            </div>
+          </div>
+        )}
+
         {apiErrorMessage && (
           <div
             data-testid="alquiler-api-error"
+            role="alert"
             className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs my-2"
           >
             <AlertCircle className="h-4 w-4 shrink-0" />
@@ -560,7 +576,14 @@ export function AlquilerFormModal({
             </div>
           </div>
         ) : (
-          <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-1">
+          <form noValidate onSubmit={form.handleSubmit(onSubmit, handleInvalid)} className="space-y-4 pt-1">
+            {hasValidationErrors && (
+              <div id="alquiler-validation-summary" data-testid="alquiler-validation-summary"
+                role="alert" tabIndex={-1}
+                className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive focus:outline-none">
+                Revisá los campos señalados antes de guardar. No se registró ningún alquiler.
+              </div>
+            )}
             {/* Selector Canónico de Modalidad */}
             <div className="grid gap-1.5 p-3 rounded-xl bg-muted/20 border border-border/80">
               <div className="flex items-center justify-between">
@@ -595,7 +618,8 @@ export function AlquilerFormModal({
                   variant={watchedModalidad === 'mensual' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => handleModalityChange('mensual')}
-                  className="h-7 text-[11px] px-2.5 font-medium"
+                  aria-pressed={watchedModalidad === 'mensual'}
+                  className="min-h-11 px-3 text-xs font-medium focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <Calendar className="h-3 w-3 mr-1" /> Mensual
                 </Button>
@@ -604,7 +628,8 @@ export function AlquilerFormModal({
                   variant={watchedModalidad === 'diaria' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => handleModalityChange('diaria')}
-                  className="h-7 text-[11px] px-2.5 font-medium"
+                  aria-pressed={watchedModalidad === 'diaria'}
+                  className="min-h-11 px-3 text-xs font-medium focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <Calendar className="h-3 w-3 mr-1" /> Diaria
                 </Button>
@@ -613,7 +638,8 @@ export function AlquilerFormModal({
                   variant={watchedModalidad === 'por_hora' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => handleModalityChange('por_hora')}
-                  className="h-7 text-[11px] px-2.5 font-medium"
+                  aria-pressed={watchedModalidad === 'por_hora'}
+                  className="min-h-11 px-3 text-xs font-medium focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <Clock className="h-3 w-3 mr-1" /> Por Hora
                 </Button>
@@ -626,8 +652,10 @@ export function AlquilerFormModal({
               <select
                 id="unidad_id"
                 name="unidad_id"
+                aria-invalid={!!form.formState.errors.unidad_id}
+                aria-describedby={form.formState.errors.unidad_id ? 'alquiler-unidad-error' : undefined}
                 value={form.watch('unidad_id')}
-                onChange={(e) => form.setValue('unidad_id', e.target.value)}
+                onChange={(e) => form.setValue('unidad_id', e.target.value, { shouldDirty: true, shouldValidate: true })}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs sm:text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/20 truncate"
                 disabled={!hasUnidades}
               >
@@ -639,7 +667,7 @@ export function AlquilerFormModal({
                 ))}
               </select>
               {form.formState.errors.unidad_id && (
-                <span className="text-xs text-destructive">{form.formState.errors.unidad_id.message}</span>
+                <span id="alquiler-unidad-error" className="text-xs text-destructive">{form.formState.errors.unidad_id.message}</span>
               )}
             </div>
 
@@ -652,8 +680,10 @@ export function AlquilerFormModal({
                 <select
                   id="inquilino_id"
                   name="inquilino_id"
+                  aria-invalid={!!form.formState.errors.inquilino_id}
+                  aria-describedby={form.formState.errors.inquilino_id ? 'alquiler-inquilino-error' : undefined}
                   value={form.watch('inquilino_id')}
-                  onChange={(e) => form.setValue('inquilino_id', e.target.value)}
+                  onChange={(e) => form.setValue('inquilino_id', e.target.value, { shouldDirty: true, shouldValidate: true })}
                   className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-xs sm:text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/20 truncate"
                   disabled={!hasInquilinos}
                 >
@@ -684,7 +714,7 @@ export function AlquilerFormModal({
                 />
               </div>
               {form.formState.errors.inquilino_id && (
-                <span className="text-xs text-destructive">{form.formState.errors.inquilino_id.message}</span>
+                <span id="alquiler-inquilino-error" className="text-xs text-destructive">{form.formState.errors.inquilino_id.message}</span>
               )}
             </div>
 
@@ -763,6 +793,8 @@ export function AlquilerFormModal({
               <Input
                 id="monto_total"
                 type="number"
+                aria-invalid={!!form.formState.errors.monto_total}
+                aria-describedby={form.formState.errors.monto_total ? 'alquiler-monto-error' : undefined}
                 min={0}
                 step="any"
                 {...form.register('monto_total', { valueAsNumber: true })}
@@ -770,8 +802,9 @@ export function AlquilerFormModal({
                 className="text-xs sm:text-sm font-semibold"
               />
               {form.formState.errors.monto_total && (
-                <span className="text-xs text-destructive">{form.formState.errors.monto_total.message}</span>
+                <span id="alquiler-monto-error" className="text-xs text-destructive">{form.formState.errors.monto_total.message}</span>
               )}
+              <p data-testid="alquiler-monto-ayuda" className="text-xs text-muted-foreground">Ingresá el monto real acordado. No se precarga ningún importe de ejemplo.</p>
             </div>
 
             {/* Sección de Seña Opcional y Reutilizable */}
@@ -868,9 +901,10 @@ export function AlquilerFormModal({
                     if (!form.getValues('sena_tipo')) {
                       form.setValue('sena_tipo', 'monto_fijo');
                     }
-                    if (form.getValues('sena_valor') === undefined || form.getValues('sena_valor') === 0) {
-                      form.setValue('sena_valor', 50000);
-                      form.setValue('monto_sena', 50000);
+                    if (!form.getValues('sena_valor')) {
+                      // An explicit user choice must never silently fill a fictional deposit.
+                      form.setValue('sena_valor', undefined);
+                      form.setValue('monto_sena', 0);
                     }
                   }}
                   className={`p-2 rounded-lg border text-xs font-medium transition-colors ${
@@ -921,9 +955,9 @@ export function AlquilerFormModal({
                       data-testid="sena-tipo-monto-fijo"
                       onClick={() => {
                         form.setValue('sena_tipo', 'monto_fijo');
-                        const val = form.getValues('sena_valor') || 50000;
+                        const val = watchedSenaTipo === 'monto_fijo' ? form.getValues('sena_valor') : undefined;
                         form.setValue('sena_valor', val, { shouldValidate: true });
-                        form.setValue('monto_sena', val, { shouldValidate: true });
+                        form.setValue('monto_sena', Number(val) || 0, { shouldValidate: true });
                       }}
                       className={`p-1.5 rounded-md border text-xs font-medium transition-colors ${
                         watchedSenaTipo === 'monto_fijo'
@@ -938,10 +972,9 @@ export function AlquilerFormModal({
                       data-testid="sena-tipo-porcentaje"
                       onClick={() => {
                         form.setValue('sena_tipo', 'porcentaje');
-                        const raw = form.getValues('sena_valor') || 20;
-                        const pct = raw > 100 ? 20 : raw <= 0 ? 10 : raw;
+                        const pct = watchedSenaTipo === 'porcentaje' ? form.getValues('sena_valor') : undefined;
                         form.setValue('sena_valor', pct, { shouldValidate: true });
-                        form.setValue('monto_sena', Math.round((watchedTotal * pct) / 100), { shouldValidate: true });
+                        form.setValue('monto_sena', pct === undefined ? 0 : Math.round((watchedTotal * pct) / 100), { shouldValidate: true });
                       }}
                       className={`p-1.5 rounded-md border text-xs font-medium transition-colors ${
                         watchedSenaTipo === 'porcentaje'
@@ -1103,63 +1136,14 @@ export function AlquilerFormModal({
               </div>
             </div>
 
-            {/* Anexar Contrato en PDF (Opcional) */}
-            <div className="border border-dashed border-border/80 rounded-xl p-3.5 bg-muted/10 space-y-2">
-              <Label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                <FileText className="h-3.5 w-3.5 text-primary" />
-                <span>Contrato Digital Firmado (Opcional)</span>
-              </Label>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,application/pdf"
-                onChange={handleFileChange}
-                className="hidden"
-                id="contrato-upload"
-              />
-
-              {!contratoFile ? (
-                <label
-                  htmlFor="contrato-upload"
-                  className="flex flex-col items-center justify-center p-3 rounded-lg border border-border bg-card/60 hover:bg-card cursor-pointer transition-colors text-center"
-                >
-                  <UploadCloud className="h-6 w-6 text-muted-foreground mb-1" />
-                  <span className="text-xs font-medium text-foreground">Subir contrato (.pdf, máx 10 MB)</span>
-                  <span className="text-[10px] text-muted-foreground mt-0.5">
-                    Podés asociar el documento legal firmado para consulta permanente
-                  </span>
-                </label>
-              ) : (
-                <div className="flex items-center justify-between p-2.5 rounded-lg border border-primary/30 bg-primary/5">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <FileText className="h-5 w-5 text-primary shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-foreground truncate">{contratoFile.name}</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {(contratoFile.size / (1024 * 1024)).toFixed(2)} MB
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleRemoveFile}
-                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                    title="Remover archivo"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-
-              {contratoError && (
-                <div className="flex items-center gap-1.5 text-xs text-destructive">
-                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                  <span>{contratoError}</span>
-                </div>
-              )}
+            <div data-testid="contrato-upload-after-save" className="rounded-xl border border-border/80 bg-muted/10 p-3.5 space-y-1">
+              <span className="flex items-center gap-1.5 text-xs font-semibold">
+                <FileText className="h-3.5 w-3.5 text-primary" /> Contrato digital (opcional)
+              </span>
+              <p className="text-xs text-muted-foreground">
+                Guardá primero el alquiler y después adjuntá el PDF desde su fila en Alquileres.
+                El archivo se guardará en una carpeta privada asociada a ese contrato.
+              </p>
             </div>
 
             {/* Acciones */}

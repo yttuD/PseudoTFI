@@ -30,7 +30,10 @@ export function Navbar({ locale }: { locale: string }) {
   const [user, setUser] = useState<ClientAuthUser | null>(null);
   const [mounted, setMounted] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const profileTriggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     let active = true;
@@ -38,6 +41,11 @@ export function Navbar({ locale }: { locale: string }) {
       if (!active) return;
       setUser(resolvedUser);
       setMounted(true);
+      // Reuse the verified session role in NativeBottomNav without a second
+      // remote Auth/profile lookup. API routes still enforce authorization.
+      window.dispatchEvent(new CustomEvent('rendo:verified-nav-role', {
+        detail: { role: resolvedUser?.role ?? null },
+      }));
     });
     refreshProfile();
     window.addEventListener('rendo:profile-updated', refreshProfile);
@@ -62,7 +70,8 @@ export function Navbar({ locale }: { locale: string }) {
     } else {
       segments.splice(1, 0, newLocale);
     }
-    router.push(segments.join('/') || `/${newLocale}`);
+    const suffix = `${window.location.search}${window.location.hash}`;
+    router.push(`${segments.join('/') || `/${newLocale}`}${suffix}`);
   };
 
   const isGestorOrDelegado = user?.role === 'gestor' || user?.role === 'delegado';
@@ -122,13 +131,21 @@ export function Navbar({ locale }: { locale: string }) {
 
           {mounted && user ? (
             /* User Profile Avatar Dropdown Menu */
-            <div className="relative" ref={dropdownRef}>
+            <div className="relative" ref={dropdownRef} onKeyDown={(event) => {
+              if (event.key === 'Escape' && dropdownOpen) {
+                event.stopPropagation();
+                setDropdownOpen(false);
+                profileTriggerRef.current?.focus();
+              }
+            }}>
               <button
+                ref={profileTriggerRef}
                 type="button"
                 onClick={() => setDropdownOpen((prev) => !prev)}
                 className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-full sm:rounded-xl border border-border/80 hover:border-border bg-surface hover:bg-muted/50 transition-all text-xs font-medium min-h-[44px]"
                 aria-expanded={dropdownOpen}
-                aria-label="Menú de perfil"
+                aria-label={tNav("profileMenu")}
+                aria-controls="navbar-profile-popover"
               >
                 <div className="h-7 w-7 rounded-full bg-gradient-to-tr from-azul-800 to-azul-900 dark:from-dorado-600 dark:to-dorado-300 text-white dark:text-azul-900 font-bold flex items-center justify-center text-xs shadow-sm">
                   {userInitial}
@@ -140,7 +157,7 @@ export function Navbar({ locale }: { locale: string }) {
               </button>
 
               {dropdownOpen && (
-                <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-surface border border-border/80 shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div id="navbar-profile-popover" className="absolute right-0 mt-2 w-64 rounded-2xl bg-surface border border-border/80 shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
                   {/* User Header */}
                   <div className="p-2.5 pb-3 border-b border-border/60">
                     <p className="text-xs font-bold text-foreground truncate">{user.name}</p>
@@ -154,7 +171,7 @@ export function Navbar({ locale }: { locale: string }) {
                       ) : (
                         <>
                           <Home className="h-3 w-3" />
-                          <span>Inquilino</span>
+                          <span>{tNav("roleTenant")}</span>
                         </>
                       )}
                     </div>
@@ -164,7 +181,7 @@ export function Navbar({ locale }: { locale: string }) {
                   <div className="py-1 space-y-1">
                     <Link href={`/${locale}/cuenta`} onClick={() => setDropdownOpen(false)} className="flex items-center gap-2.5 px-3 py-2 text-xs rounded-xl hover:bg-muted/70 text-foreground transition-colors">
                       <UserRound className="h-4 w-4 text-primary" />
-                      <span>Mi perfil</span>
+                      <span>{tNav("myProfile")}</span>
                     </Link>
                     <Link
                       href={`/${locale}/favoritos`}
@@ -200,16 +217,28 @@ export function Navbar({ locale }: { locale: string }) {
                   <div className="pt-1 border-t border-border/60">
                     <button
                       type="button"
+                      disabled={signingOut}
                       onClick={async () => {
-                        setDropdownOpen(false);
-                        await signOutClient();
-                        window.location.href = `/${locale}`;
+                        if (signingOut) return;
+                        setSigningOut(true);
+                        setLogoutError(null);
+                        try {
+                          await signOutClient();
+                          window.location.replace(`/${locale}`);
+                        } catch {
+                          // Never redirect or imply a closed session on network failure.
+                          setLogoutError(tNav('logoutFailed'));
+                          setDropdownOpen(true);
+                        } finally {
+                          setSigningOut(false);
+                        }
                       }}
                       className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-destructive hover:bg-destructive/10 rounded-xl transition-colors cursor-pointer text-left"
                     >
                       <LogOut className="h-4 w-4" />
-                      <span>{tNav('logout')}</span>
+                      <span>{signingOut ? tNav('signingOut') : tNav('logout')}</span>
                     </button>
+                    {logoutError && <p role="alert" className="px-3 py-2 text-xs text-destructive">{logoutError}</p>}
                   </div>
                 </div>
               )}

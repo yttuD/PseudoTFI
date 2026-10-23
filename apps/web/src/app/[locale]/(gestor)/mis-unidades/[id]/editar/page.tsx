@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import { redirect } from 'next/navigation';
 import { getServerAuth } from '@/lib/supabase/server-auth';
+import { isTestAdapterEnabled } from '@/lib/test-adapter';
 import { getServerAccessContext } from '@/lib/access-context';
 
 export default async function EditarUnidadPage({ params: { locale, id } }: { params: { locale: string, id: string } }) {
@@ -40,7 +41,7 @@ export default async function EditarUnidadPage({ params: { locale, id } }: { par
     });
     if (res.ok) {
       unidad = await res.json();
-    } else if (process.env.NODE_ENV !== 'production' && process.env.RENDO_BETA_MODE !== 'true' && id === 'a0000000-0000-0000-0000-000000000001') {
+    } else if (isTestAdapterEnabled() && id === 'a0000000-0000-0000-0000-000000000001') {
       unidad = {
         id: 'a0000000-0000-0000-0000-000000000001',
         titulo_es: 'Departamento 2 Ambientes Frente al Río',
@@ -61,7 +62,7 @@ export default async function EditarUnidadPage({ params: { locale, id } }: { par
       notFound = true;
     }
   } catch {
-    if (process.env.NODE_ENV !== 'production' && process.env.RENDO_BETA_MODE !== 'true' && id === 'a0000000-0000-0000-0000-000000000001') {
+    if (isTestAdapterEnabled() && id === 'a0000000-0000-0000-0000-000000000001') {
       unidad = {
         id: 'a0000000-0000-0000-0000-000000000001',
         titulo_es: 'Departamento 2 Ambientes Frente al Río',

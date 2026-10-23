@@ -51,12 +51,12 @@ export default function Sidebar({
 
   const navigation = [
     { label: tNav('dashboard'), href: `/${locale}/dashboard`, icon: <LayoutDashboard className="h-5 w-5" /> },
-    { label: 'Métricas', href: `/${locale}/metricas`, icon: <BarChart3 className="h-5 w-5" />, reqGestor: true },
+    { label: tNav('metrics'), href: `/${locale}/metricas`, icon: <BarChart3 className="h-5 w-5" />, reqGestor: true },
     { label: tNav('units'), href: `/${locale}/mis-unidades`, icon: <Building2 className="h-5 w-5" /> },
     { label: tNav('tenants'), href: `/${locale}/inquilinos`, icon: <Users className="h-5 w-5" /> },
     { label: tNav('rentals'), href: `/${locale}/alquileres`, icon: <FileText className="h-5 w-5" /> },
     { label: tNav('billing'), href: `/${locale}/facturacion`, icon: <CreditCard className="h-5 w-5" />, reqGestor: true },
-    { label: 'Facturación AFIP', href: `/${locale}/facturacion-afip`, icon: <ReceiptText className="h-5 w-5" />, reqGestor: true },
+    { label: tNav('taxBilling'), href: `/${locale}/facturacion-afip`, icon: <ReceiptText className="h-5 w-5" />, reqGestor: true },
     { label: tNav('delegates'), href: `/${locale}/delegados`, icon: <UserCheck className="h-5 w-5" />, reqGestor: true },
     { label: tNav('activityLog') || 'Registro de Actividad', href: `/${locale}/logs`, icon: <History className="h-5 w-5" />, reqGestor: true },
   ];
@@ -100,17 +100,17 @@ export default function Sidebar({
                     </span>
                     {delegadoActivo?.permiso === 'ver' && (
                       <span className="text-[9px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono uppercase">
-                        Ver
+                        {tNav('roleView')}
                       </span>
                     )}
                     {delegadoActivo?.permiso === 'gestionar' && (
                       <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#B89355]/20 text-[#B89355] font-mono uppercase font-semibold">
-                        Gestionar
+                        {tNav('roleManage')}
                       </span>
                     )}
                     {isPending && (
                       <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 font-mono uppercase">
-                        Pendiente
+                        {tNav('rolePending')}
                       </span>
                     )}
                   </div>
@@ -134,16 +134,16 @@ export default function Sidebar({
 
         {/* Footer info in sidebar */}
         <div className="border-t border-border pt-3 flex flex-col gap-1">
-          <Link href={`/${locale}/cuenta`} title="Mi perfil" className="flex items-center gap-3 p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors text-xs font-mono min-h-[44px] min-w-[44px]">
+          <Link href={`/${locale}/cuenta`} title={tNav('myProfile')} aria-label={tNav('myProfile')} className="flex items-center gap-3 p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors text-xs font-mono min-h-[44px] min-w-[44px]">
             <UserRound className="h-4 w-4 shrink-0" />
-            {open && <span>Mi perfil</span>}
+            {open && <span>{tNav('myProfile')}</span>}
           </Link>
           {/* Theme Toggle Button */}
           <button
             type="button"
             onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-            title={mounted && (resolvedTheme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro') || 'Cambiar tema'}
-            aria-label="Cambiar tema"
+            title={mounted ? (resolvedTheme === 'dark' ? tNav('themeLight') : tNav('themeDark')) : tNav('themeToggle')}
+            aria-label={tNav('themeToggle')}
             className="flex items-center gap-3 p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors text-xs font-mono w-full text-left cursor-pointer min-h-[44px] min-w-[44px]"
           >
             <div className="h-4 w-4 shrink-0 flex items-center justify-center">
@@ -159,14 +159,14 @@ export default function Sidebar({
             </div>
             {open && (
               <span className="truncate">
-                {mounted ? (resolvedTheme === 'dark' ? 'Modo Claro' : 'Modo Oscuro') : 'Cambiar tema'}
+                {mounted ? (resolvedTheme === 'dark' ? tNav('themeLight') : tNav('themeDark')) : tNav('themeToggle')}
               </span>
             )}
           </button>
 
           <Link
             href={`/${locale}`}
-            title="Explorar catálogo público en Marketplace"
+            title={tNav('backToMarketplace')} aria-label={tNav('backToMarketplace')}
             className="flex items-center gap-3 p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors text-xs font-mono min-h-[44px] min-w-[44px]"
           >
             <Compass className="h-4 w-4 shrink-0 text-muted-foreground hover:text-foreground" />

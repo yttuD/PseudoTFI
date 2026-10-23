@@ -1,4 +1,5 @@
-import { Injectable, UnprocessableEntityException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, UnprocessableEntityException, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
+import { createHash } from 'node:crypto';
 import { SupabaseService } from '../supabase/supabase.service.js';
 import { CreateUnidadDto } from './dto/create-unidad.dto.js';
 import { UpdateUnidadDto } from './dto/update-unidad.dto.js';
@@ -300,13 +301,53 @@ export class UnidadesService {
     return { success: true, id: res.id, deleted_at: res.deleted_at };
   }
 
-  async createModalidad(unidadId: string, createDto: CreateModalidadPrecioDto, token: string) {
+  async createModalidad(
+    unidadId: string,
+    createDto: CreateModalidadPrecioDto,
+    token: string,
+    idempotencyKey?: string,
+  ) {
     const supabase = this.supabaseService.getClient(token);
+    // UUIDv8-style deterministic primary key: same unit + request UUID
+    // produces exactly the same database row, even across API instances.
+    // The database primary key resolves concurrent requests atomically.
+    const hash = idempotencyKey
+      ? createHash('sha256')
+          .update(`rendo:tarifa:v1:${unidadId.toLowerCase()}:${idempotencyKey.toLowerCase()}`)
+          .digest('hex')
+      : null;
+    const requestId = hash
+      ? `${hash.slice(0, 8)}-${hash.slice(8, 12)}-8${hash.slice(13, 16)}-a${hash.slice(17, 20)}-${hash.slice(20, 32)}`
+      : null;
     const { data, error } = await supabase
       .from('modalidades_precio')
-      .insert({ ...createDto, unidad_id: unidadId })
+      .insert({ ...createDto, unidad_id: unidadId, ...(requestId ? { id: requestId } : {}) })
       .select()
       .single();
+
+    if (error?.code === '23505' && requestId) {
+      // A lost HTTP response must not produce a second tariff. Never update
+      // an existing row implicitly, especially if it was already archived.
+      const { data: existing, error: lookupError } = await supabase
+        .from('modalidades_precio')
+        .select('*')
+        .eq('id', requestId)
+        .eq('unidad_id', unidadId)
+        .single();
+      if (lookupError || !existing || existing.deleted_at) {
+        throw new ConflictException('La operación original no puede reutilizarse. Recargá la unidad.');
+      }
+      const sameNumber = (a: unknown, b: unknown) =>
+        a == null && b == null || (a != null && b != null && Number(a) === Number(b));
+      if (existing.unidad_tiempo !== createDto.unidad_tiempo ||
+          !sameNumber(existing.cantidad_tiempo, createDto.cantidad_tiempo) ||
+          !sameNumber(existing.precio, createDto.precio) ||
+          !sameNumber(existing.precio_usd, createDto.precio_usd) ||
+          !sameNumber(existing.precio_brl, createDto.precio_brl)) {
+        throw new ConflictException('Idempotency-Key reutilizada para una tarifa diferente');
+      }
+      return existing;
+    }
 
     if (error || !data) {
       throw new UnprocessableEntityException(error?.message || 'Error al crear modalidad');

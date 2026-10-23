@@ -89,7 +89,14 @@ export const DesktopSidebar = ({
       }}
       transition={terminalSpring}
       onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
+      onMouseLeave={(event) => {
+        // Keep labels visible while keyboard focus is still inside the sidebar.
+        if (!event.currentTarget.contains(document.activeElement)) setOpen(false);
+      }}
+      onFocusCapture={() => setOpen(true)}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(false);
+      }}
       {...props}
     >
       {children}
@@ -169,32 +176,36 @@ export interface SidebarLinkProps {
 }
 
 export const SidebarLink = ({ link, className, active }: SidebarLinkProps) => {
-  const { open, animate } = useSidebar();
+  const { open, animate, setOpen } = useSidebar();
   return (
     <Link
       href={link.href}
+      aria-label={link.label}
+      title={link.label}
+      onClick={() => {
+        // A mobile route transition should never leave the navigation dialog covering its destination.
+        if (window.matchMedia('(max-width: 767px)').matches) setOpen(false);
+      }}
       className={cn(
         "flex items-center gap-3 group/sidebar min-h-[44px] min-w-[44px] py-2.5 px-2.5 rounded-xl transition-colors duration-150",
         active
-          ? "bg-primary/10 text-primary font-medium"
+          ? "bg-primary/10 text-dorado-700 dark:text-dorado-200 font-medium"
           : "text-muted-foreground hover:text-foreground hover:bg-muted/70",
         className
       )}
     >
-      <div className={cn("h-5 w-5 shrink-0 flex items-center justify-center", active && "text-primary")}>
+      <div className={cn("h-5 w-5 shrink-0 flex items-center justify-center", active && "text-dorado-700 dark:text-dorado-200")}>
         {link.icon}
       </div>
 
-      <motion.span
-        animate={{
-          display: animate ? (open ? "inline-block" : "none") : "inline-block",
-          opacity: animate ? (open ? 1 : 0) : 1,
-        }}
-        transition={terminalSpring}
-        className="text-xs whitespace-pre inline-block !p-0 !m-0 overflow-hidden font-medium"
+      {/* Avoid partially transparent labels while the sidebar expands: contrast
+          must remain legible throughout the interaction. Animate width only. */}
+      <span
+        style={{ display: animate && !open ? "none" : "inline-block" }}
+        className="text-xs whitespace-pre !p-0 !m-0 overflow-hidden font-medium"
       >
         {link.label}
-      </motion.span>
+      </span>
     </Link>
   );
 };

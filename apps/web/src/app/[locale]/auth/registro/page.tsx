@@ -315,19 +315,13 @@ export default function RegisterPage() {
     }
   };
 
-  const pageTitle = isGestorPortal
-    ? "Rendo Gestor :: Alta de Operador"
-    : "Creá tu cuenta en Rendo";
-
-  const pageSubtitle = isGestorPortal
-    ? isClosedBeta
-      ? "Registrate para probar hasta 10 unidades sin costo. Los cobros y comprobantes están deshabilitados."
-      : "Registrate para administrar tus unidades, alquileres y facturación sin comisiones."
-    : "Iniciá tu cuenta para ver ubicaciones exactas, contactar gestores por WhatsApp y guardar favoritos.";
-
-  const trustBadge = isGestorPortal
-    ? "Terminal Operativo Seguro"
-    : "Marketplace Inmobiliario Directo";
+  const pageTitle = t(isGestorPortal ? "registroGestorTitulo" : "registroBuscadorTitulo");
+  const pageSubtitle = t(
+    isGestorPortal
+      ? isClosedBeta ? "registroGestorBetaDescripcion" : "registroGestorDescripcion"
+      : "registroBuscadorDescripcion"
+  );
+  const trustBadge = t(isGestorPortal ? "registroGestorConfianza" : "registroBuscadorConfianza");
 
   return (
     <AuthLayout
@@ -357,9 +351,10 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={() => setRegisterMethod("phone")}
+              aria-pressed={registerMethod === "phone"}
               className={`flex items-center justify-center gap-2 rounded-lg py-2 min-h-[44px] text-xs font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                 registerMethod === "phone"
-                  ? "bg-surface text-primary shadow-sm"
+                  ? "bg-surface text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -369,9 +364,10 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={() => setRegisterMethod("email")}
+              aria-pressed={registerMethod === "email"}
               className={`flex items-center justify-center gap-2 rounded-lg py-2 min-h-[44px] text-xs font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                 registerMethod === "email"
-                  ? "bg-surface text-primary shadow-sm"
+                  ? "bg-surface text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -401,7 +397,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading || token.length < 6}
-              className="w-full min-h-[44px] flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-white shadow-md shadow-primary/20 hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary/40 focus:outline-hidden transition-all disabled:opacity-50"
+              className="w-full min-h-[44px] flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary/40 focus:outline-hidden transition-all disabled:opacity-50"
             >
               <span>{loading ? t("verificando") : t("verificarOtp")}</span>
               <ArrowRight className="h-4 w-4" />
@@ -461,7 +457,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading || !phone}
-              className="w-full min-h-[44px] flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-white shadow-md shadow-primary/20 hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary/40 focus:outline-hidden transition-all disabled:opacity-50 mt-2"
+              className="w-full min-h-[44px] flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary/40 focus:outline-hidden transition-all disabled:opacity-50 mt-2"
             >
               <span>{loading ? t("enviando") : t("enviarOtp")}</span>
               <ArrowRight className="h-4 w-4" />
@@ -522,7 +518,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full min-h-[44px] flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-white shadow-md shadow-primary/20 hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary focus-visible:ring-2 focus-visible:ring-primary/40 transition-all disabled:opacity-50 mt-2"
+              className="w-full min-h-[44px] flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary focus-visible:ring-2 focus-visible:ring-primary/40 transition-all disabled:opacity-50 mt-2"
             >
               <span>{loading ? t("registrando") : t("registrarse")}</span>
               <ArrowRight className="h-4 w-4" />
@@ -547,26 +543,22 @@ export default function RegisterPage() {
           <div className="pt-2 border-t border-border/40">
             {isGestorPortal ? (
               <p className="text-xs text-muted-foreground">
-                ¿Buscás alquilar una Unidad?{" "}
+                {t("registroPreguntaBuscador")}{" "}
                 <Link
-                  href={`/${locale}/auth/registro?portal=marketplace${
-                    nextParam ? `&next=${encodeURIComponent(nextParam)}` : ""
-                  }`}
+                  href={`/${locale}/auth/registro?portal=marketplace`}
                   className="font-semibold text-azul-900 dark:text-dorado-300 hover:underline"
                 >
-                  Registrate como inquilino aquí
+                  {t("registroEnlaceBuscador")}
                 </Link>
               </p>
             ) : (
               <p className="text-xs text-muted-foreground">
-                ¿Sos Gestor inmobiliario?{" "}
+                {t("registroPreguntaGestor")}{" "}
                 <Link
-                  href={`/${locale}/auth/registro?portal=gestor${
-                    nextParam ? `&next=${encodeURIComponent(nextParam)}` : ""
-                  }`}
+                  href={`/${locale}/auth/registro?portal=gestor`}
                   className="font-semibold text-azul-900 dark:text-dorado-300 hover:underline"
                 >
-                  Creá tu cuenta de Gestor aquí
+                  {t("registroEnlaceGestor")}
                 </Link>
               </p>
             )}

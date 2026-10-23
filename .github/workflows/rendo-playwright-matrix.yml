@@ -3,7 +3,9 @@ name: Rendo UI Playwright desktop-mobile smoke
 on:
   pull_request:
     branches:
+      - codex/ui-playwright-matrix-2026-10-20
       - codex/n01-n02-group-membership-2026-10-20
+      - codex/release-candidate-n01-n08-2026-10-20
     paths:
       - 'apps/web/**'
       - 'packages/**'
@@ -20,7 +22,7 @@ concurrency:
 jobs:
   responsive:
     runs-on: ubuntu-latest
-    timeout-minutes: 18
+    timeout-minutes: 32
     env:
       AUTH_ALLOW_DEV_TOKENS: 'true'
       NEXT_PUBLIC_AUTH_ALLOW_DEV_TOKENS: 'true'
@@ -47,9 +49,15 @@ jobs:
       - name: Install Chromium only
         working-directory: apps/web
         run: node node_modules/@playwright/test/cli.js install --with-deps chromium
+      - name: Install pinned axe engine for isolated WCAG audit
+        run: |
+          npm install --prefix "$RUNNER_TEMP/rendo-axe" --no-save --ignore-scripts --no-audit --no-fund axe-core@4.13.0
+          test -s "$RUNNER_TEMP/rendo-axe/node_modules/axe-core/axe.min.js"
       - name: Run responsive regressions with only synthetic test fixtures
         working-directory: apps/web
-        run: node node_modules/@playwright/test/cli.js test -c playwright.rendo-ci.config.ts e2e/observaciones_regression.spec.ts --reporter=list
+        env:
+          AXE_SCRIPT_PATH: ${{ runner.temp }}/rendo-axe/node_modules/axe-core/axe.min.js
+        run: node node_modules/@playwright/test/cli.js test -c playwright.rendo-ci.config.ts e2e/observaciones_regression.spec.ts e2e/gestor_sidebar_qol.spec.ts e2e/gestor_inquilinos_states.spec.ts e2e/gestor_delegados_states.spec.ts e2e/gestor_alquiler_importes_qol.spec.ts e2e/catalogo_i18n_regression.spec.ts e2e/catalogo_filtros_ux.spec.ts e2e/catalogo_mobile_apply_focus_ux.spec.ts e2e/favorites_error_ux.spec.ts e2e/mobile_navigation_ux.spec.ts e2e/skip_to_content_ux.spec.ts e2e/alquiler_form_validation_ux.spec.ts e2e/unidad_mobile_sections_ux.spec.ts e2e/unidad_form_guard_ux.spec.ts e2e/unidad_readability_ux.spec.ts e2e/unidad_accessibility_ux.spec.ts e2e/alquiler_explicit_associations_ux.spec.ts e2e/unidad_photo_keyboard_ux.spec.ts e2e/alquiler_modality_touch_ux.spec.ts e2e/wcag_axe_baseline.spec.ts e2e/viewport_320_ux.spec.ts e2e/dashboard_reflow_ux.spec.ts e2e/mobile_nav_reflow_ux.spec.ts e2e/catalogo_zonas_recovery_ux.spec.ts e2e/catalogo_images_priority_ux.spec.ts e2e/catalogo_card_actions_ux.spec.ts e2e/mobile_unit_nav_clearance_ux.spec.ts e2e/mobile_catalog_header_clarity_ux.spec.ts e2e/registro_copy_locale_ux.spec.ts e2e/favorites_button_i18n_ux.spec.ts e2e/catalogo_badge_contrast_ux.spec.ts e2e/reduced_motion_icon_ux.spec.ts e2e/navbar_profile_i18n_keyboard_ux.spec.ts e2e/login_portal_copy_locale_ux.spec.ts e2e/mobile_nav_auth_destinations_ux.spec.ts e2e/catalogo_language_filters_ux.spec.ts e2e/unit_detail_published_contrast_ux.spec.ts --reporter=list
       - name: Preserve diagnostics and screenshot captures
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

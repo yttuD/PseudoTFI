@@ -86,6 +86,17 @@ export class AlquileresController {
     return this.alquileresService.findOne(id, token);
   }
 
+  @Patch(':id/contrato')
+  async attachContract(
+    @Param('id') id: string,
+    @Body() body: { path?: string },
+    @Request() req: AuthenticatedRequest,
+  ) {
+    const canManage = await this.authzService.canManageAlquiler(req.user, id);
+    if (!canManage) throw new NotFoundException('Alquiler no encontrado o sin permisos de gestión');
+    return this.alquileresService.attachContract(id, body?.path as string, this.extractToken(req));
+  }
+
   @Patch(':id')
   async update(
     @Param('id') id: string,

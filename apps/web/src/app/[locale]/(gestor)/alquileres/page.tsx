@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { getServerAuth } from '@/lib/supabase/server-auth';
 import { cookies } from 'next/headers';
 import { AlquilerFormModal } from '@/components/gestor/AlquilerFormModal';
+import { RentalContractDocument } from '@/components/gestor/RentalContractDocument';
 import { Badge } from '@/components/ui/badge';
 import {
   Table,
@@ -14,6 +15,7 @@ import {
 
 import { getServerAccessContext } from '@/lib/access-context';
 import { Eye } from 'lucide-react';
+import { InventoryLoadError } from '@/components/gestor/InventoryLoadError';
 
 export default async function AlquileresPage() {
   const cookieStore = cookies();
@@ -44,38 +46,50 @@ export default async function AlquileresPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let grupos: any[] = [];
 
+  // Never present a failed request as an empty rental history.
+  // Rentals are readable independently of the auxiliary data required to
+  // open the creation form, so retain valid results on a partial outage.
+  let rentalsLoadError = !token;
+  let creationDataError = false;
   if (token) {
     const fetchOptions = {
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store' as RequestCache,
+      signal: AbortSignal.timeout(10000),
     };
 
-    try {
-      const [alqRes, uniRes, inqRes, gruposRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/alquileres?limit=1000`, fetchOptions),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/unidades?limit=1000`, fetchOptions),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/inquilinos?limit=1000`, fetchOptions),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/grupos`, fetchOptions),
-      ]);
+    const loadList = async (endpoint: string, paged: boolean) => {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, fetchOptions);
+      if (!response.ok) throw new Error('No se pudo cargar el listado');
+      const json: unknown = await response.json();
+      const records = paged && json !== null && typeof json === 'object'
+        ? (json as { data?: unknown }).data
+        : json;
+      if (!Array.isArray(records)) throw new Error('Respuesta de listado inválida');
+      return records;
+    };
 
-      if (alqRes.ok) {
-        const json = await alqRes.json();
-        alquileres = json.data || [];
-      }
-      if (uniRes.ok) {
-        const json = await uniRes.json();
-        unidades = json.data || [];
-      }
-      if (inqRes.ok) {
-        const json = await inqRes.json();
-        inquilinos = json.data || [];
-      }
-      if (gruposRes.ok) {
-        grupos = await gruposRes.json();
-      }
-    } catch (e) {
-      console.warn('Error fetching alquileres in SSR:', e);
+    const [rentalsResult, unitsResult, tenantsResult, groupsResult] = await Promise.allSettled([
+      loadList('/alquileres?limit=1000', true),
+      loadList('/unidades?limit=1000', true),
+      loadList('/inquilinos?limit=1000', true),
+      loadList('/grupos', false),
+    ]);
+
+    if (rentalsResult.status === 'fulfilled') {
+      alquileres = rentalsResult.value;
+    } else {
+      rentalsLoadError = true;
     }
+
+    if (unitsResult.status === 'fulfilled') unidades = unitsResult.value;
+    else creationDataError = true;
+
+    if (tenantsResult.status === 'fulfilled') inquilinos = tenantsResult.value;
+    else creationDataError = true;
+
+    if (groupsResult.status === 'fulfilled') grupos = groupsResult.value;
+    else creationDataError = true;
   }
 
   // Fail closed: No demo fake fallbacks
@@ -110,13 +124,32 @@ export default async function AlquileresPage() {
             Administrá todos los contratos y reservas de tus unidades.
           </p>
         </div>
-        {token && !isReadOnly && (
+        {token && !isReadOnly && !rentalsLoadError && !creationDataError && (
           <AlquilerFormModal token={token} unidades={unidades} inquilinos={inquilinos} grupos={grupos} />
         )}
       </div>
 
-      <div className="rounded-md border bg-card overflow-hidden">
-        {alquileres.length === 0 ? (
+      {rentalsLoadError ? (
+        <div data-testid="alquileres-load-error">
+          <InventoryLoadError
+            title={token ? 'No pudimos cargar los alquileres' : 'No se pudo verificar tu sesión'}
+            message={token
+              ? 'Tus alquileres no se eliminaron. No pudimos consultar el servicio; reintentá cuando vuelva la conexión.'
+              : 'Iniciá sesión nuevamente para consultar tus contratos y reservas.'}
+          />
+        </div>
+      ) : (
+        <>
+          {creationDataError && (
+            <div data-testid="alquileres-creation-data-error">
+              <InventoryLoadError
+                title="Los alquileres se cargaron, pero faltan datos para registrar uno nuevo"
+                message="Podés consultar los contratos existentes. La creación de alquileres está temporalmente deshabilitada hasta recuperar unidades, inquilinos y grupos."
+              />
+            </div>
+          )}
+          <div className="rounded-md border bg-card overflow-hidden">
+            {alquileres.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground font-mono text-sm">
             No hay alquileres registrados.
           </div>
@@ -134,6 +167,7 @@ export default async function AlquileresPage() {
                     <TableHead>Monto Total</TableHead>
                     <TableHead>Seña</TableHead>
                     <TableHead>Estado</TableHead>
+                    <TableHead>Documento</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -154,6 +188,9 @@ export default async function AlquileresPage() {
                         {Number(alq.monto_sena || 0) > 0 ? `$${Number(alq.monto_sena).toLocaleString('es-AR')}` : '-'}
                       </TableCell>
                       <TableCell>{getStatusBadge(alq.estado)}</TableCell>
+                      <TableCell>
+                        <RentalContractDocument rentalId={alq.id} storedPath={alq.contrato_url} token={token || ''} canManage={!isReadOnly} />
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -177,6 +214,7 @@ export default async function AlquileresPage() {
                     </span>
                     <span className="font-bold text-foreground">${Number(alq.monto_total || 0).toLocaleString('es-AR')}</span>
                   </div>
+                  <RentalContractDocument rentalId={alq.id} storedPath={alq.contrato_url} token={token || ''} canManage={!isReadOnly} />
                   {Number(alq.monto_sena || 0) > 0 && (
                     <div className="text-xs font-mono text-amber-600 dark:text-amber-400">
                       Seña: ${Number(alq.monto_sena).toLocaleString('es-AR')}
@@ -186,8 +224,10 @@ export default async function AlquileresPage() {
               ))}
             </div>
           </>
-        )}
-      </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

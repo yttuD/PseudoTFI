@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { ConfigService } from '@nestjs/config';
 import { ForbiddenException, NotFoundException, ValidationPipe, type ExecutionContext, type INestApplication } from '@nestjs/common';
@@ -47,6 +47,9 @@ interface GrupoRow {
   gestor_id: string;
   nombre: string;
   descripcion?: string | null;
+  sena_default_activa?: boolean | null;
+  sena_default_tipo?: string | null;
+  sena_default_valor?: number | null;
   deleted_at?: string | null;
 }
 
@@ -920,6 +923,173 @@ describe('B007a: Aislamiento API Real y Autorización Multi-Tenant (T005 / T001)
     });
   });
 
+  describe('N02/N03. Persistencia real de categoría y tarifas por HTTP + Supabase local', () => {
+    it('N02 cambia casa/departamento a cancha, recarga el detalle y mantiene la categoría en PostgreSQL', async () => {
+      const server = httpApp.getHttpServer();
+      const authA = `Bearer ${tokenGestorA}`;
+
+      // Existing fixture: unitA2 starts as departamento, is owned by Gestor A.
+      const original = await httpRequest(server)
+        .get(`/unidades/${unitA2Id}`)
+        .set('Authorization', authA)
+        .expect(200);
+      expect((original.body as UnidadRow).categoria).toBe('departamento');
+
+      const edited = await httpRequest(server)
+        .patch(`/unidades/${unitA2Id}`)
+        .set('Authorization', authA)
+        .send({ categoria: 'cancha', auto_traducir: false })
+        .expect(200);
+      expect((edited.body as UnidadRow).categoria).toBe('cancha');
+
+      // A new API request—not the React form state—must return persisted data.
+      const reloaded = await httpRequest(server)
+        .get(`/unidades/${unitA2Id}`)
+        .set('Authorization', authA)
+        .expect(200);
+      expect((reloaded.body as UnidadRow).categoria).toBe('cancha');
+
+      const { data: persisted, error } = await adminClient.from('unidades')
+        .select('id,gestor_id,categoria').eq('id', unitA2Id).single();
+      expect(error).toBeNull();
+      expect(persisted).toMatchObject({ id: unitA2Id, gestor_id: gestorAId, categoria: 'cancha' });
+
+      // Revert this local fixture so unrelated scenarios remain order-independent.
+      await httpRequest(server)
+        .patch(`/unidades/${unitA2Id}`)
+        .set('Authorization', authA)
+        .send({ categoria: 'departamento', auto_traducir: false })
+        .expect(200);
+    });
+
+    it('N03 crea dos tarifas, actualiza la primera sin duplicar y archiva la segunda', async () => {
+      const server = httpApp.getHttpServer();
+      const authA = `Bearer ${tokenGestorA}`;
+      const url = `/unidades/${unitA2Id}/modalidades`;
+
+      const initial = await httpRequest(server).get(`/unidades/${unitA2Id}`)
+        .set('Authorization', authA).expect(200);
+      expect(initial.body.modalidades_precio).toEqual([]);
+
+      const first = await httpRequest(server).post(url)
+        .set('Authorization', authA)
+        .send({ unidad_tiempo: 'día', cantidad_tiempo: 1, precio: 40000 })
+        .expect(201);
+      const firstId = first.body.id as string;
+      expect(firstId).toEqual(expect.any(String));
+      createdModalidadIds.push(firstId);
+
+      const second = await httpRequest(server).post(url)
+        .set('Authorization', authA)
+        .send({ unidad_tiempo: 'mes', cantidad_tiempo: 1, precio: 280000 })
+        .expect(201);
+      const secondId = second.body.id as string;
+      expect(secondId).toEqual(expect.any(String));
+      createdModalidadIds.push(secondId);
+
+      const before = await httpRequest(server).get(`/unidades/${unitA2Id}`)
+        .set('Authorization', authA).expect(200);
+      expect(new Set(before.body.modalidades_precio.map((m: ModalidadRow) => m.id)))
+        .toEqual(new Set([firstId, secondId]));
+
+      await httpRequest(server).patch(`${url}/${firstId}`)
+        .set('Authorization', authA)
+        .send({ precio: 45000, cantidad_tiempo: 2 })
+        .expect(200);
+      const updated = await httpRequest(server).get(`/unidades/${unitA2Id}`)
+        .set('Authorization', authA).expect(200);
+      const rates = updated.body.modalidades_precio as (ModalidadRow & { cantidad_tiempo: number })[];
+      expect(rates).toHaveLength(2);
+      expect(new Set(rates.map(m => m.id))).toEqual(new Set([firstId, secondId]));
+      expect(rates.find(m => m.id === firstId)).toMatchObject({ precio: 45000, cantidad_tiempo: 2 });
+
+      await httpRequest(server).delete(`${url}/${secondId}`)
+        .set('Authorization', authA).expect(200);
+      const after = await httpRequest(server).get(`/unidades/${unitA2Id}`)
+        .set('Authorization', authA).expect(200);
+      expect(after.body.modalidades_precio.map((m: ModalidadRow) => m.id)).toEqual([firstId]);
+
+      const { data: stored, error } = await adminClient.from('modalidades_precio')
+        .select('id,precio,deleted_at').in('id', [firstId, secondId]);
+      expect(error).toBeNull();
+      expect(stored).toHaveLength(2);
+      expect(stored?.find(x => x.id === firstId)).toMatchObject({ precio: 45000, deleted_at: null });
+      expect(stored?.find(x => x.id === secondId)?.deleted_at).toBeTruthy();
+    });
+
+    it('N03 POST repetido o concurrente con misma clave crea exactamente una tarifa', async () => {
+      const server = httpApp.getHttpServer();
+      const url = `/unidades/${unitA2Id}/modalidades`;
+      const key = randomUUID();
+      const payload = { unidad_tiempo: 'hora', cantidad_tiempo: 2, precio: 54000 };
+      const auth = `Bearer ${tokenGestorA}`;
+      const submit = (body = payload, requestKey = key) =>
+        httpRequest(server).post(url).set('Authorization', auth)
+          .set('Idempotency-Key', requestKey).send(body);
+
+      // The initial 201 may be committed while its HTTP response is lost.
+      const first = await submit().expect(201);
+      const tarifaId: string = first.body.id;
+      expect(tarifaId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-8[0-9a-f]{3}-a[0-9a-f]{3}-[0-9a-f]{12}$/i);
+      createdModalidadIds.push(tarifaId);
+
+      const repeated = await submit().expect(201);
+      expect(repeated.body.id).toBe(tarifaId);
+
+      const [parallelOne, parallelTwo] = await Promise.all([
+        submit().expect(201), submit().expect(201),
+      ]);
+      expect(parallelOne.body.id).toBe(tarifaId);
+      expect(parallelTwo.body.id).toBe(tarifaId);
+
+      const { data: databaseRows, error } = await adminClient.from('modalidades_precio')
+        .select('id,precio,unidad_id,deleted_at').eq('id', tarifaId);
+      expect(error).toBeNull();
+      expect(databaseRows).toHaveLength(1);
+      expect(databaseRows?.[0]).toMatchObject({
+        unidad_id: unitA2Id, precio: 54000, deleted_at: null,
+      });
+
+      // A different price under the same operation key must fail, not mutate.
+      await submit({ ...payload, precio: 55000 }).expect(409);
+      await submit(payload, 'not-a-uuid').expect(400);
+      const { data: stillPresent, error: verifiedError } = await adminClient
+        .from('modalidades_precio').select('precio').eq('id', tarifaId).single();
+      expect(verifiedError).toBeNull();
+      expect(stillPresent?.precio).toBe(54000);
+    });
+
+    it('N02/N03 impide mutaciones de categoría y tarifas entre gestores, sin alterar la base', async () => {
+      const server = httpApp.getHttpServer();
+      const authB = `Bearer ${tokenGestorB}`;
+      await httpRequest(server).patch(`/unidades/${unitA1Id}`)
+        .set('Authorization', authB)
+        .send({ categoria: 'cancha', auto_traducir: false })
+        .expect(404);
+      await httpRequest(server).post(`/unidades/${unitA1Id}/modalidades`)
+        .set('Authorization', authB)
+        .send({ unidad_tiempo: 'mes', cantidad_tiempo: 1, precio: 100 })
+        .expect(404);
+      await httpRequest(server).patch(`/unidades/${unitA1Id}/modalidades/${modalidadA1Id}`)
+        .set('Authorization', authB)
+        .send({ precio: 100 })
+        .expect(404);
+      await httpRequest(server).delete(`/unidades/${unitA1Id}/modalidades/${modalidadA1Id}`)
+        .set('Authorization', authB)
+        .expect(404);
+
+      const { data: unidad, error: unitError } = await adminClient.from('unidades')
+        .select('categoria').eq('id', unitA1Id).single();
+      expect(unitError).toBeNull();
+      expect(unidad?.categoria).toBe('departamento');
+
+      const { data: modalidad, error: modError } = await adminClient.from('modalidades_precio')
+        .select('precio,deleted_at').eq('id', modalidadA1Id).single();
+      expect(modError).toBeNull();
+      expect(modalidad).toMatchObject({ precio: 50000, deleted_at: null });
+    });
+  });
+
   describe('2. Ciclo de vida y alcances del Delegado (pendiente, grupo, cuenta, unidades, vacío)', () => {
     it('Delegado antes de configurar (aceptada_sin_configurar) obtiene lista vacía y recuento 0', async () => {
       const { executionContext, request } = createExecutionContext(tokenDelegado);
@@ -1383,6 +1553,85 @@ describe('B007a: Aislamiento API Real y Autorización Multi-Tenant (T005 / T001)
       expect((dbGrupo as GrupoRow).deleted_at).toBeNull();
     });
 
+    it.each([
+      {
+        etiqueta: 'solo nombre',
+        payload: { nombre: 'Grupo N07 sin opcionales', },
+        descripcionEsperada: null,
+        senaEsperada: false,
+      },
+      {
+        etiqueta: 'solo descripción',
+        payload: { nombre: 'Grupo N07 descripción', descripcion: 'Detalle del edificio compartido', },
+        descripcionEsperada: 'Detalle del edificio compartido',
+        senaEsperada: false,
+      },
+      {
+        etiqueta: 'solo seña',
+        payload: { nombre: 'Grupo N08 seña', sena_default_activa: true, sena_default_tipo: 'porcentaje', sena_default_valor: 20, },
+        descripcionEsperada: null,
+        senaEsperada: true,
+      },
+      {
+        etiqueta: 'descripción y seña',
+        payload: { nombre: 'Grupo N07 completo', descripcion: 'Seña monto fijo', sena_default_activa: true, sena_default_tipo: 'monto_fijo', sena_default_valor: 12500, },
+        descripcionEsperada: 'Seña monto fijo',
+        senaEsperada: true,
+      },
+    ] as const)('POST/GET Grupos persiste $etiqueta sin cruce de Gestores (N07/N08)', async ({ payload, descripcionEsperada, senaEsperada }) => {
+      const server = httpApp.getHttpServer();
+      const result = await httpRequest(server)
+        .post('/grupos')
+        .set('Authorization', `Bearer ${tokenGestorA}`)
+        .send({ ...payload, nombre: `${payload.nombre} ${fixtureMarker}` })
+        .expect(201);
+      const createdId = (result.body as { id?: string }).id;
+      expect(createdId).toBeTruthy();
+      createdGrupoIds.push(createdId!);
+
+      const listA = await httpRequest(server).get('/grupos')
+        .set('Authorization', `Bearer ${tokenGestorA}`).expect(200);
+      const group = (listA.body as GrupoRow[]).find((g) => g.id === createdId);
+      expect(group).toBeDefined();
+
+      const { data, error } = await adminClient.from('grupos')
+        .select('id, gestor_id, descripcion, sena_default_activa, sena_default_tipo, sena_default_valor, deleted_at')
+        .eq('id', createdId!).single();
+      expect(error).toBeNull();
+      expect(data).toBeTruthy();
+      expect(data!.gestor_id).toBe(gestorAId);
+      expect(data!.deleted_at).toBeNull();
+
+      const checkDescripcion = (value: string | null | undefined) => {
+        if (descripcionEsperada === null) {
+          expect(value == null || value === '').toBe(true);
+        } else {
+          expect(value).toBe(descripcionEsperada);
+        }
+      };
+      checkDescripcion(group?.descripcion);
+      checkDescripcion(data!.descripcion);
+
+      if (senaEsperada) {
+        if (!('sena_default_tipo' in payload) || !('sena_default_valor' in payload)) {
+          throw new Error('La variante de seña requiere tipo y valor');
+        }
+        expect(data!.sena_default_activa).toBe(true);
+        expect(data!.sena_default_tipo).toBe(payload.sena_default_tipo);
+        expect(Number(data!.sena_default_valor)).toBe(payload.sena_default_valor);
+        expect(group?.sena_default_activa).toBe(true);
+        expect(group?.sena_default_tipo).toBe(payload.sena_default_tipo);
+        expect(Number(group?.sena_default_valor)).toBe(payload.sena_default_valor);
+      } else {
+        expect(data!.sena_default_activa).not.toBe(true);
+        expect(group?.sena_default_activa).not.toBe(true);
+      }
+
+      const listB = await httpRequest(server).get('/grupos')
+        .set('Authorization', `Bearer ${tokenGestorB}`).expect(200);
+      expect((listB.body as GrupoRow[]).some((g) => g.id === createdId)).toBe(false);
+    });
+
     it('Delegado con alcance cuenta: ver solo lee; gestionar permite create y update pero rechaza ajenos', async () => {
       // 1. Delegado cuenta con permiso 'ver'
       const confVer = await clientGestorA.rpc('configure_delegacion', {
@@ -1789,6 +2038,69 @@ describe('B007a: Aislamiento API Real y Autorización Multi-Tenant (T005 / T001)
         .select('grupo_id').eq('id', unitA1Id).single();
       expect(error).toBeNull();
       expect(unit?.grupo_id).toBe(grupoAId);
+    });
+  });
+
+  describe('N06. Perfil propio y aislamiento RLS real', () => {
+    it('Gestor A guarda su perfil y vuelve a leer exactamente la fila confirmada', async () => {
+      const { data: initial, error: initialError } = await adminClient
+        .from('users').select('id,full_name,phone').eq('id', gestorAId).single();
+      expect(initialError).toBeNull();
+      expect(initial?.id).toBe(gestorAId);
+
+      const nextName = `Gestor validado ${fixtureMarker}`;
+      const nextPhone = '3777000000';
+      const { data: saved, error: saveError } = await clientGestorA
+        .from('users')
+        .update({ full_name: nextName, phone: nextPhone })
+        .eq('id', gestorAId)
+        .select('id,full_name,phone')
+        .single();
+      expect(saveError).toBeNull();
+      expect(saved).toMatchObject({ id: gestorAId, full_name: nextName, phone: nextPhone });
+
+      // Independent read from a fresh Supabase client with the same genuine JWT.
+      const reader = createClient(config.apiUrl, config.anonKey, {
+        global: { headers: { Authorization: `Bearer ${tokenGestorA}` } },
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { data: reloaded, error: reloadError } = await reader
+        .from('users').select('id,full_name,phone').eq('id', gestorAId).single();
+      expect(reloadError).toBeNull();
+      expect(reloaded).toMatchObject(saved);
+
+      const { error: restoreError } = await adminClient.from('users')
+        .update({ full_name: initial?.full_name, phone: initial?.phone })
+        .eq('id', gestorAId);
+      expect(restoreError).toBeNull();
+    });
+
+    it('Gestor B no puede editar el perfil de Gestor A ni ver su fila privada', async () => {
+      const other = createClient(config.apiUrl, config.anonKey, {
+        global: { headers: { Authorization: `Bearer ${tokenGestorB}` } },
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { data: original, error: originalError } = await adminClient
+        .from('users').select('id,full_name,phone').eq('id', gestorAId).single();
+      expect(originalError).toBeNull();
+
+      const { data: forbiddenRows, error: writeError } = await other
+        .from('users')
+        .update({ full_name: 'NO AUTORIZADO' })
+        .eq('id', gestorAId)
+        .select('id');
+      // An RLS-denied write can be represented as zero rows or explicit error.
+      expect(writeError === null ? forbiddenRows : []).toEqual([]);
+
+      const { data: hidden, error: readError } = await other
+        .from('users').select('id,full_name,phone').eq('id', gestorAId);
+      expect(readError).toBeNull();
+      expect(hidden).toEqual([]);
+
+      const { data: after, error: afterError } = await adminClient
+        .from('users').select('id,full_name,phone').eq('id', gestorAId).single();
+      expect(afterError).toBeNull();
+      expect(after).toEqual(original);
     });
   });
 

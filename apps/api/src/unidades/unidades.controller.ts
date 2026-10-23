@@ -11,6 +11,8 @@ import {
   Query,
   ForbiddenException,
   NotFoundException,
+  BadRequestException,
+  Headers,
 } from '@nestjs/common';
 import { UnidadesService } from './unidades.service.js';
 import { CreateUnidadDto } from './dto/create-unidad.dto.js';
@@ -172,14 +174,20 @@ export class UnidadesController {
     @Param('id') id: string,
     @Body() createModalidadDto: CreateModalidadPrecioDto,
     @Request() req: AuthenticatedRequest,
+    @Headers('idempotency-key') idempotencyKey?: string,
   ) {
+    // Existing API clients may omit the header; new clients must use UUIDv4.
+    if (idempotencyKey !== undefined &&
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(idempotencyKey)) {
+      throw new BadRequestException('Idempotency-Key debe ser UUIDv4');
+    }
     const canManage = await this.authzService.canManageUnidad(req.user, id);
     if (!canManage) {
       throw new NotFoundException('Unidad no encontrada o sin permisos de gestión');
     }
 
     const token = this.extractToken(req);
-    return this.unidadesService.createModalidad(id, createModalidadDto, token);
+    return this.unidadesService.createModalidad(id, createModalidadDto, token, idempotencyKey);
   }
 
   @Patch(':id/modalidades/:modId')

@@ -1,0 +1,58 @@
+name: Rendo N05 missing-translation gate
+
+on:
+  pull_request:
+    branches:
+      - codex/release-candidate-n01-n08-2026-10-20
+    paths:
+      - 'apps/api/src/marketplace/**'
+      - 'apps/web/src/app/**'
+      - 'apps/web/messages/**'
+      - 'packages/**'
+      - 'scripts/backfill-beta-unit-translations.mjs'
+      - 'scripts/translation-backfill-plan.mjs'
+      - 'scripts/tests/translation-backfill-plan.test.mjs'
+      - '.github/workflows/rendo-n05-translation-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  n05:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Activate pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.0.0 --activate
+      - name: Install API/web dependencies
+        run: pnpm install --frozen-lockfile --filter api... --filter web...
+      - name: Build shared types
+        run: pnpm --filter @tfi/types build
+      - name: Audit conservative translation planning without credentials
+        run: node --test scripts/tests/translation-backfill-plan.test.mjs
+      - name: Test Marketplace translation status, projection, privacy
+        working-directory: apps/api
+        run: node node_modules/vitest/vitest.mjs run src/marketplace/marketplace.service.spec.ts --reporter=dot
+      - name: API TypeScript
+        working-directory: apps/api
+        run: node node_modules/typescript/bin/tsc --noEmit -p tsconfig.build.json
+      - name: Web TypeScript
+        working-directory: apps/web
+        run: node node_modules/typescript/bin/tsc --noEmit --pretty false
+      - name: Validate three localized notices
+        run: |
+          node --input-type=module -e '
+          import fs from "node:fs";
+          for (const lang of ["es","en","pt"]){
+            const x=JSON.parse(fs.readFileSync(`apps/web/messages/${lang}.json`, "utf8"));
+            if (!x.UnitDetail?.translationPendingNotice?.trim()) throw new Error("Notice missing in "+lang);
+          }
+          '

@@ -1,12 +1,13 @@
 import { test, expect } from '@playwright/test';
+import { startMockApiServer, stopMockApiServer, setMockMarketplaceCatalogEmpty } from './fixtures/mock-api-server';
 
-function gestorCookie() {
+function gestorCookie(signature = 'test') {
   const userId = '11111111-1111-1111-1111-111111111111';
   const payload = {
     sub: userId,
     accessContext: { actor: 'gestor', ownerOnly: true, capabilities: ['*'] },
   };
-  const token = `${Buffer.from('{}').toString('base64url')}.${Buffer.from(JSON.stringify(payload)).toString('base64url')}.test`;
+  const token = `${Buffer.from('{}').toString('base64url')}.${Buffer.from(JSON.stringify(payload)).toString('base64url')}.${signature}`;
   const value = `base64-${Buffer.from(JSON.stringify({
     access_token: token,
     user: { id: userId, email: 'qa@example.invalid', user_metadata: { role: 'gestor' } },
@@ -65,6 +66,10 @@ test('formulario de gestor: borrador, categorías y fotos', async ({ page, conte
   await expect(page.getByText('Sin zona predefinida').first()).toBeVisible();
   await expect(page.getByText('Guardá el borrador antes de subirlas')).toBeVisible();
   await expect(page.locator('input[type="file"]')).toBeDisabled();
+  // New units intentionally have no fictional default tariff.
+  await expect(page.getByTestId('input-precio')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Alquiler por Día', exact: false }).click();
+  await expect(page.getByTestId('input-precio')).toHaveValue('');
   await expect(page.getByText('Precio para público en inglés (USD)')).toBeVisible();
   await expect(page.getByText('Precio para público en portugués (BRL)')).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('gestor-formulario.png'), fullPage: true });
@@ -121,9 +126,10 @@ test('N04 y N05: detalle público proyecta dirección solo para autenticado y lo
   await page.goto('/es/unidades/a0000000-0000-0000-0000-000000000001');
   await expect(page.locator('[data-testid="exact-address"]')).toBeVisible();
   await expect(page.locator('[data-testid="exact-address"]')).toContainText('Av. Caá Guazú 450, Goya, Corrientes');
-  const waEsBtn = page.getByRole('button', { name: 'Contactar por WhatsApp' });
+  const waEsBtn = page.getByRole('link', { name: 'Contactar por WhatsApp' });
   await expect(waEsBtn).toBeVisible();
   const waEsLink = page.locator('a[href*="wa.me"]');
+  await expect(waEsBtn.locator('button')).toHaveCount(0);
   const esHref = await waEsLink.getAttribute('href');
   expect(esHref).toContain('Hola%2C%20me%20interesa%20la%20unidad');
 
@@ -131,7 +137,7 @@ test('N04 y N05: detalle público proyecta dirección solo para autenticado y lo
 
   // 5. Usuario autenticado en inglés: botón WhatsApp localizado en inglés
   await page.goto('/en/unidades/a0000000-0000-0000-0000-000000000001');
-  const waEnBtn = page.getByRole('button', { name: 'Contact via WhatsApp' });
+  const waEnBtn = page.getByRole('link', { name: 'Contact via WhatsApp' });
   await expect(waEnBtn).toBeVisible();
   const waEnLink = page.locator('a[href*="wa.me"]');
   const enHref = await waEnLink.getAttribute('href');
@@ -139,11 +145,144 @@ test('N04 y N05: detalle público proyecta dirección solo para autenticado y lo
 
   // 6. Usuario autenticado en portugués: botón WhatsApp localizado en portugués
   await page.goto('/pt/unidades/a0000000-0000-0000-0000-000000000001');
-  const waPtBtn = page.getByRole('button', { name: 'Contatar via WhatsApp' });
+  const waPtBtn = page.getByRole('link', { name: 'Contatar via WhatsApp' });
   await expect(waPtBtn).toBeVisible();
   const waPtLink = page.locator('a[href*="wa.me"]');
   const ptHref = await waPtLink.getAttribute('href');
   expect(ptHref).toContain('Ol%C3%A1%2C%20tenho%20interesse%20na%20unidade');
 
   await page.screenshot({ path: testInfo.outputPath('detalle-autenticado-pt.png'), fullPage: true });
+});
+
+test.describe('UX-001: estados SSR de alquileres con API sintética de loopback', () => {
+  test.beforeAll(async () => {
+    await startMockApiServer(3001);
+  });
+  test.afterAll(async () => {
+    await stopMockApiServer();
+  });
+
+  test('UX-001: alquileres distingue error, vacío real y recuperación sin perder datos', async ({ page, context }) => {
+  // These cookie signatures are synthetic and accepted ONLY by the local test adapter.
+  await context.clearCookies();
+  await context.addCookies([gestorCookie('service-error')]);
+  await page.goto('/es/alquileres');
+  await expect(page.getByTestId('alquileres-load-error')).toBeVisible();
+  await expect(page.getByText('No pudimos cargar los alquileres')).toBeVisible();
+  await expect(page.getByText('No hay alquileres registrados.')).toHaveCount(0);
+  await expect(page.getByTestId('btn-nuevo-alquiler')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Reintentar' })).toBeVisible();
+
+  await context.clearCookies();
+  await context.addCookies([gestorCookie()]);
+  await page.reload();
+  await expect(page.getByTestId('alquileres-load-error')).toHaveCount(0);
+  await expect(page.getByText('Departamento 2 Ambientes Frente al Río').filter({ visible: true }).first()).toBeVisible();
+  await expect(page.getByTestId('btn-nuevo-alquiler')).toBeVisible();
+
+  await context.clearCookies();
+  await context.addCookies([gestorCookie('empty-rentals')]);
+  await page.reload();
+  await expect(page.getByText('No hay alquileres registrados.')).toBeVisible();
+  await expect(page.getByTestId('alquileres-load-error')).toHaveCount(0);
+});
+
+test('UX-001: si falta el catálogo auxiliar, conserva contratos y bloquea el alta', async ({ page, context }) => {
+  await context.clearCookies();
+  await context.addCookies([gestorCookie('units-only-failure')]);
+  await page.goto('/es/alquileres');
+  await expect(page.getByTestId('alquileres-creation-data-error')).toBeVisible();
+  await expect(page.getByText('Los alquileres se cargaron, pero faltan datos para registrar uno nuevo')).toBeVisible();
+  await expect(page.getByText('Departamento 2 Ambientes Frente al Río').filter({ visible: true }).first()).toBeVisible();
+  await expect(page.getByTestId('alquileres-load-error')).toHaveCount(0);
+  await expect(page.getByTestId('btn-nuevo-alquiler')).toHaveCount(0);
+});
+
+test('UX-001: alquiler nuevo protege cambios ante Cancelar y Escape', async ({ page, context }) => {
+  await context.clearCookies();
+  await context.addCookies([gestorCookie()]);
+  await page.goto('/es/alquileres');
+  await expect(page.getByTestId('btn-nuevo-alquiler')).toBeVisible();
+  await page.getByTestId('btn-nuevo-alquiler').click();
+  await expect(page.getByRole('heading', { name: 'Nuevo Alquiler' })).toBeVisible();
+
+  const monto = page.locator('#monto_total');
+  await monto.fill('1234');
+  await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
+  await expect(page.getByTestId('alquiler-unsaved-confirm')).toBeVisible();
+  await expect(monto).toHaveValue('1234');
+
+  await page.getByTestId('alquiler-seguir-editando').click();
+  await expect(page.getByTestId('alquiler-unsaved-confirm')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('alquiler-unsaved-confirm')).toBeVisible();
+
+  await page.getByTestId('alquiler-descartar-cambios').click();
+  await expect(page.getByRole('heading', { name: 'Nuevo Alquiler' })).toHaveCount(0);
+  await page.getByTestId('btn-nuevo-alquiler').click();
+  await expect(page.locator('#monto_total')).toHaveValue('0');
+});
+
+test('UX-001: PDF privado se adjunta solo después de registrar alquiler', async ({ page, context }) => {
+  await context.clearCookies();
+  await context.addCookies([gestorCookie()]);
+  await page.goto('/es/alquileres');
+  const documentControl = page.getByTestId('alquiler-contrato-documento').filter({ visible: true }).first();
+  await expect(documentControl).toBeVisible();
+  await expect(documentControl.getByLabel('Adjuntar contrato PDF')).toBeVisible();
+
+  await page.getByTestId('btn-nuevo-alquiler').click();
+  await expect(page.getByTestId('contrato-upload-after-save')).toContainText(
+    'Guardá primero el alquiler y después adjuntá el PDF'
+  );
+  await expect(page.locator('#contrato-upload')).toHaveCount(0);
+  await expect(page.locator('#monto_total')).toHaveValue('0');
+  await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Nuevo Alquiler' })).toHaveCount(0);
+
+  // An invalid file is rejected before contacting Storage or updating money.
+  await documentControl.getByLabel('Adjuntar contrato PDF').setInputFiles({
+    name: 'not-a-contract.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('not pdf'),
+  });
+  await expect(documentControl.getByRole('alert')).toContainText('PDF válido');
+});
+});
+
+test('UX-001: catálogo sin filtros ni coincidencias no inventa propiedades ni precios', async ({ page }) => {
+  await startMockApiServer(3001);
+  try {
+    // Regression-critical case: the removed fallback only ran for an unfiltered
+    // successful empty response. A filtered q=no-results request missed it.
+    setMockMarketplaceCatalogEmpty(true);
+    await page.goto('/es/unidades');
+    await expect(page.getByText('No encontramos resultados')).toBeVisible();
+    await expect(page.getByText('0 unidades encontradas')).toBeVisible();
+    await expect(page.getByText('Departamento 2 Ambientes Frente al Río')).toHaveCount(0);
+    await expect(page.locator('a[href*="/unidades/a0000000-0000-0000-0000-000000000001"]')).toHaveCount(0);
+
+    // Keep the filtered empty path covered too.
+    setMockMarketplaceCatalogEmpty(false);
+    await page.goto('/es/unidades?q=no-results');
+    await expect(page.getByText('No encontramos resultados')).toBeVisible();
+    await expect(page.getByText('0 unidades encontradas')).toBeVisible();
+  } finally {
+    setMockMarketplaceCatalogEmpty(false);
+    await stopMockApiServer();
+  }
+});
+
+
+test('UX-001: HTTP 200 con datos inválidos muestra error y conserva filtros', async ({ page }) => {
+  await startMockApiServer(3001);
+  try {
+    await page.goto('/es/unidades?q=invalid-payload');
+    await expect(page.getByText('El catálogo no está disponible temporalmente')).toBeVisible();
+    await expect(page.getByText('Servicio no disponible')).toBeVisible();
+    await expect(page.getByText('0 unidades encontradas')).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Reintentar' })).toHaveAttribute('href', /q=invalid-payload/);
+  } finally {
+    await stopMockApiServer();
+  }
 });

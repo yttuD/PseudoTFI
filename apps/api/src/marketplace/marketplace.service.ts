@@ -3,7 +3,7 @@ import { SupabaseService } from '../supabase/supabase.service.js';
 import { BuscarUnidadesDto } from './dto/buscar-unidades.dto.js';
 import { resilientStore } from '../common/resilient-store.js';
 import { createHash } from 'node:crypto';
-import { isReleaseRuntime } from '../config/release-readiness.js';
+import { isReleaseRuntime, allowSyntheticFallback } from '../config/release-readiness.js';
 import { getExchangeRates } from './exchange-rates.js';
 
 const databaseUnavailable = () => new ServiceUnavailableException('El catálogo no está disponible temporalmente');
@@ -40,7 +40,7 @@ export class MarketplaceService {
 
     const isOnline = await this.supabaseService.isOnline();
     if (!isOnline) {
-      if (isReleaseRuntime()) throw databaseUnavailable();
+      if (!allowSyntheticFallback()) throw databaseUnavailable();
       let fallbackUnidades = resilientStore.getUnidades(true);
       
       if (categoria) {
@@ -68,9 +68,11 @@ export class MarketplaceService {
 
       const mapped = fallbackUnidades.map((item) => {
         const titulo = (item as any)[`titulo_${locale}`] || item.titulo_es;
+        const traduccionPendiente = locale !== 'es' && !String((item as any)[`titulo_${locale}`] || '').trim();
         return {
           id: item.id,
           titulo: titulo || null,
+          traduccion_pendiente: traduccionPendiente,
           categoria: item.categoria,
           zona_id: item.zona_id,
           fotos: item.fotos,
@@ -176,7 +178,7 @@ export class MarketplaceService {
     }
 
     if (error || !data) {
-      if (isReleaseRuntime()) throw databaseUnavailable();
+      if (!allowSyntheticFallback()) throw databaseUnavailable();
       let fallbackUnidades = resilientStore.getUnidades(true);
       
       if (categoria) {
@@ -204,9 +206,11 @@ export class MarketplaceService {
 
       const mapped = fallbackUnidades.map((item) => {
         const titulo = (item as any)[`titulo_${locale}`] || item.titulo_es;
+        const traduccionPendiente = locale !== 'es' && !String((item as any)[`titulo_${locale}`] || '').trim();
         return {
           id: item.id,
           titulo: titulo || null,
+          traduccion_pendiente: traduccionPendiente,
           categoria: item.categoria,
           zona_id: item.zona_id,
           fotos: item.fotos,
@@ -223,6 +227,7 @@ export class MarketplaceService {
       return {
         id: item.id,
         titulo: item[`titulo_${locale}`] || item.titulo_es || null,
+        traduccion_pendiente: locale !== 'es' && !String(item[`titulo_${locale}`] || '').trim(),
         categoria: item.categoria,
         zona_id: item.zona_id,
         zonas: item.zonas || null,
@@ -241,20 +246,10 @@ export class MarketplaceService {
   async findOne(id: string, isAuthenticated: boolean, locale: string = 'es') {
     const isOnline = await this.supabaseService.isOnline();
     if (!isOnline) {
-      if (isReleaseRuntime()) throw databaseUnavailable();
+      if (!allowSyntheticFallback()) throw databaseUnavailable();
       const fallback = resilientStore.getUnidadById(id);
       if (fallback && fallback.estado === 'publicada') {
-        const titulo = (fallback as any)[`titulo_${locale}`] || fallback.titulo_es;
-        const descripcion = (fallback as any)[`descripcion_${locale}`] || fallback.descripcion_es;
-        return {
-          ...fallback,
-          titulo: titulo || null,
-          descripcion: descripcion || null,
-          ubicacion_exacta: isAuthenticated ? fallback.ubicacion_exacta : null,
-          direccion_texto: isAuthenticated ? (fallback.direccion_texto || null) : null,
-          whatsapp: isAuthenticated ? fallback.whatsapp : null,
-          telefono: isAuthenticated ? (fallback as any).telefono || null : null,
-        };
+        return this.projectDetail(fallback, isAuthenticated, locale);
       }
       throw new NotFoundException('Unidad no encontrada o no publicada');
     }
@@ -279,52 +274,65 @@ export class MarketplaceService {
     }
 
     if (error || !data) {
-      if (isReleaseRuntime()) {
+      if (!allowSyntheticFallback()) {
         if (error?.code === 'PGRST116') throw new NotFoundException('Unidad no encontrada o no publicada');
         throw databaseUnavailable();
       }
       const fallback = resilientStore.getUnidadById(id);
       if (fallback && fallback.estado === 'publicada') {
-        const titulo = (fallback as any)[`titulo_${locale}`] || fallback.titulo_es;
-        const descripcion = (fallback as any)[`descripcion_${locale}`] || fallback.descripcion_es;
-        return {
-          ...fallback,
-          titulo: titulo || null,
-          descripcion: descripcion || null,
-          ubicacion_exacta: isAuthenticated ? fallback.ubicacion_exacta : null,
-          direccion_texto: isAuthenticated ? (fallback.direccion_texto || null) : null,
-          whatsapp: isAuthenticated ? fallback.whatsapp : null,
-          telefono: isAuthenticated ? (fallback as any).telefono || null : null,
-        };
+        return this.projectDetail(fallback, isAuthenticated, locale);
       }
       throw new NotFoundException('Unidad no encontrada o no publicada');
     }
 
+    return this.projectDetail(data, isAuthenticated, locale);
+  }
+
+  /**
+   * Proyectar exclusivamente campos del contrato de detalle público.
+   * Compartido por el catálogo en Supabase y el fallback local: nunca expandir
+   * con ...data, ya que los registros privilegiados pueden incluir columnas privadas.
+   */
+  private projectDetail(data: any, isAuthenticated: boolean, locale: string) {
     const titulo = data[`titulo_${locale}`] || data.titulo_es;
     const descripcion = data[`descripcion_${locale}`] || data.descripcion_es;
+    // For EN/PT, a Spanish fallback is not a translation. Report missing
+    // localized fields explicitly; never suggest that untranslated copy is ready.
+    const traduccionPendiente = locale !== 'es' &&
+      (!String(data[`titulo_${locale}`] || '').trim() ||
+       !String(data[`descripcion_${locale}`] || '').trim());
     return {
       id: data.id,
       titulo: titulo || null,
       descripcion: descripcion || null,
+      traduccion_pendiente: traduccionPendiente,
       categoria: data.categoria,
       zona_id: data.zona_id,
       zonas: data.zonas || null,
       fotos: data.fotos || [],
       ubicacion_aprox: data.ubicacion_aprox || null,
       ubicacion_exacta: isAuthenticated ? data.ubicacion_exacta || null : null,
-      direccion_texto: isAuthenticated ? (data.direccion_texto || null) : null,
+      direccion_texto: isAuthenticated ? data.direccion_texto || null : null,
       whatsapp: isAuthenticated ? data.whatsapp || null : null,
       caracteristicas: data.atributos || {},
       modalidades_precio: (data.modalidades_precio || [])
         .filter((m: any) => !m.deleted_at)
-        .map((m: any) => ({ id: m.id, unidad_tiempo: m.unidad_tiempo, cantidad_tiempo: m.cantidad_tiempo, precio: m.precio, precio_usd: m.precio_usd ?? null, precio_brl: m.precio_brl ?? null })),
+        .map((m: any) => ({
+          id: m.id,
+          unidad_tiempo: m.unidad_tiempo ?? m.modalidad,
+          cantidad_tiempo: m.cantidad_tiempo ?? 1,
+          precio: m.precio,
+          precio_usd: m.precio_usd ?? null,
+          precio_brl: m.precio_brl ?? null,
+        })),
     };
+
   }
 
   async getZonas() {
     const isOnline = await this.supabaseService.isOnline();
     if (!isOnline) {
-      if (isReleaseRuntime()) throw databaseUnavailable();
+      if (!allowSyntheticFallback()) throw databaseUnavailable();
       return [
         {
           id: 1,
@@ -357,7 +365,7 @@ export class MarketplaceService {
       if (result && !result.error && result.data) return result.data;
     } catch {}
 
-    if (isReleaseRuntime()) throw databaseUnavailable();
+    if (!allowSyntheticFallback()) throw databaseUnavailable();
 
     return [
       {
@@ -378,7 +386,7 @@ export class MarketplaceService {
     const ipHash = hashIp(ip || '127.0.0.1');
     const isOnline = await this.supabaseService.isOnline();
     if (!isOnline) {
-      if (isReleaseRuntime()) throw databaseUnavailable();
+      if (!allowSyntheticFallback()) throw databaseUnavailable();
       resilientStore.addVista(unidadId, ipHash);
       return { ok: true };
     }
@@ -388,9 +396,9 @@ export class MarketplaceService {
         unidad_id: unidadId,
         ip_hash: ipHash,
       });
-      if (error && isReleaseRuntime()) throw databaseUnavailable();
+      if (error && !allowSyntheticFallback()) throw databaseUnavailable();
     } catch {
-      if (isReleaseRuntime()) throw databaseUnavailable();
+      if (!allowSyntheticFallback()) throw databaseUnavailable();
       resilientStore.addVista(unidadId, ipHash);
     }
     return { ok: true };
@@ -400,7 +408,7 @@ export class MarketplaceService {
     const ipHash = ip ? hashIp(ip) : undefined;
     const isOnline = await this.supabaseService.isOnline();
     if (!isOnline) {
-      if (isReleaseRuntime()) throw databaseUnavailable();
+      if (!allowSyntheticFallback()) throw databaseUnavailable();
       resilientStore.addContacto(unidadId, ipHash);
       return { ok: true };
     }
@@ -410,9 +418,9 @@ export class MarketplaceService {
         unidad_id: unidadId,
         ip_hash: ipHash || null,
       });
-      if (error && isReleaseRuntime()) throw databaseUnavailable();
+      if (error && !allowSyntheticFallback()) throw databaseUnavailable();
     } catch {
-      if (isReleaseRuntime()) throw databaseUnavailable();
+      if (!allowSyntheticFallback()) throw databaseUnavailable();
       resilientStore.addContacto(unidadId, ipHash);
     }
     return { ok: true };

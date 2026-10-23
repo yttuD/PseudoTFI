@@ -3,7 +3,9 @@ name: Rendo full API unit regression
 on:
   pull_request:
     branches:
+      - codex/ui-playwright-matrix-2026-10-20
       - codex/n01-n02-group-membership-2026-10-20
+      - codex/release-candidate-n01-n08-2026-10-20
     paths:
       - 'apps/api/**'
       - 'packages/**'

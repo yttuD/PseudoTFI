@@ -14,11 +14,13 @@ interface CardUnidadProps {
   isLoggedIn?: boolean;
   token?: string;
   exchangeRates?: ExchangeRates | null;
+  priority?: boolean;
 }
 
-export function CardUnidad({ unidad, locale, isFavorito = false, isLoggedIn = false, token, exchangeRates }: CardUnidadProps) {
+export function CardUnidad({ unidad, locale, isFavorito = false, isLoggedIn = false, token, exchangeRates, priority = false }: CardUnidadProps) {
   const t = useTranslations('unidad');
   const tDetail = useTranslations('UnitDetail');
+  const tCatalog = useTranslations('Catalogo');
   
   const modalidades = Array.isArray(unidad.modalidades_precio) ? unidad.modalidades_precio : [];
   const prices = modalidades.map((m: { precio: number; precio_usd?: number | null; precio_brl?: number | null; unidad_tiempo?: string }) => ({
@@ -31,15 +33,25 @@ export function CardUnidad({ unidad, locale, isFavorito = false, isLoggedIn = fa
     : (locale === 'en' ? 'day' : locale === 'pt' ? 'dia' : 'día');
     
   return (
-    <Link href={`/${locale}/unidades/${unidad.id}`} className="block group">
-      <Card className="overflow-hidden bg-background border-border/40 hover:border-border transition-all duration-300 cursor-pointer h-full flex flex-col shadow-sm hover:shadow-premium rounded-[1.5rem]">
-        <div className="aspect-[4/3] relative bg-muted overflow-hidden">
+    <Card data-testid="unit-card" className="relative group overflow-hidden bg-background border-border/40 hover:border-border focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1 transition-all duration-300 cursor-pointer h-full flex flex-col shadow-sm hover:shadow-premium rounded-[1.5rem]">
+      <Link
+        data-testid="unit-card-detail-link"
+        href={`/${locale}/unidades/${unidad.id}`}
+        aria-label={String(unidad.titulo || unidad.titulo_es || tCatalog('unnamedUnit'))}
+        className="absolute inset-0 z-10 rounded-[1.5rem] focus-visible:outline-none"
+      />
+      <div className="aspect-[4/3] relative bg-muted overflow-hidden">
           {Array.isArray(unidad.fotos) && unidad.fotos.length > 0 ? (
             /* eslint-disable-next-line @next/next/no-img-element */
-            <img 
-              src={unidad.fotos[0] as string} 
-              alt={(unidad.titulo_es as string) || 'Foto de la unidad'} 
-              className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" 
+            <img
+              src={unidad.fotos[0] as string}
+              alt={String(unidad.titulo || unidad.titulo_es || tCatalog('photoAlt'))}
+              loading={priority ? 'eager' : 'lazy'}
+              fetchPriority={priority ? 'high' : 'auto'}
+              decoding="async"
+              width={800}
+              height={600}
+              className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105"
             />
           ) : (
             <div className="flex items-center justify-center w-full h-full text-muted-foreground text-xs bg-muted">
@@ -52,12 +64,12 @@ export function CardUnidad({ unidad, locale, isFavorito = false, isLoggedIn = fa
           
           {/* Top badges */}
           <div className="absolute top-3 left-3 flex gap-2">
-            <Badge className="bg-background/90 hover:bg-background/90 backdrop-blur-md border-none text-foreground gap-1 shadow-sm">
+            <Badge data-testid="unit-card-published" className="bg-card border border-border text-card-foreground gap-1 shadow-sm">
               <FileCheck className="w-3 h-3" /> {tDetail('publishedUnit')}
             </Badge>
           </div>
 
-          <div className="absolute top-3 right-3">
+          <div className="absolute top-3 right-3 z-20">
             <FavoritoButton 
               unidadId={unidad.id as string} 
               initialIsFavorito={isFavorito}
@@ -70,9 +82,9 @@ export function CardUnidad({ unidad, locale, isFavorito = false, isLoggedIn = fa
           {/* Bottom details on image */}
           <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
             {firstPrice && (
-              <div className="bg-card/95 backdrop-blur-md rounded-xl px-3 py-1.5 shadow-sm border border-border">
+              <div data-testid="unit-card-price" className="bg-card rounded-xl px-3 py-1.5 shadow-sm border border-border">
                 <span className="text-[10px] text-muted-foreground uppercase font-mono mr-1 tracking-wider">{t('desde')}</span>
-                <span className="font-bold font-mono text-dorado-600 dark:text-dorado-500">{firstPrice.price?.text}{firstPrice.price?.approximate ? ' aprox.' : ''}</span>
+                <span className="font-bold font-mono text-dorado-700 dark:text-dorado-200">{firstPrice.price?.text}{firstPrice.price?.approximate ? ` ${tCatalog('estimated')}` : ''}</span>
                 <span className="text-[10px] text-muted-foreground ml-1">/ {periodLabel}</span>
               </div>
             )}
@@ -82,13 +94,12 @@ export function CardUnidad({ unidad, locale, isFavorito = false, isLoggedIn = fa
         <CardContent className="p-4 flex flex-col flex-1 gap-2">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground uppercase font-mono tracking-wider">
             <MapPin className="w-3.5 h-3.5 text-dorado-600 dark:text-dorado-400" />
-            <span className="truncate">{((unidad.zonas as Record<string, unknown>)?.nombre as string) || 'Fuera de zonas predefinidas'} • {categoriaLabel(unidad.categoria as string)}</span>
+            <span className="truncate">{((unidad.zonas as Record<string, unknown>)?.nombre as string) || tCatalog('outsideZone')} • {categoriaLabel(unidad.categoria as string, locale)}</span>
           </div>
           <h3 className="font-bold text-base md:text-lg line-clamp-2 leading-tight text-balance group-hover:text-dorado-600 dark:group-hover:text-dorado-400 transition-colors">
             {(unidad.titulo || unidad.titulo_es) as string}
           </h3>
         </CardContent>
-      </Card>
-    </Link>
+    </Card>
   );
 }
