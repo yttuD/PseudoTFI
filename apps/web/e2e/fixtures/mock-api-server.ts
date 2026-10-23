@@ -192,6 +192,25 @@ export function startMockApiServer(port = 3001): Promise<http.Server> {
         if (detailMatch && detailMatch[1] && !detailMatch[1].startsWith('?')) {
           const unitId = detailMatch[1];
           const isAuth = !!authHeader && authHeader.length > 10;
+          if (unitId === 'a0000000-0000-0000-0000-000000000099') {
+            // Synthetic fixture for historical rows that are identical vs different terms.
+            const terms = [
+              ['día', 1, 45000], ['día', 1, 45000], ['día', 1, 45000],
+              ['día', 3, 25000], ['mes', 1, 250005], ['mes', 1, 250000],
+              ['hora', 1, 15000],
+            ] as const;
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+              ...SAMPLE_UNIDAD_1,
+              id: unitId,
+              modalidades_precio: terms.map(([unidad_tiempo, cantidad_tiempo, precio], index) => ({
+                id: `tariff-fixture-${index}`, unidad_tiempo, cantidad_tiempo,
+                precio, precio_usd: null, precio_brl: null,
+              })),
+              ubicacion_exacta: isAuth ? { lat: -29.1445, lng: -59.2645 } : null,
+            }));
+            return;
+          }
           if (unitId === 'a0000000-0000-0000-0000-000000000002') {
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(
