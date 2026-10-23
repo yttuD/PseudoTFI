@@ -1,0 +1,35 @@
+name: Rendo public listing live browser verification
+
+on:
+  push:
+    branches:
+      - qa/rendo-public-smoke-2026-10-22
+    paths:
+      - '.github/workflows/rendo-live-prices-2026-10-22.yml'
+      - 'apps/web/e2e/public_rates_live_smoke.mjs'
+
+permissions:
+  contents: read
+
+jobs:
+  live-public-prices:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288ca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Install pinned pnpm and web dependency
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.0.0 --activate
+          pnpm install --frozen-lockfile --filter web...
+      - name: Install Chromium only
+        working-directory: apps/web
+        run: node node_modules/@playwright/test/cli.js install chromium
+      - name: Verify real published five distinct prices and minimum stay in desktop and mobile
+        working-directory: apps/web
+        run: node e2e/public_rates_live_smoke.mjs
